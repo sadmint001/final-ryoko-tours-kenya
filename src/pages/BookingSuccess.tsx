@@ -188,9 +188,9 @@ const BookingSuccess = () => {
                 </div>
 
                 <div className="border-t pt-6 space-y-3">
-                  <Link to="/tours">
+                  <Link to="/destinations">
                     <Button variant="outline" className="w-full">
-                      Book Another Tour
+                      Book Another Experience
                     </Button>
                   </Link>
                   <Link to="/">
@@ -214,9 +214,9 @@ const BookingSuccess = () => {
                       Contact Support
                     </Button>
                   </Link>
-                  <Link to="/tours">
+                  <Link to="/destinations">
                     <Button className="w-full bg-gradient-primary hover:opacity-90">
-                      Browse Tours
+                      Browse Destinations
                     </Button>
                   </Link>
                 </div>

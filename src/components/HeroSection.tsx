@@ -70,9 +70,9 @@ const HeroSection = () => {
 
           {/* Premium CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16 animate-fade-up">
-            <Link to="/tours">
+            <Link to="/destinations">
               <Button size="lg" className="group bg-gradient-luxury hover:shadow-glow text-earth-brown border-0 px-8 py-4 font-semibold text-lg rounded-xl transition-all duration-300">
-                Explore Tours
+                Explore Destinations
                 <ChevronRight className="h-5 w-5 ml-2 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>

@@ -72,7 +72,7 @@ const Navbar = () => {
                 </div>
               ) : (
                 <div className="flex items-center space-x-4">
-                  <Link to="/tours">
+                  <Link to="/destinations">
                     <Button variant="safari" size="default">
                       Book Now
                     </Button>
@@ -141,7 +141,7 @@ const Navbar = () => {
               ) : (
                 <div className="space-y-2 pt-4 border-t border-border">
                   <div className="px-3">
-                    <Link to="/tours" onClick={() => setIsOpen(false)}>
+                    <Link to="/destinations" onClick={() => setIsOpen(false)}>
                       <Button variant="safari" size="default" className="w-full">
                         Book Now
                       </Button>

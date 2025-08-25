@@ -8,7 +8,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ResidencyProvider } from "./contexts/ResidencyContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Tours from "./pages/Tours";
+
 import Destinations from "./pages/Destinations";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -32,7 +32,7 @@ const App = () => (
             <Routes>
                           <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/tours" element={<Tours />} />
+
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
