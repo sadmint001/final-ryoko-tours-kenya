@@ -3,7 +3,7 @@
 
 ## Project info
 
-**URL**: https://ryokotoursafrica.netlify.com
+**URL**: https://ryokotoursafrica.netlify.app
 
 ## What technologies are used for this project?
 
