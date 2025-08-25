@@ -468,11 +468,11 @@ const Destinations = () => {
                 </div>
 
                 {/* Pricing Section */}
-                <div className="text-center w-full bg-slate-50 p-3 rounded-lg border-2 border-dashed border-gray-300">
+                <div className="text-center w-full bg-slate-50 dark:bg-white text-black p-3 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-300">
                   {selectedResidency ? (
                     <>
                       <div className="text-sm text-black dark:text-black font-medium">Starting from</div>
-                      <div className="text-2xl font-bold text-primary">
+                      <div className="text-2xl font-bold text-primary dark:text-black">
                         {formatPrice(getPriceByResidency(destination.pricing, selectedResidency))}
                         <span className="text-sm font-normal text-black dark:text-black ml-1">
                           per person
