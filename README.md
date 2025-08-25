@@ -3,7 +3,8 @@
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/b006f314-dac1-40be-b3b9-3cd21d17b9c3
+**URL**: https://ryokotoursafrica.netlify.com
+
 
 ## How can I edit this code?
 
