@@ -18,10 +18,10 @@ const Footer = () => {
     {
       title: "Tour Types",
       links: [
-        { name: "Cultural Trips", href: "/destinations" },
-        { name: "Safari Adventures", href: "/destinations" },
-        { name: "City Tours", href: "/destinations" },
-        { name: "Custom Experiences", href: "/destinations" },
+        { name: "Cultural Trips", href: "/destinations?category=Cultural" },
+        { name: "Safari Adventures", href: "/destinations?category=Wildlife" },
+        { name: "City Tours", href: "/destinations?category=Historical" },
+        { name: "Custom Experiences", href: "/destinations?category=Adventure" },
       ]
     },
     {
@@ -29,7 +29,7 @@ const Footer = () => {
       links: [
         { name: "info@ryokotoursafrica.com", href: "mailto:info@ryokotoursafrica.com", icon: Mail },
         { name: "0797758216", href: "https://wa.me/254797758216", icon: Phone },
-        { name: "Nairobi, Kenya", href: "#", icon: MapPin },
+        { name: "Nairobi, Kenya", href: "https://www.google.com/maps/search/?api=1&query=Nairobi%2C%20Kenya", icon: MapPin },
       ]
     }
   ];
@@ -63,7 +63,7 @@ const Footer = () => {
                 <Mail className="w-5 h-5" />
               </a>
               <a 
-                href="#" 
+                href="https://instagram.com/ryokotoursafrica" 
                 className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-safari-gold/20 transition-colors"
               >
                 <Instagram className="w-5 h-5" />

@@ -4,7 +4,9 @@ tours and travel website
 
 ## Project info
 
-**URL**: https://ryokotoursafrica.netlify.com
+<<<<<<< HEAD
+**URL**: https://ryokotoursafrica.netlify.APP
+
 
 ## How can I edit this code?
 
@@ -23,6 +25,7 @@ There are several ways of editing your application.
 - Select the "Codespaces" tab.
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
+**URL**: https://ryokotoursafrica.netlify.app
 
 ## What technologies are used for this project?
 
@@ -33,3 +36,9 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+
+
+
+# Ryokotoursafrica
+tours and travel website
+>>>>>>> cfd664c8a425091c1dd5586e9617dd781a5136c0

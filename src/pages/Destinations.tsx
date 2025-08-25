@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +35,9 @@ interface Destination {
 const Destinations = () => {
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('recommended');
+  const location = useLocation();
+  const navigate = useNavigate();
   const { selectedResidency, setSelectedResidency } = useResidency();
 
 
@@ -271,10 +274,58 @@ const Destinations = () => {
 
 
 
-  // Filter destinations based on selected category
-  const filteredDestinations = selectedCategory === 'all' 
+  // Read filters from URL on mount / change
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const categoryParam = params.get('category');
+    const sortParam = params.get('sort');
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    }
+    if (sortParam) {
+      setSortBy(sortParam);
+    }
+  }, [location.search]);
+
+  // Keep URL in sync when user changes filters
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (selectedCategory && selectedCategory !== params.get('category')) {
+      if (selectedCategory === 'all') {
+        params.delete('category');
+      } else {
+        params.set('category', selectedCategory);
+      }
+    }
+    if (sortBy && sortBy !== params.get('sort')) {
+      if (sortBy === 'recommended') {
+        params.delete('sort');
+      } else {
+        params.set('sort', sortBy);
+      }
+    }
+    navigate({ pathname: location.pathname, search: params.toString() ? `?${params.toString()}` : '' }, { replace: true });
+  }, [selectedCategory, sortBy]);
+
+  // Filter and sort
+  const filteredDestinationsBase = selectedCategory === 'all' 
     ? allDestinations 
     : allDestinations.filter(dest => dest.category === selectedCategory);
+
+  const filteredDestinations = [...filteredDestinationsBase].sort((a, b) => {
+    switch (sortBy) {
+      case 'priceAsc':
+        return a.pricing.citizenPrice - b.pricing.citizenPrice;
+      case 'priceDesc':
+        return b.pricing.citizenPrice - a.pricing.citizenPrice;
+      case 'rating':
+        return (b.rating || 0) - (a.rating || 0);
+      case 'duration':
+        return (a.duration || 0) - (b.duration || 0);
+      default:
+        return 0;
+    }
+  });
 
   if (loading) {
     return (
@@ -307,12 +358,13 @@ const Destinations = () => {
           onResidencyChange={setSelectedResidency}
         />
 
-        {/* Category Filter */}
+        {/* Category Filter and Sort */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Filter className="w-5 h-5 text-muted-foreground" />
             <span className="font-semibold text-muted-foreground">Filter by:</span>
           </div>
+          <div className="flex flex-wrap items-center gap-3">
           <div className="flex flex-wrap gap-3">
             {categories.map((category) => (
               <Button
@@ -326,6 +378,21 @@ const Destinations = () => {
                 {category.name}
               </Button>
             ))}
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Sort:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="h-9 rounded-md border bg-background px-3 text-sm"
+              >
+                <option value="recommended">Recommended</option>
+                <option value="priceAsc">Price: Low to High</option>
+                <option value="priceDesc">Price: High to Low</option>
+                <option value="rating">Top Rated</option>
+                <option value="duration">Shortest First</option>
+              </select>
+            </div>
           </div>
         </div>
 
