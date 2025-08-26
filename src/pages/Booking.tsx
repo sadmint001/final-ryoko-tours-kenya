@@ -17,6 +17,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useResidency } from '@/contexts/ResidencyContext';
 import { getPriceByResidency, formatPrice } from '@/lib/pricing';
+import { PaymentService } from '@/services/paymentService';
+import { PAYMENT_CONFIG } from '@/lib/payment-config';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Loader from '@/components/ui/loader';
@@ -385,30 +387,34 @@ const Booking = () => {
 
   const handleStripePayment = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('create-booking-payment', {
-        body: {
-          destinationId: selectedDestination!.id,
-          destinationTitle: selectedDestination!.name,
-          participants: form.participants,
-          totalAmount: calculateTotal(),
-          customerName: form.customerName,
-          customerEmail: form.customerEmail,
-          customerPhone: form.customerPhone,
-          startDate: form.startDate?.toISOString(),
-          specialRequests: form.specialRequests,
-        },
-      });
+      const paymentData = {
+        destinationId: selectedDestination!.id,
+        destinationTitle: selectedDestination!.name,
+        participants: form.participants,
+        totalAmount: calculateTotal(),
+        customerName: form.customerName,
+        customerEmail: form.customerEmail,
+        customerPhone: form.customerPhone,
+        startDate: form.startDate?.toISOString(),
+        specialRequests: form.specialRequests,
+      };
 
-      if (error) throw error;
+      const result = await PaymentService.processStripePayment(paymentData);
 
-      if (data?.url) {
-        window.open(data.url, '_blank');
+      if (result.success && result.url) {
+        window.open(result.url, '_blank');
+        toast({
+          title: 'Payment Session Created',
+          description: 'Redirecting to Stripe checkout...',
+        });
+      } else {
+        throw new Error(result.error || 'Payment failed');
       }
     } catch (error) {
       console.error('Stripe payment error:', error);
       toast({
         title: 'Payment Error',
-        description: 'Failed to process Stripe payment. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to process Stripe payment. Please try again.',
         variant: 'destructive',
       });
     }

@@ -120,43 +120,7 @@ const About = () => {
           </div>
         </div>
 
-        {/* Team Section */}
-        <div className="mb-16">
-          <h2 className="text-3xl font-display font-bold text-primary text-center mb-12">
-            Why Choose Us?
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="text-center group hover:shadow-elegant transition-all duration-300">
-              <CardContent className="p-8">
-                <Award className="w-12 h-12 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-primary mb-3">Award-Winning Service</h3>
-                <p className="text-muted-foreground">
-                  Recognized for excellence in African tourism with multiple industry awards.
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center group hover:shadow-elegant transition-all duration-300">
-              <CardContent className="p-8">
-                <Users className="w-12 h-12 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-primary mb-3">Small Group Experiences</h3>
-                <p className="text-muted-foreground">
-                  Intimate group sizes ensure personalized attention and authentic experiences.
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center group hover:shadow-elegant transition-all duration-300">
-              <CardContent className="p-8">
-                <Globe className="w-12 h-12 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-primary mb-3">Local Partnerships</h3>
-                <p className="text-muted-foreground">
-                  Strong relationships with local communities create unique, off-the-beaten-path experiences.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+  {/* Team Section removed: Why Choose Us? */}
 
         {/* Call to Action */}
         <Card className="bg-background text-center border border-orange-200">
