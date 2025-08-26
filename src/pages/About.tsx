@@ -120,8 +120,6 @@ const About = () => {
           </div>
         </div>
 
-  {/* Team Section removed: Why Choose Us? */}
-
         {/* Call to Action */}
         <Card className="bg-background text-center border border-orange-200">
           <CardContent className="p-8 md:p-12">
