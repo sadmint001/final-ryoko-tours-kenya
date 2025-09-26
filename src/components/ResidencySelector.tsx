@@ -22,23 +22,14 @@ const ResidencySelector: React.FC<ResidencySelectorProps> = ({
   return (
     <>
       {/* Residency Selection Banner */}
-      <div className={`flex justify-between items-center bg-gradient-to-r from-orange-500 to-yellow-500 text-black p-3 rounded-lg mb-8 ${className}`}>
+      <div className={`flex justify-between items-center bg-gradient-to-r from-orange-500 to-yellow-500 text-black p-3 rounded-lg mb-8 `}>
         <div className="flex items-center gap-2">
-          <span className="font-semibold">Pricing for:</span>
-          {selectedResidency ? (
-            <span className="bg-black/20 px-3 py-1 rounded-full text-sm text-black font-medium">
-              {selectedResidency === 'citizen' ? 'Kenyan Citizens' : 
-               selectedResidency === 'resident' ? 'Residents' : 'Non-Residents'}
-            </span>
-          ) : (
-            <span className="italic">Select your residency status to see prices</span>
-          )}
+          <span className="font-semibold">Tour prices</span>
         </div>
-        <button 
+        <button
           className="bg-white text-black px-4 py-1 rounded-full font-semibold text-sm hover:bg-gray-100 transition-colors"
-          onClick={() => setShowModal(true)}
         >
-          {selectedResidency ? 'Change' : 'Select'} Residency
+          Select Residency
         </button>
       </div>
 

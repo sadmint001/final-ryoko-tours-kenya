@@ -14,6 +14,9 @@ import TestimonialManagement from '@/components/admin/TestimonialManagement';
 import NewsletterManagement from '@/components/admin/NewsletterManagement';
 import SiteSettingsManagement from '@/components/admin/SiteSettingsManagement';
 import DestinationManagement from '@/components/admin/DestinationManagement';
+import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
+import UsersDashboard from '@/components/admin/UsersDashboard';
+import AnalyticsCharts from '@/components/admin/AnalyticsCharts';
 
 const Admin = () => {
   const { user } = useAuth();
@@ -86,13 +89,16 @@ const Admin = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-7">
+            <TabsList className="grid w-full grid-cols-9">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="destinations">Destinations</TabsTrigger>
               <TabsTrigger value="blogs">Blogs</TabsTrigger>
               <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
               <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
               <TabsTrigger value="settings">Settings</TabsTrigger>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="analytics-charts">Analytics Charts</TabsTrigger>
+              <TabsTrigger value="users">Users</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
@@ -253,6 +259,16 @@ const Admin = () => {
 
             <TabsContent value="settings">
               <SiteSettingsManagement />
+            </TabsContent>
+
+            <TabsContent value="analytics">
+              <AnalyticsDashboard />
+            </TabsContent>
+            <TabsContent value="analytics-charts">
+              <AnalyticsCharts />
+            </TabsContent>
+            <TabsContent value="users">
+              <UsersDashboard />
             </TabsContent>
           </Tabs>
         </div>

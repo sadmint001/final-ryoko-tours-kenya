@@ -45,7 +45,7 @@ const About = () => {
         {/* Hero Section */}
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-display font-bold text-primary mb-6">
-            Tapestry of Experience!
+            Tapestry of Experience
           </h1>
           <div className="max-w-4xl mx-auto space-y-6 text-lg text-muted-foreground leading-relaxed">
             <p>
@@ -96,7 +96,7 @@ const About = () => {
           </Card>
         </div>
 
-        {/* Values Section */}
+        {/* Values Section (unchanged as requested) */}
         <div className="mb-16">
           <h2 className="text-3xl font-display font-bold text-primary text-center mb-12">
             Our Values
@@ -120,26 +120,13 @@ const About = () => {
           </div>
         </div>
 
-        {/* Call to Action */}
+        {/* Call to Action with client CTA (verbatim) */}
         <Card className="bg-background text-center border border-orange-200">
           <CardContent className="p-8 md:p-12">
             <h2 className="text-3xl font-display font-bold mb-4">
-              Ready for Your African Adventure?
+              Come journey with us. Let’s create your perfect tapestry of experience.
             </h2>
-            <p className="text-xl mb-6 opacity-90">
-              Let us help you create memories that will last a lifetime
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Badge variant="secondary" className="text-primary">
-                Personalized Itineraries
-              </Badge>
-              <Badge variant="secondary" className="text-primary">
-                Expert Local Guides
-              </Badge>
-              <Badge variant="secondary" className="text-primary">
-                24/7 Support
-              </Badge>
-            </div>
+            <p className="sr-only">Client CTA</p>
             <div className="mt-8">
               <a href="/destinations">
                 <span className="inline-block bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-black font-semibold rounded-md px-4 md:px-6 py-2 transition-all">

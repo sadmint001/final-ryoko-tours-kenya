@@ -13,10 +13,12 @@ import Destinations from "./pages/Destinations";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Blog from "./pages/Blog";
+import WhyUs from "./pages/WhyUs";
 import Booking from "./pages/Booking";
 import BookingSuccess from "./pages/BookingSuccess";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import { I18nProvider } from "./contexts/I18nContext";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +30,7 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            <I18nProvider>
             <BrowserRouter>
             <Routes>
                           <Route path="/" element={<Index />} />
@@ -35,6 +38,7 @@ const App = () => (
 
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/about" element={<About />} />
+            <Route path="/why-us" element={<WhyUs />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/booking" element={<Booking />} />
             <Route path="/booking-success" element={<BookingSuccess />} />
@@ -44,6 +48,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+          </I18nProvider>
         </TooltipProvider>
       </ResidencyProvider>
     </AuthProvider>

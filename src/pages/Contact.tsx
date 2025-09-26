@@ -85,6 +85,11 @@ const Contact = () => {
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Ready to start your African adventure? We're here to help you plan the perfect journey.
           </p>
+          <div className="mt-4">
+            <a href="mailto:info@ryokotoursafrica.com" className="inline-flex items-center gap-2 text-primary font-semibold underline">
+              <Mail className="w-4 h-4" /> info@ryokotoursafrica.com
+            </a>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">

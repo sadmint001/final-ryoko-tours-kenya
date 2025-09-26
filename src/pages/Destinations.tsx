@@ -11,6 +11,7 @@ import Loader from '@/components/ui/loader';
 import ResidencySelector from '@/components/ResidencySelector';
 import { getPriceByResidency, formatPrice } from '@/lib/pricing';
 import { useResidency } from '@/contexts/ResidencyContext';
+import { supabase } from '@/integrations/supabase/client';
 
 
 
@@ -30,6 +31,8 @@ interface Destination {
   maxParticipants?: number;
   difficulty?: string;
   rating?: number;
+  location?: string;
+  updatedAt?: string;
 }
 
 const Destinations = () => {
@@ -42,216 +45,49 @@ const Destinations = () => {
 
 
 
-  // All destinations and tours combined
-  const allDestinations: Destination[] = [
-    // Featured Tours from Homepage
-    {
-      id: 1,
-      name: "Nairobi National Park Safari",
-      description: "Experience Kenya's wildlife just minutes from the city center",
-      highlights: ["Wildlife viewing", "Safari drives", "Photography"],
-      image: "/lovable-uploads/73327ee8-9c0a-46bc-bb2d-790af95674a4.png",
-      pricing: {
-        citizenPrice: 2500,
-        residentPrice: 3500,
-        nonResidentPrice: 8500
-      },
-      category: "Wildlife",
-      duration: 1,
-      maxParticipants: 8,
-      difficulty: "easy",
-      rating: 4.9
-    },
-    {
-      id: 2,
-      name: "Karen Blixen Museum Tour",
-      description: "Step back in time at the home of the 'Out of Africa' author",
-      highlights: ["Historical tour", "Cultural experience", "Museum visit"],
-      image: "/lovable-uploads/da389b0b-2c48-446a-93d4-03d23e502f85.png",
-      pricing: {
-        citizenPrice: 800,
-        residentPrice: 1200,
-        nonResidentPrice: 2500
-      },
-      category: "Historical",
-      duration: 0.5,
-      maxParticipants: 15,
-      difficulty: "easy",
-      rating: 4.7
-    },
-    {
-      id: 3,
-      name: "Maasai Cultural Experience",
-      description: "Authentic immersion in Maasai traditions and way of life",
-      highlights: ["Cultural immersion", "Traditional dance", "Local crafts"],
-      image: "/lovable-uploads/0495d7fd-3442-44b2-a254-6666dcde17d0.png",
-      pricing: {
-        citizenPrice: 1500,
-        residentPrice: 2500,
-        nonResidentPrice: 5000
-      },
-      category: "Cultural",
-      duration: 1,
-      maxParticipants: 12,
-      difficulty: "moderate",
-      rating: 4.8
-    },
-    // Top Destinations
-    {
-      id: 4,
-      name: "Mount Kilimanjaro",
-      description: "Africa's highest peak offering life-changing adventures and breathtaking views",
-      highlights: ["Mountain climbing", "Wildlife viewing", "Cultural experiences"],
-      image: "/lovable-uploads/67714bb6-efb7-46fc-9d50-40094c91c610.png",
-      pricing: {
-        citizenPrice: 45000,
-        residentPrice: 65000,
-        nonResidentPrice: 120000
-      },
-      category: "Adventure",
-      duration: 7,
-      maxParticipants: 12,
-      difficulty: "challenging",
-      rating: 4.9
-    },
-    {
-      id: 5,
-      name: "Great Migration Safari",
-      description: "Witness the spectacular wildebeest migration in comfortable safari vehicles",
-      highlights: ["Wildlife migration", "Safari drives", "Photography tours"],
-      image: "/lovable-uploads/69adab17-1c5d-40e0-af0c-031e44b5af13.png",
-      pricing: {
-        citizenPrice: 35000,
-        residentPrice: 50000,
-        nonResidentPrice: 95000
-      },
-      category: "Wildlife",
-      duration: 5,
-      maxParticipants: 8,
-      difficulty: "moderate",
-      rating: 4.8
-    },
-    {
-      id: 6,
-      name: "Adventure Activities",
-      description: "Thrilling outdoor adventures including zip-lining through pristine forests",
-      highlights: ["Zip-lining", "Forest adventures", "Adrenaline activities"],
-      image: "/lovable-uploads/8830a94e-8109-4438-99fc-7b8392c0c9c5.png",
-      pricing: {
-        citizenPrice: 8000,
-        residentPrice: 12000,
-        nonResidentPrice: 25000
-      },
-      category: "Adventure",
-      duration: 1,
-      maxParticipants: 15,
-      difficulty: "moderate",
-      rating: 4.7
-    },
-    // Additional Cultural Experiences
-    {
-      id: 7,
-      name: "Bomas of Kenya",
-      description: "Experience traditional Kenyan village life and cultural performances",
-      highlights: ["Cultural performances", "Traditional villages", "Dance shows"],
-      image: "/lovable-uploads/1dd617ea-b3b5-491f-a2f7-ef1c4170e0d6.png",
-      pricing: {
-        citizenPrice: 1200,
-        residentPrice: 1800,
-        nonResidentPrice: 3500
-      },
-      category: "Cultural",
-      duration: 0.5,
-      maxParticipants: 20,
-      difficulty: "easy",
-      rating: 4.6
-    },
-    {
-      id: 8,
-      name: "Giraffe Centre",
-      description: "Get up close with endangered Rothschild giraffes in their natural habitat",
-      highlights: ["Giraffe feeding", "Conservation education", "Wildlife photography"],
-      image: "/lovable-uploads/7fb62c94-7164-4789-bdf7-04075cd81dc5.png",
-      pricing: {
-        citizenPrice: 1000,
-        residentPrice: 1500,
-        nonResidentPrice: 3000
-      },
-      category: "Wildlife",
-      duration: 0.5,
-      maxParticipants: 25,
-      difficulty: "easy",
-      rating: 4.8
-    },
-    {
-      id: 9,
-      name: "David Sheldrick Wildlife Trust",
-      description: "Visit the world-famous elephant orphanage and learn about conservation",
-      highlights: ["Elephant orphanage", "Conservation", "Educational tour"],
-      image: "/lovable-uploads/a6a63721-ea3e-40bd-8d4b-4a7b7d495954.png",
-      pricing: {
-        citizenPrice: 1500,
-        residentPrice: 2000,
-        nonResidentPrice: 4000
-      },
-      category: "Wildlife",
-      duration: 1,
-      maxParticipants: 20,
-      difficulty: "easy",
-      rating: 4.9
-    },
-    {
-      id: 10,
-      name: "Nairobi National Museum",
-      description: "Explore Kenya's rich history, culture, and natural heritage",
-      highlights: ["Historical exhibits", "Cultural artifacts", "Educational tours"],
-      image: "/lovable-uploads/bb7af049-9225-4675-9855-9bc62ac0ea88.png",
-      pricing: {
-        citizenPrice: 500,
-        residentPrice: 800,
-        nonResidentPrice: 1500
-      },
-      category: "Historical",
-      duration: 0.5,
-      maxParticipants: 30,
-      difficulty: "easy",
-      rating: 4.5
-    },
-    {
-      id: 11,
-      name: "Kazuri Beads Workshop",
-      description: "Learn traditional beadwork from local artisans and create your own jewelry",
-      highlights: ["Beadwork workshop", "Local artisans", "Handmade crafts"],
-      image: "/lovable-uploads/24bcc57e-638a-4459-838a-5f795ba7d56c.png",
-      pricing: {
-        citizenPrice: 2000,
-        residentPrice: 3000,
-        nonResidentPrice: 6000
-      },
-      category: "Cultural",
-      duration: 1,
-      maxParticipants: 10,
-      difficulty: "easy",
-      rating: 4.7
-    },
-    {
-      id: 12,
-      name: "Lamu Old Town",
-      description: "Explore the UNESCO World Heritage site with its rich Swahili culture",
-      highlights: ["UNESCO site", "Swahili culture", "Historical architecture"],
-      image: "/lovable-uploads/1e8d1015-2f19-4231-b1bf-ac57307e2a83.png",
-      pricing: {
-        citizenPrice: 25000,
-        residentPrice: 35000,
-        nonResidentPrice: 75000
-      },
-      category: "Historical",
-      duration: 3,
-      maxParticipants: 8,
-      difficulty: "moderate",
-      rating: 4.8
-    }
-  ];
+  // Load destinations and tours from Supabase so admin updates reflect on this page
+  const [allDestinations, setAllDestinations] = useState<Destination[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        // Use untyped alias to avoid TS table name limitations if types are outdated
+        const sb: any = supabase;
+        const { data, error } = await sb
+          .from('destinations')
+          .select('*')
+          .eq('is_active', true)
+          .order('id', { ascending: true });
+        if (error) throw error;
+        const mapped: Destination[] = (data || []).map((d: any) => ({
+          id: d.id,
+          name: d.name,
+          description: d.description,
+          highlights: d.highlights || [],
+          image: d.image,
+          pricing: {
+            citizenPrice: d.citizen_price,
+            residentPrice: d.resident_price,
+            nonResidentPrice: d.non_resident_price,
+          },
+          category: d.category,
+          duration: d.duration ?? undefined,
+          maxParticipants: d.max_participants ?? undefined,
+          difficulty: d.difficulty ?? undefined,
+          rating: d.rating ?? undefined,
+          location: d.location ?? undefined,
+          updatedAt: d.updated_at ?? undefined,
+        }));
+        setAllDestinations(mapped);
+      } catch (e) {
+        console.error('Failed to load destinations:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   const categories = [
     { id: 'all', name: 'All Experiences', icon: '🌟' },
@@ -345,10 +181,10 @@ const Destinations = () => {
       <main className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-display font-bold text-primary mb-4">
-            Discover Africa
+            Discover Kenya
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Embark on unforgettable adventures across the most spectacular destinations in Africa
+            Embark on unforgettable adventures across the most spectacular destinations in Kenya
           </p>
         </div>
 
@@ -402,7 +238,7 @@ const Destinations = () => {
             <Card key={destination.id} className="group hover:shadow-elegant transition-all duration-300 overflow-hidden">
               <div className="aspect-video overflow-hidden relative">
                 <img 
-                  src={destination.image} 
+                  src={destination.updatedAt ? `${destination.image}?v=${new Date(destination.updatedAt).getTime()}` : destination.image}
                   alt={destination.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
@@ -524,6 +360,36 @@ const Destinations = () => {
           </div>
         )}
 
+        {/* Pricing banner - updated text */}
+        <div
+          style={{
+            background: "linear-gradient(90deg, #f7971e 0%, #ffd200 100%)",
+            borderRadius: "16px",
+            padding: "16px 32px",
+            marginBottom: "24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <span style={{ color: "#222", fontWeight: 500, fontSize: "18px" }}>
+            Tour prices
+          </span>
+          <button
+            style={{
+              background: "#fff",
+              color: "#222",
+              border: "none",
+              borderRadius: "20px",
+              padding: "8px 20px",
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+            onClick={() => setSelectedResidency('citizen')}
+          >
+            Select Residency
+          </button>
+        </div>
 
       </main>
       <Footer />

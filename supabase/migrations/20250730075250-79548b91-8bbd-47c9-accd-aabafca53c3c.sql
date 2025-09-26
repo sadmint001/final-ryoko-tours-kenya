@@ -141,3 +141,11 @@ INSERT INTO public.tours (title, description, short_description, price, duration
 ('Mount Kenya Safari Adventure', 'Experience the breathtaking beauty of Mount Kenya with guided hiking, wildlife viewing, and cultural encounters. This adventure combines the thrill of mountain climbing with authentic African safari experiences.', 'Epic Mount Kenya adventure with hiking and safari', 1299.00, 7, 12, 'Mount Kenya National Park', 'moderate', ARRAY['Professional guide', 'All meals', 'Accommodation', 'Transportation', 'Park fees']),
 ('Serengeti Wildlife Expedition', 'Witness the Great Migration and discover the incredible wildlife of Serengeti National Park. This expedition offers unparalleled game viewing opportunities and luxury camping experiences.', 'Luxury Serengeti safari with migration viewing', 2199.00, 5, 8, 'Serengeti National Park', 'easy', ARRAY['Luxury tented accommodation', 'All meals and drinks', 'Game drives', 'Professional guide', 'Airport transfers']),
 ('Kilimanjaro Summit Challenge', 'Conquer Africa''s highest peak with our expert guides. This challenging expedition takes you through diverse ecosystems to the summit of Mount Kilimanjaro via the Machame route.', 'Ultimate Kilimanjaro climbing experience', 2799.00, 8, 10, 'Mount Kilimanjaro', 'challenging', ARRAY['Professional mountain guides', 'All camping equipment', 'All meals on mountain', 'Porters', 'National park fees']);
+
+-- Enable RLS if not already enabled
+ALTER TABLE public.destinations ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Allow read access to everyone
+CREATE POLICY "Allow read to all" ON public.destinations
+FOR SELECT
+USING (true);

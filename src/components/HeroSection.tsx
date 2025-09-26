@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { ChevronRight, Star, Users, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'; 
 import heroImage1 from '@/assets/hero-1-elephant.jpg';
 import heroImage2 from '@/assets/hero-2-lions.jpg';
 import heroImage3 from '/lovable-uploads/73327ee8-9c0a-46bc-bb2d-790af95674a4.png';

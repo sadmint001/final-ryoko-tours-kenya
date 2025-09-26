@@ -2,20 +2,24 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { Menu, X, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
   const location = useLocation();
+  const { t } = useI18n();
 
   const navLinks = [
-    { name: 'Home', href: '/' },
-    { name: 'Destinations', href: '/destinations' },
-    { name: 'Blog', href: '/blog' },
-    { name: 'About Us', href: '/about' },
-    { name: 'Contact', href: '/contact' },
+    { name: t('nav.home'), href: '/' },
+    { name: t('nav.destinations'), href: '/destinations' },
+    { name: t('nav.blog'), href: '/blog' },
+    { name: t('nav.why'), href: '/why-us' },
+    { name: t('nav.about'), href: '/about' },
+    { name: t('nav.contact'), href: '/contact' },
   ];
 
   const handleSignOut = async () => {
@@ -55,6 +59,7 @@ const Navbar = () => {
             
             <div className="flex items-center space-x-4">
               <ThemeToggle />
+              <LanguageSwitcher />
               {user ? (
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2 text-muted-foreground">

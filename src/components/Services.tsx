@@ -4,6 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Users, GraduationCap, Tent, Plane } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+const SERVICES_ALLOWED = [
+  'Team Building & Corporate Retreats',
+  'School Excursions',
+  'Camping, Hiking & Training',
+];
+
 const Services = () => {
   const services = [
     {
@@ -29,14 +35,6 @@ const Services = () => {
       icon: Tent,
       features: ["Mountain hiking", "Survival training", "Outdoor skills", "Group camping"],
       image: "/lovable-uploads/67714bb6-efb7-46fc-9d50-40094c91c610.png"
-    },
-    {
-      id: 4,
-      title: "Concierge Services",
-      description: "Personalized travel assistance for international visitors exploring Kenya",
-      icon: Plane,
-      features: ["Airport transfers", "Accommodation booking", "Custom itineraries", "24/7 support"],
-      image: "/lovable-uploads/0495d7fd-3442-44b2-a254-6666dcde17d0.png"
     }
   ];
 
@@ -55,7 +53,7 @@ const Services = () => {
 
         {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {services.map((service) => {
+          {services.filter(s => SERVICES_ALLOWED.includes(s.title)).map((service) => {
             const IconComponent = service.icon;
             return (
               <Card key={service.id} className="group hover:shadow-elevated transition-all duration-300 overflow-hidden">

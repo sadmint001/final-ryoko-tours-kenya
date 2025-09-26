@@ -291,6 +291,28 @@ export type Database = {
       [_ in never]: never
     }
   }
+  // Add custom RPCs for user role management and analytics
+  rpc: {
+    list_users_with_roles: {
+      Args: Record<string, never>;
+      Returns: Array<{
+        id: string;
+        email: string;
+        role: string | null;
+      }>;
+    };
+    set_user_role: {
+      Args: { user_id: string; role: string };
+      Returns: null;
+    };
+    daily_page_views: {
+      Args: Record<string, never>;
+      Returns: Array<{
+        date: string;
+        count: number;
+      }>;
+    };
+  };
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MapPin, ExternalLink } from 'lucide-react';
@@ -6,60 +6,62 @@ import { Link } from 'react-router-dom';
 import ResidencySelector from '@/components/ResidencySelector';
 import { getPriceByResidency, formatPrice } from '@/lib/pricing';
 import { useResidency } from '@/contexts/ResidencyContext';
+import { supabase } from '@/integrations/supabase/client';
+
+type Destination = {
+  id: number;
+  name: string;
+  description: string;
+  highlights: string[];
+  image: string;
+  pricing: {
+    citizenPrice: number;
+    residentPrice: number;
+    nonResidentPrice: number;
+  };
+  updatedAt?: string;
+};
 
 const TopDestinations = () => {
   const { selectedResidency, setSelectedResidency } = useResidency();
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const destinations = [
-    {
-      id: 1,
-      name: "Mount Kilimanjaro",
-      description: "Africa's highest peak offering life-changing adventures and breathtaking views",
-      highlights: ["Mountain climbing", "Wildlife viewing", "Cultural experiences"],
-      image: "/lovable-uploads/67714bb6-efb7-46fc-9d50-40094c91c610.png",
-      pricing: {
-        citizenPrice: 45000,
-        residentPrice: 65000,
-        nonResidentPrice: 120000
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const sb: any = supabase;
+        const { data, error } = await sb
+          .from('destinations')
+          .select('*')
+          .eq('is_active', true)
+          .eq('is_featured', true)
+          .order('featured_order', { ascending: true })
+          .order('id', { ascending: true });
+        if (error) throw error;
+        const mapped: Destination[] = (data || []).map((d: any) => ({
+          id: d.id,
+          name: d.name,
+          description: d.description,
+          highlights: d.highlights || [],
+          image: d.image,
+          pricing: {
+            citizenPrice: d.citizen_price,
+            residentPrice: d.resident_price,
+            nonResidentPrice: d.non_resident_price,
+          },
+          updatedAt: d.updated_at ?? undefined,
+        }));
+        setDestinations(mapped);
+      } catch (e) {
+        console.error('Failed to load featured destinations:', e);
+      } finally {
+        setLoading(false);
       }
-    },
-    {
-      id: 2,
-      name: "Nairobi National Park",
-      description: "Unique wildlife park where city skyline meets African savanna",
-      highlights: ["Urban safari", "Zebra herds", "Wildlife photography"],
-      image: "/lovable-uploads/73327ee8-9c0a-46bc-bb2d-790af95674a4.png",
-      pricing: {
-        citizenPrice: 2500,
-        residentPrice: 3500,
-        nonResidentPrice: 8500
-      }
-    },
-    {
-      id: 3,
-      name: "Great Migration",
-      description: "Witness the spectacular wildebeest migration in comfortable safari vehicles",
-      highlights: ["Wildlife migration", "Safari drives", "Photography tours"],
-      image: "/lovable-uploads/69adab17-1c5d-40e0-af0c-031e44b5af13.png",
-      pricing: {
-        citizenPrice: 35000,
-        residentPrice: 50000,
-        nonResidentPrice: 95000
-      }
-    },
-    {
-      id: 4,
-      name: "Adventure Activities",
-      description: "Thrilling outdoor adventures including zip-lining through pristine forests",
-      highlights: ["Zip-lining", "Forest adventures", "Adrenaline activities"],
-      image: "/lovable-uploads/8830a94e-8109-4438-99fc-7b8392c0c9c5.png",
-      pricing: {
-        citizenPrice: 8000,
-        residentPrice: 12000,
-        nonResidentPrice: 25000
-      }
-    }
-  ];
+    };
+    load();
+  }, []);
 
   return (
     <section className="py-20 bg-background">
@@ -84,7 +86,7 @@ const TopDestinations = () => {
             <Card key={destination.id} className="group hover:shadow-elevated transition-all duration-300 overflow-hidden">
               <div 
                 className="aspect-video bg-cover bg-center relative overflow-hidden group-hover:scale-105 transition-transform duration-300"
-                style={{ backgroundImage: `url(${destination.image})` }}
+                style={{ backgroundImage: `url(${destination.updatedAt ? `${destination.image}?v=${new Date(destination.updatedAt).getTime()}` : destination.image})` }}
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
