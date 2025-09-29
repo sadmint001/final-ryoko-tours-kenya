@@ -69,20 +69,24 @@ const Index = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {testimonials.map((t) => (
-            <article key={t.id} className="rounded-2xl p-6 bg-gradient-to-b from-white/5 to-white/2 dark:from-black/40 dark:to-black/30 border border-white/6 backdrop-blur-md shadow-lg transform transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-[0_30px_60px_rgba(3,7,18,0.6)] hover:ring-2 hover:ring-orange-400/30" role="group">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="rounded-full bg-orange-50 text-orange-600 p-3"><Star className="w-5 h-5" /></div>
-                <div>
-                  <div className="text-sm text-slate-300">Rating</div>
-                  <div className="flex items-center gap-2"><div className="text-lg font-semibold text-white">{'★'.repeat(t.rating)}</div></div>
-                </div>
+            <article
+              key={t.id}
+              className="rounded-2xl p-8 bg-gradient-to-b from-white/5 to-white/2 dark:from-black/40 dark:to-black/30 border border-white/6 backdrop-blur-md shadow-lg transform transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-[0_30px_60px_rgba(3,7,18,0.6)] hover:ring-2 hover:ring-orange-400/30 flex flex-col items-center text-center gap-4"
+              role="group"
+            >
+              <div className="flex flex-col items-center gap-2">
+                <div className="rounded-full bg-orange-50 text-orange-600 p-3 shadow-sm"><Star className="w-5 h-5" /></div>
+                <div className="text-xs uppercase tracking-wider text-slate-300">Rating</div>
+                <div className="text-lg font-semibold text-white tracking-wide">{'★'.repeat(t.rating)}</div>
               </div>
 
-              <blockquote className="text-white italic text-lg mb-4">“{t.quote}”</blockquote>
+              <blockquote className="text-white italic text-xl md:text-2xl font-serif leading-relaxed max-w-xl mx-auto px-2 drop-shadow-sm">“{t.quote}”</blockquote>
 
-              <div className="flex items-center gap-3 mt-4">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-400 to-yellow-300 flex items-center justify-center text-white font-semibold">{t.author.slice(0, 1)}</div>
-                <div>
+              <div className="flex items-center gap-3 mt-2">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-orange-400 to-yellow-300 flex items-center justify-center text-white font-semibold text-lg shadow-md">
+                  {t.author.slice(0, 1)}
+                </div>
+                <div className="text-left">
                   <div className="text-sm font-medium text-white">{t.author}</div>
                   <div className="text-xs text-slate-300">{t.location}</div>
                 </div>
