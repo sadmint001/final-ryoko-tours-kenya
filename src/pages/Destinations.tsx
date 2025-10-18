@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,11 +49,11 @@ const Destinations = () => {
   const [allDestinations, setAllDestinations] = useState<Destination[]>([]);
 
   useEffect(() => {
-    const load = async () => {
+    // Extracted loader so it can be reused by realtime subscription
+    const sb: any = supabase;
+    const loadDestinations = async () => {
       setLoading(true);
       try {
-        // Use untyped alias to avoid TS table name limitations if types are outdated
-        const sb: any = supabase;
         const { data, error } = await sb
           .from('destinations')
           .select('*')
@@ -86,7 +86,26 @@ const Destinations = () => {
         setLoading(false);
       }
     };
-    load();
+
+    // Initial load
+    loadDestinations();
+
+    // Realtime subscription to keep UI in sync with DB changes
+    const channel = (supabase as any)
+      .channel('public:destinations')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'destinations' },
+        () => {
+          // refetch when any change happens in the destinations table
+          loadDestinations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      try { channel.unsubscribe(); } catch {}
+    };
   }, []);
 
   const categories = [

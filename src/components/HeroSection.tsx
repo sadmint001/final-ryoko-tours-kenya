@@ -26,7 +26,7 @@ const HeroSection = () => {
       setCurrentImageIndex((prevIndex) => 
         (prevIndex + 1) % heroImages.length
       );
-    }, 5000); // Change image every 5 seconds
+    }, 15000); // Change image every 5 seconds
 
     return () => clearInterval(interval);
   }, [heroImages.length]);
