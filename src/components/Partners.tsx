@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import React from 'react';
-import karunguru from '../assets/karunguru-logo.png';
-import gaturaGreens from '../assets/gatura-greens-farm-logo.png';
+import karunguru from '../assets/karunguru-logo.jpg';
+import gaturaGreens from '../assets/gatura-greens-farm-logo.jpg';
 
 type Partner = {
   id: string;
