@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,13 +43,47 @@ const Destinations = () => {
   const navigate = useNavigate();
   const { selectedResidency, setSelectedResidency } = useResidency();
 
+  // local dropdown state & ref
+  const [showResidencyMenu, setShowResidencyMenu] = useState(false);
+  const residencyMenuRef = useRef<HTMLDivElement | null>(null);
 
-
-  // Load destinations and tours from Supabase so admin updates reflect on this page
   const [allDestinations, setAllDestinations] = useState<Destination[]>([]);
 
+  const residencyOptions = [
+    { key: 'citizen', label: 'Citizen' },
+    { key: 'resident', label: 'Resident' },
+    { key: 'nonResident', label: 'Non-resident' },
+  ];
+
+  // persist and restore residency selection so dropdown appears consistent across refreshes
   useEffect(() => {
-    // Extracted loader so it can be reused by realtime subscription
+    try {
+      const stored = localStorage.getItem('selectedResidency');
+      if (stored && !selectedResidency) {
+        setSelectedResidency(stored as any);
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSelectResidency = useCallback((key: string) => {
+    setSelectedResidency(key as any);
+    try { localStorage.setItem('selectedResidency', key); } catch {}
+    setShowResidencyMenu(false);
+  }, [setSelectedResidency]);
+
+  // close residency dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (residencyMenuRef.current && !residencyMenuRef.current.contains(e.target as Node)) {
+        setShowResidencyMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
     const sb: any = supabase;
     const loadDestinations = async () => {
       setLoading(true);
@@ -116,8 +150,6 @@ const Destinations = () => {
     { id: 'Adventure', name: 'Adventure', icon: '🏔️' }
   ];
 
-
-
   const getDifficultyColor = (level: string) => {
     switch (level) {
       case 'easy': return 'bg-green-100 text-green-800';
@@ -126,8 +158,6 @@ const Destinations = () => {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
-
-
 
   // Read filters from URL on mount / change
   useEffect(() => {
@@ -163,8 +193,8 @@ const Destinations = () => {
   }, [selectedCategory, sortBy]);
 
   // Filter and sort
-  const filteredDestinationsBase = selectedCategory === 'all' 
-    ? allDestinations 
+  const filteredDestinationsBase = selectedCategory === 'all'
+    ? allDestinations
     : allDestinations.filter(dest => dest.category === selectedCategory);
 
   const filteredDestinations = [...filteredDestinationsBase].sort((a, b) => {
@@ -196,7 +226,7 @@ const Destinations = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/10">
       <Navbar />
-      
+
       <main className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-display font-bold text-primary mb-4">
@@ -207,11 +237,45 @@ const Destinations = () => {
           </p>
         </div>
 
-        {/* Residency Selection */}
-        <ResidencySelector 
-          selectedResidency={selectedResidency}
-          onResidencyChange={setSelectedResidency}
-        />
+        {/* Residency Selection (Dropdown now works) */}
+        <div className="flex justify-center mb-6" ref={residencyMenuRef}>
+          {/* Keep the existing ResidencySelector component for compatibility (if it has UI),
+              but we also provide a working dropdown button here to ensure the selection works. */}
+          <div className="relative">
+            <Button
+              className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 transition-all text-sm text-white font-medium"
+              onClick={() => setShowResidencyMenu(s => !s)}
+            >
+              {selectedResidency ? `Residency: ${selectedResidency === 'nonResident' ? 'Non-resident' : selectedResidency}` : 'Select Residency'}
+            </Button>
+
+            {showResidencyMenu && (
+              <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-gray-800 rounded-md shadow-xl z-50 overflow-hidden">
+                {residencyOptions.map((opt) => (
+                  <button
+                    key={opt.key}
+                    onClick={() => handleSelectResidency(opt.key)}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* If you still want to render the original ResidencySelector for other behaviour, keep it */}
+          {/* This won't conflict with the dropdown above because both call setSelectedResidency */}
+          <div className="ml-4">
+            <ResidencySelector
+              selectedResidency={selectedResidency}
+              onResidencyChange={(val) => {
+                setSelectedResidency(val);
+                try { localStorage.setItem('selectedResidency', val); } catch {}
+              }}
+            />
+          </div>
+        </div>
 
         {/* Category Filter and Sort */}
         <div className="mb-8">
@@ -251,12 +315,64 @@ const Destinations = () => {
           </div>
         </div>
 
+        {/* Pricing banner */}
+        <div
+          style={{
+            background: "linear-gradient(90deg, #f7971e 0%, #ffd200 100%)",
+            borderRadius: "16px",
+            padding: "16px 32px",
+            marginBottom: "24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div className="flex items-center gap-4">
+            {selectedResidency ? (
+              <div className="flex items-center gap-2">
+                <span style={{ color: "#222", fontWeight: 500, fontSize: "18px" }}>
+                  Residency: 
+                </span>
+                <span className="bg-white px-4 py-2 rounded-full text-black font-medium">
+                  {selectedResidency === 'nonResident' ? 'Non-resident' : 
+                   selectedResidency === 'resident' ? 'Resident' : 'Citizen'}
+                </span>
+              </div>
+            ) : (
+              <div className="relative" ref={residencyMenuRef}>
+                <button
+                  className="bg-white text-black px-6 py-2 rounded-full font-medium hover:bg-gray-50 transition-colors"
+                  onClick={() => setShowResidencyMenu(!showResidencyMenu)}
+                >
+                  Select Residency
+                </button>
+                {showResidencyMenu && (
+                  <div className="absolute left-0 mt-2 w-44 bg-white rounded-md shadow-xl z-50 overflow-hidden">
+                    {residencyOptions.map((opt) => (
+                      <button
+                        key={opt.key}
+                        onClick={() => {
+                          setSelectedResidency(opt.key as any);
+                          setShowResidencyMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Destinations Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredDestinations.map((destination) => (
             <Card key={destination.id} className="group hover:shadow-elegant transition-all duration-300 overflow-hidden">
               <div className="aspect-video overflow-hidden relative">
-                <img 
+                <img
                   src={destination.updatedAt ? `${destination.image}?v=${new Date(destination.updatedAt).getTime()}` : destination.image}
                   alt={destination.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -268,7 +384,7 @@ const Destinations = () => {
                   </div>
                 )}
               </div>
-              
+
               <CardHeader>
                 <div className="flex justify-between items-start mb-2">
                   <CardTitle className="text-xl font-display group-hover:text-primary transition-colors">
@@ -284,7 +400,7 @@ const Destinations = () => {
                   {destination.description}
                 </CardDescription>
               </CardHeader>
-              
+
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
@@ -305,7 +421,6 @@ const Destinations = () => {
                   )}
                 </div>
 
-                {/* Highlights */}
                 <div>
                   <h4 className="font-semibold text-foreground mb-2 text-sm">Highlights:</h4>
                   <div className="flex flex-wrap gap-1">
@@ -340,12 +455,16 @@ const Destinations = () => {
                       <div className="text-lg text-black dark:text-black italic">
                         per person
                       </div>
-                      <Button 
-                        className="mt-2 bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 transition-all text-sm text-white font-medium"
-                        onClick={() => setSelectedResidency('citizen')}
-                      >
-                        Select Residency
-                      </Button>
+
+                      {/* Fallback button inside card that opens the same dropdown */}
+                      <div className="mt-2 inline-block">
+                        <Button
+                          className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 transition-all text-sm text-white font-medium"
+                          onClick={() => setShowResidencyMenu(true)}
+                        >
+                          Select Residency
+                        </Button>
+                      </div>
                     </>
                   )}
                 </div>
@@ -369,8 +488,8 @@ const Destinations = () => {
         {filteredDestinations.length === 0 && (
           <div className="text-center py-12">
             <p className="text-xl text-muted-foreground">No destinations found for the selected category.</p>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="mt-4"
               onClick={() => setSelectedCategory('all')}
             >
@@ -378,37 +497,6 @@ const Destinations = () => {
             </Button>
           </div>
         )}
-
-        {/* Pricing banner - updated text */}
-        <div
-          style={{
-            background: "linear-gradient(90deg, #f7971e 0%, #ffd200 100%)",
-            borderRadius: "16px",
-            padding: "16px 32px",
-            marginBottom: "24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <span style={{ color: "#222", fontWeight: 500, fontSize: "18px" }}>
-            Tour prices
-          </span>
-          <button
-            style={{
-              background: "#fff",
-              color: "#222",
-              border: "none",
-              borderRadius: "20px",
-              padding: "8px 20px",
-              fontWeight: 500,
-              cursor: "pointer",
-            }}
-            onClick={() => setSelectedResidency('citizen')}
-          >
-            Select Residency
-          </button>
-        </div>
 
       </main>
       <Footer />
