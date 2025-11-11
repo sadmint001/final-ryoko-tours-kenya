@@ -124,6 +124,59 @@ All colors MUST be HSL.
   }
 }
 
+/* Ensure normal (light) mode text is black across the site */
+@layer base {
+  /* Base text color for light mode */
+  html:not(.dark) {
+    color: #000 !important;
+  }
+
+  /* Make common helper classes use black in light mode (override theme utilities) */
+  html:not(.dark) .text-muted-foreground,
+  html:not(.dark) .text-foreground,
+  html:not(.dark) .text-primary,
+  html:not(.dark) .text-black {
+    color: #000 !important;
+  }
+
+  /* If any backgrounds use light text, ensure readability */
+  html:not(.dark) .bg-background {
+    background-color: #fff !important;
+  }
+}
+
+@layer base {
+  /* Force key text tokens to black in light mode so all tailwind utilities using them render dark text */
+  html:not(.dark) {
+    /* When your theme uses hsl(var(--foreground)) this sets that var to black */
+    --foreground: 0 0% 0%;
+    --muted-foreground: 0 0% 0%;
+    --primary-foreground: 0 0% 0%;
+    --card-foreground: 0 0% 0%;
+    --popover-foreground: 0 0% 0%;
+    /* ensure any primary text utility that uses --primary doesn't become unreadable */
+    --primary: 0 0% 0%;
+  }
+
+  /* Fallback overrides for common light-mode utility classes that may be hardcoded */
+  html:not(.dark) .text-muted-foreground,
+  html:not(.dark) .text-foreground,
+  html:not(.dark) .text-primary,
+  html:not(.dark) .text-white,
+  html:not(.dark) .text-slate-300,
+  html:not(.dark) .text-slate-400 {
+    color: #000 !important;
+    opacity: 1 !important;
+  }
+
+  /* In case some components rely on body color, ensure base is strong black in light mode */
+  html:not(.dark),
+  html:not(.dark) body,
+  html:not(.dark) #root {
+    color: #000 !important;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

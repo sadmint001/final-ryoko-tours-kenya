@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Clock, Users, Star, ExternalLink, Filter } from 'lucide-react';
+import { MapPin, Clock, Users, ExternalLink, Filter } from 'lucide-react';
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -12,8 +12,6 @@ import ResidencySelector from '@/components/ResidencySelector';
 import { getPriceByResidency, formatPrice } from '@/lib/pricing';
 import { useResidency } from '@/contexts/ResidencyContext';
 import { supabase } from '@/integrations/supabase/client';
-
-
 
 interface Destination {
   id: number;
@@ -29,25 +27,22 @@ interface Destination {
   category: string;
   duration?: number;
   maxParticipants?: number;
-  difficulty?: string;
-  rating?: number;
   location?: string;
   updatedAt?: string;
 }
 
-const Destinations = () => {
-  const [loading, setLoading] = useState(false);
+const Destinations: React.FC = () => {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [allDestinations, setAllDestinations] = useState<Destination[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recommended');
+
   const location = useLocation();
   const navigate = useNavigate();
+
   const { selectedResidency, setSelectedResidency } = useResidency();
-
-  // local dropdown state & ref
-  const [showResidencyMenu, setShowResidencyMenu] = useState(false);
   const residencyMenuRef = useRef<HTMLDivElement | null>(null);
-
-  const [allDestinations, setAllDestinations] = useState<Destination[]>([]);
+  const [showResidencyMenu, setShowResidencyMenu] = useState<boolean>(false);
 
   const residencyOptions = [
     { key: 'citizen', label: 'Citizen' },
@@ -55,7 +50,20 @@ const Destinations = () => {
     { key: 'nonResident', label: 'Non-resident' },
   ];
 
-  // persist and restore residency selection so dropdown appears consistent across refreshes
+  const handleSelectResidency = useCallback((key: string) => {
+    localStorage.clear(); // Clear all localStorage to reset state
+    setSelectedResidency(key as any);
+    try { localStorage.setItem('selectedResidency', key); } catch {}
+    setShowResidencyMenu(false);
+  }, [setSelectedResidency]);
+
+  // debug
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('Destinations: selectedResidency ->', selectedResidency);
+  }, [selectedResidency]);
+
+  // restore residency from localStorage if present
   useEffect(() => {
     try {
       const stored = localStorage.getItem('selectedResidency');
@@ -66,26 +74,22 @@ const Destinations = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSelectResidency = useCallback((key: string) => {
-    setSelectedResidency(key as any);
-    try { localStorage.setItem('selectedResidency', key); } catch {}
-    setShowResidencyMenu(false);
-  }, [setSelectedResidency]);
-
-  // close residency dropdown when clicking outside
+  // click outside to close dropdown
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const onDoc = (e: MouseEvent) => {
       if (residencyMenuRef.current && !residencyMenuRef.current.contains(e.target as Node)) {
         setShowResidencyMenu(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
+  // load destinations
   useEffect(() => {
+    let mounted = true;
     const sb: any = supabase;
-    const loadDestinations = async () => {
+    const load = async () => {
       setLoading(true);
       try {
         const { data, error } = await sb
@@ -94,6 +98,7 @@ const Destinations = () => {
           .eq('is_active', true)
           .order('id', { ascending: true });
         if (error) throw error;
+        if (!mounted) return;
         const mapped: Destination[] = (data || []).map((d: any) => ({
           id: d.id,
           name: d.name,
@@ -108,107 +113,67 @@ const Destinations = () => {
           category: d.category,
           duration: d.duration ?? undefined,
           maxParticipants: d.max_participants ?? undefined,
-          difficulty: d.difficulty ?? undefined,
-          rating: d.rating ?? undefined,
           location: d.location ?? undefined,
           updatedAt: d.updated_at ?? undefined,
         }));
         setAllDestinations(mapped);
-      } catch (e) {
-        console.error('Failed to load destinations:', e);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to load destinations', err);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
-    // Initial load
-    loadDestinations();
+    load();
 
-    // Realtime subscription to keep UI in sync with DB changes
     const channel = (supabase as any)
       .channel('public:destinations')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'destinations' },
-        () => {
-          // refetch when any change happens in the destinations table
-          loadDestinations();
-        }
+        () => { load(); }
       )
       .subscribe();
 
     return () => {
+      mounted = false;
       try { channel.unsubscribe(); } catch {}
     };
   }, []);
 
-  const categories = [
-    { id: 'all', name: 'All Experiences', icon: '🌟' },
-    { id: 'Wildlife', name: 'Wildlife', icon: '🦁' },
-    { id: 'Cultural', name: 'Cultural', icon: '🎭' },
-    { id: 'Historical', name: 'Historical', icon: '🏛️' },
-    { id: 'Adventure', name: 'Adventure', icon: '🏔️' }
-  ];
-
-  const getDifficultyColor = (level: string) => {
-    switch (level) {
-      case 'easy': return 'bg-green-100 text-green-800';
-      case 'moderate': return 'bg-yellow-100 text-yellow-800';
-      case 'challenging': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  // Read filters from URL on mount / change
+  // URL sync for filters
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const categoryParam = params.get('category');
-    const sortParam = params.get('sort');
-    if (categoryParam) {
-      setSelectedCategory(categoryParam);
-    }
-    if (sortParam) {
-      setSortBy(sortParam);
-    }
+    const c = params.get('category');
+    const s = params.get('sort');
+    if (c) setSelectedCategory(c);
+    if (s) setSortBy(s);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
-  // Keep URL in sync when user changes filters
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (selectedCategory && selectedCategory !== params.get('category')) {
-      if (selectedCategory === 'all') {
-        params.delete('category');
-      } else {
-        params.set('category', selectedCategory);
-      }
+      if (selectedCategory === 'all') params.delete('category'); else params.set('category', selectedCategory);
     }
     if (sortBy && sortBy !== params.get('sort')) {
-      if (sortBy === 'recommended') {
-        params.delete('sort');
-      } else {
-        params.set('sort', sortBy);
-      }
+      if (sortBy === 'recommended') params.delete('sort'); else params.set('sort', sortBy);
     }
     navigate({ pathname: location.pathname, search: params.toString() ? `?${params.toString()}` : '' }, { replace: true });
-  }, [selectedCategory, sortBy]);
+  }, [selectedCategory, sortBy, location.pathname, location.search, navigate]);
 
-  // Filter and sort
-  const filteredDestinationsBase = selectedCategory === 'all'
+  const filtered = selectedCategory === 'all'
     ? allDestinations
-    : allDestinations.filter(dest => dest.category === selectedCategory);
+    : allDestinations.filter(d => d.category === selectedCategory);
 
-  const filteredDestinations = [...filteredDestinationsBase].sort((a, b) => {
+  const sorted = [...filtered].sort((a, b) => {
     switch (sortBy) {
-      case 'priceAsc':
-        return a.pricing.citizenPrice - b.pricing.citizenPrice;
-      case 'priceDesc':
-        return b.pricing.citizenPrice - a.pricing.citizenPrice;
-      case 'rating':
-        return (b.rating || 0) - (a.rating || 0);
-      case 'duration':
-        return (a.duration || 0) - (b.duration || 0);
-      default:
-        return 0;
+      case 'priceAsc': return (a.pricing.citizenPrice || 0) - (b.pricing.citizenPrice || 0);
+      case 'priceDesc': return (b.pricing.citizenPrice || 0) - (a.pricing.citizenPrice || 0);
+      case 'rating': return 0; // ratings removed
+      case 'duration': return (a.duration || 0) - (b.duration || 0);
+      default: return 0;
     }
   });
 
@@ -223,139 +188,89 @@ const Destinations = () => {
     );
   }
 
+  // Block page until residency selected
+  if (!selectedResidency) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/10">
+        <Navbar />
+        <main className="container mx-auto px-4 py-20">
+          <div className="flex flex-col items-center gap-6">
+            <h2 className="text-3xl font-display font-bold text-primary">Select your residency</h2>
+            <p className="max-w-xl text-center text-muted-foreground">
+              We show availability and prices based on your residency. Choose one to continue.
+            </p>
+
+            <div ref={residencyMenuRef} className="relative">
+              <Button
+                className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white px-6 py-2 rounded-full"
+                onClick={() => setShowResidencyMenu(s => !s)}
+              >
+                Select Residency
+              </Button>
+
+              {showResidencyMenu && (
+                <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 overflow-hidden">
+                  {residencyOptions.map((opt) => (
+                    <button
+                      key={opt.key}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                      onClick={() => handleSelectResidency(opt.key)}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* keep the original selector (optional) */}
+            <div>
+              <ResidencySelector
+                selectedResidency={selectedResidency}
+                onResidencyChange={(val) => { setSelectedResidency(val); try { localStorage.setItem('selectedResidency', val); } catch {} }}
+              />
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/10">
       <Navbar />
-
       <main className="container mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-display font-bold text-primary mb-4">
-            Discover Kenya
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Embark on unforgettable adventures across the most spectacular destinations in Kenya
-          </p>
-        </div>
-
-        {/* Residency Selection (Dropdown now works) */}
-        <div className="flex justify-center mb-6" ref={residencyMenuRef}>
-          {/* Keep the existing ResidencySelector component for compatibility (if it has UI),
-              but we also provide a working dropdown button here to ensure the selection works. */}
-          <div className="relative">
-            <Button
-              className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 transition-all text-sm text-white font-medium"
-              onClick={() => setShowResidencyMenu(s => !s)}
-            >
-              {selectedResidency ? `Residency: ${selectedResidency === 'nonResident' ? 'Non-resident' : selectedResidency}` : 'Select Residency'}
-            </Button>
-
-            {showResidencyMenu && (
-              <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-gray-800 rounded-md shadow-xl z-50 overflow-hidden">
-                {residencyOptions.map((opt) => (
-                  <button
-                    key={opt.key}
-                    onClick={() => handleSelectResidency(opt.key)}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* If you still want to render the original ResidencySelector for other behaviour, keep it */}
-          {/* This won't conflict with the dropdown above because both call setSelectedResidency */}
-          <div className="ml-4">
-            <ResidencySelector
-              selectedResidency={selectedResidency}
-              onResidencyChange={(val) => {
-                setSelectedResidency(val);
-                try { localStorage.setItem('selectedResidency', val); } catch {}
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Category Filter and Sort */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-muted-foreground" />
-            <span className="font-semibold text-muted-foreground">Filter by:</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-          <div className="flex flex-wrap gap-3">
-            {categories.map((category) => (
-              <Button
-                key={category.id}
-                variant={selectedCategory === category.id ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(category.id)}
-                className="flex items-center gap-2"
-              >
-                <span>{category.icon}</span>
-                {category.name}
-              </Button>
-            ))}
-            </div>
-            <div className="ml-auto flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Sort:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="h-9 rounded-md border bg-background px-3 text-sm"
-              >
-                <option value="recommended">Recommended</option>
-                <option value="priceAsc">Price: Low to High</option>
-                <option value="priceDesc">Price: High to Low</option>
-                <option value="rating">Top Rated</option>
-                <option value="duration">Shortest First</option>
-              </select>
-            </div>
-          </div>
+        <div className="text-center mb-10">
+          <h1 className="text-4xl md:text-5xl font-display font-bold text-primary">Discover Kenya</h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">Embark on unforgettable adventures across the most spectacular destinations in Kenya</p>
         </div>
 
         {/* Pricing banner */}
-        <div
-          style={{
-            background: "linear-gradient(90deg, #f7971e 0%, #ffd200 100%)",
-            borderRadius: "16px",
-            padding: "16px 32px",
-            marginBottom: "24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <div className="flex items-center gap-4">
-            {selectedResidency ? (
-              <div className="flex items-center gap-2">
-                <span style={{ color: "#222", fontWeight: 500, fontSize: "18px" }}>
-                  Residency: 
-                </span>
-                <span className="bg-white px-4 py-2 rounded-full text-black font-medium">
-                  {selectedResidency === 'nonResident' ? 'Non-resident' : 
-                   selectedResidency === 'resident' ? 'Resident' : 'Citizen'}
-                </span>
+        <div className="mb-6">
+          <div className="mx-auto max-w-xl rounded-2xl p-4" style={{ background: 'linear-gradient(90deg, #f7971e 0%, #ffd200 100%)' }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="text-sm font-medium text-black">Residency:</div>
+                <div className="bg-white px-4 py-1 rounded-full font-medium text-black">
+                  {selectedResidency === 'nonResident' ? 'Non-resident' : (selectedResidency === 'resident' ? 'Resident' : 'Citizen')}
+                </div>
               </div>
-            ) : (
-              <div className="relative" ref={residencyMenuRef}>
-                <button
-                  className="bg-white text-black px-6 py-2 rounded-full font-medium hover:bg-gray-50 transition-colors"
-                  onClick={() => setShowResidencyMenu(!showResidencyMenu)}
+              <div ref={residencyMenuRef}>
+                <Button
+                  className="bg-white text-black px-4 py-1 rounded-full"
+                  onClick={() => { setShowResidencyMenu(s => !s); }}
                 >
-                  Select Residency
-                </button>
+                  Change
+                </Button>
+
                 {showResidencyMenu && (
-                  <div className="absolute left-0 mt-2 w-44 bg-white rounded-md shadow-xl z-50 overflow-hidden">
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 overflow-hidden">
                     {residencyOptions.map((opt) => (
                       <button
                         key={opt.key}
-                        onClick={() => {
-                          setSelectedResidency(opt.key as any);
-                          setShowResidencyMenu(false);
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-black"
+                        onClick={() => handleSelectResidency(opt.key)}
                       >
                         {opt.label}
                       </button>
@@ -363,121 +278,102 @@ const Destinations = () => {
                   </div>
                 )}
               </div>
-            )}
+            </div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="mb-8 flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Filter className="w-5 h-5 text-muted-foreground" />
+            <span className="font-semibold text-muted-foreground">Filter by:</span>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            {[
+              { id: 'all', name: 'All Experiences' },
+              { id: 'Wildlife', name: 'Wildlife' },
+              { id: 'Cultural', name: 'Cultural' },
+              { id: 'Historical', name: 'Historical' },
+              { id: 'Adventure', name: 'Adventure' },
+            ].map(c => (
+              <Button
+                key={c.id}
+                variant={selectedCategory === c.id ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedCategory(c.id)}
+              >
+                {c.name}
+              </Button>
+            ))}
+          </div>
+
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Sort:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+            >
+              <option value="recommended">Recommended</option>
+              <option value="priceAsc">Price: Low to High</option>
+              <option value="priceDesc">Price: High to Low</option>
+              <option value="duration">Shortest First</option>
+            </select>
           </div>
         </div>
 
         {/* Destinations Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredDestinations.map((destination) => (
-            <Card key={destination.id} className="group hover:shadow-elegant transition-all duration-300 overflow-hidden">
+          {sorted.map(dest => (
+            <Card key={dest.id} className="group hover:shadow-elegant transition-all duration-300 overflow-hidden">
               <div className="aspect-video overflow-hidden relative">
                 <img
-                  src={destination.updatedAt ? `${destination.image}?v=${new Date(destination.updatedAt).getTime()}` : destination.image}
-                  alt={destination.name}
+                  src={dest.updatedAt ? `${dest.image}?v=${new Date(dest.updatedAt).getTime()}` : dest.image}
+                  alt={dest.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                {destination.rating && (
-                  <div className="absolute top-4 right-4 bg-white/90 px-2 py-1 rounded-full flex items-center gap-1">
-                    <Star className="w-4 h-4 text-safari-gold fill-current" />
-                    <span className="text-sm font-medium">{destination.rating}</span>
-                  </div>
-                )}
               </div>
 
               <CardHeader>
-                <div className="flex justify-between items-start mb-2">
-                  <CardTitle className="text-xl font-display group-hover:text-primary transition-colors">
-                    {destination.name}
-                  </CardTitle>
-                  {destination.difficulty && (
-                    <Badge className={getDifficultyColor(destination.difficulty)}>
-                      {destination.difficulty}
-                    </Badge>
-                  )}
+                <div className="mb-2">
+                  <CardTitle className="text-xl font-display group-hover:text-primary transition-colors">{dest.name}</CardTitle>
                 </div>
-                <CardDescription className="text-sm">
-                  {destination.description}
-                </CardDescription>
+                <CardDescription className="text-sm">{dest.description}</CardDescription>
               </CardHeader>
 
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    {destination.location || destination.name}
-                  </div>
-                  {destination.duration && (
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {destination.duration} {destination.duration < 1 ? 'hours' : destination.duration === 1 ? 'day' : 'days'}
-                    </div>
-                  )}
-                  {destination.maxParticipants && (
-                    <div className="flex items-center gap-1">
-                      <Users className="w-4 h-4" />
-                      Max {destination.maxParticipants}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1"><MapPin className="w-4 h-4" />{dest.location || dest.name}</div>
+                  {dest.duration && <div className="flex items-center gap-1"><Clock className="w-4 h-4" />{dest.duration} {dest.duration === 1 ? 'day' : 'days'}</div>}
+                  {dest.maxParticipants && <div className="flex items-center gap-1"><Users className="w-4 h-4" />Max {dest.maxParticipants}</div>}
                 </div>
 
                 <div>
                   <h4 className="font-semibold text-foreground mb-2 text-sm">Highlights:</h4>
                   <div className="flex flex-wrap gap-1">
-                    {destination.highlights.slice(0, 3).map((highlight, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {highlight}
-                      </Badge>
-                    ))}
-                    {destination.highlights.length > 3 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{destination.highlights.length - 3} more
-                      </Badge>
-                    )}
+                    {dest.highlights.slice(0, 3).map((h, i) => <Badge key={i} variant="outline" className="text-xs">{h}</Badge>)}
+                    {dest.highlights.length > 3 && <Badge variant="outline" className="text-xs">+{dest.highlights.length - 3} more</Badge>}
                   </div>
                 </div>
 
-                {/* Pricing Section */}
-                <div className="text-center w-full bg-slate-50 dark:bg-white text-black p-3 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-300">
-                  {selectedResidency ? (
-                    <>
-                      <div className="text-sm text-black dark:text-black font-medium">Starting from</div>
-                      <div className="text-2xl font-bold text-primary dark:text-black">
-                        {formatPrice(getPriceByResidency(destination.pricing, selectedResidency))}
-                        <span className="text-sm font-normal text-black dark:text-black ml-1">
-                          per person
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="text-sm text-black dark:text-black font-medium">Starting from</div>
-                      <div className="text-lg text-black dark:text-black italic">
-                        per person
-                      </div>
-
-                      {/* Fallback button inside card that opens the same dropdown */}
-                      <div className="mt-2 inline-block">
-                        <Button
-                          className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 transition-all text-sm text-white font-medium"
-                          onClick={() => setShowResidencyMenu(true)}
-                        >
-                          Select Residency
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                </div>
+                {/* Pricing */}
+                {selectedResidency && (
+                  <div className="text-center w-full bg-slate-50 dark:bg-white p-3 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-300">
+                    <div className="text-sm font-medium" style={{ color: '#000' }}>As low as</div>
+                    <div className="text-2xl font-bold" style={{ color: '#f97316' }}>
+                      {formatPrice(getPriceByResidency(dest.pricing, selectedResidency))}
+                      <span className="text-sm font-normal ml-1" style={{ color: '#000' }}>per person</span>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex gap-3">
-                  <Link to={`/booking?destination=${destination.id}`} className="flex-1">
-                    <Button className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 transition-all text-black font-medium">
-                      Book Now
-                    </Button>
+                  <Link to={`/booking?destination=${dest.id}`} className="flex-1">
+                    <Button className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-black font-medium">Book Now</Button>
                   </Link>
                   <Button variant="outline" className="flex-1 border-orange-500 text-orange-600 hover:bg-orange-50">
-                    View Details
-                    <ExternalLink className="w-4 h-4 ml-2" />
+                    View Details <ExternalLink className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
               </CardContent>
@@ -485,19 +381,12 @@ const Destinations = () => {
           ))}
         </div>
 
-        {filteredDestinations.length === 0 && (
+        {sorted.length === 0 && (
           <div className="text-center py-12">
             <p className="text-xl text-muted-foreground">No destinations found for the selected category.</p>
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => setSelectedCategory('all')}
-            >
-              View All Destinations
-            </Button>
+            <Button variant="outline" className="mt-4" onClick={() => setSelectedCategory('all')}>View All Destinations</Button>
           </div>
         )}
-
       </main>
       <Footer />
     </div>

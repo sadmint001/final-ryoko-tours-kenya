@@ -26,6 +26,57 @@ const Index = () => {
       <Navbar />
       <HeroSection />
 
+      {/* Featured Tours (elegant hover + click -> /destinations?category=...) */}
+      <section className="max-w-6xl mx-auto mt-12 mb-16 px-4">
+        <h2 className="text-4xl md:text-5xl font-serif font-bold text-white text-center mb-3">Featured Tours</h2>
+        <p className="text-center text-slate-300 mb-8">Discover Kenya through our carefully curated experiences that go beyond traditional tourism</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[
+            { key: 'Historical', title: 'Historical, Cultural & Art', icon: '🏛️', desc: "Immerse yourself in Kenya's rich heritage and artistry", tags: ['Kazuri Beads','Maasai Market','Karen Blixen Museum'] },
+            { key: 'Wildlife', title: 'Wildlife', icon: '🦁', desc: "Encounter Kenya's incredible wildlife up close", tags: ['Nairobi NP','Giraffe Centre','Sheldrick'] },
+            { key: 'Nature', title: "Hiking, Picnic, Camping & Nature", icon: '🥾', desc: "Explore Kenya's breathtaking natural landscapes", tags: ['Ngong Hills','Karura Forest',"Hell's Gate"] },
+            { key: 'Farming', title: 'Farming, Coffee & Tea', icon: '🌿', desc: "Educational experiences in Kenya's agricultural heritage", tags: ['Fairview Coffee','Kiambethu Tea'] }
+          ].map((t) => (
+            <article
+              key={t.key}
+              role="button"
+              tabIndex={0}
+              aria-label={`View ${t.title} tours`}
+              onClick={() => navigate(`/destinations?category=${encodeURIComponent(t.key)}`)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate(`/destinations?category=${encodeURIComponent(t.key)}`);
+                }
+              }}
+              className="rounded-2xl p-8 bg-gradient-to-br from-slate-900/80 to-slate-900/70 border border-white/6 shadow-lg cursor-pointer transform transition-all duration-300 hover:-translate-y-3 hover:scale-[1.01] hover:shadow-2xl group"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-orange-50 text-orange-600 text-2xl">{t.icon}</div>
+                  <h3 className="text-lg font-semibold text-white mb-0 font-serif group-hover:text-amber-200">{t.title}</h3>
+                </div>
+                <div className="text-sm text-slate-400 group-hover:text-slate-200">Explore →</div>
+              </div>
+
+              <p className="text-sm text-slate-300 mb-6">{t.desc}</p>
+
+              <div className="flex flex-wrap gap-2 mt-auto">
+                {t.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-xs px-3 py-1 rounded-full bg-white/5 border border-white/6 text-slate-300 group-hover:bg-white/6 group-hover:text-white transition-colors"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
       {/* Why Choose Us? — modern + classic design */}
       <section id="why-choose-us" className="max-w-6xl mx-auto mt-12 mb-16 px-4">
         <div className="text-center mb-8">
@@ -97,8 +148,8 @@ const Index = () => {
       </section>
 
       {/* keep other site sections/components */}
-      <Partners />
       <BlogSection />
+      <Partners />
       <Footer />
     </div>
   );

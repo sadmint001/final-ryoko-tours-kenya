@@ -1,32 +1,32 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Heart, Globe, Shield, Users, Award, MapPin } from 'lucide-react';
+import { Heart, Globe, Shield, Users } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Services from '@/components/Services';
+import heroSafari from '../assets/hero-safari.jpg';
 
 const About = () => {
   const values = [
     {
       icon: Heart,
       title: "Passion for Africa",
-      description: "We're deeply passionate about showcasing Africa's incredible diversity, from its breathtaking landscapes to its rich cultural heritage."
+      description: "We're deeply passionate about showcasing Africa's incredible diversity—its landscapes, traditions, wildlife, and cultures."
     },
     {
       icon: Shield,
       title: "Safety First",
-      description: "Your safety is our top priority. We maintain the highest safety standards and work with certified guides and operators."
+      description: "Your safety is paramount. We adhere to international safety standards and collaborate with certified professionals."
     },
     {
       icon: Globe,
       title: "Sustainable Tourism",
-      description: "We're committed to responsible tourism that benefits local communities and preserves Africa's natural wonders for future generations."
+      description: "We promote responsible eco-tourism that uplifts communities and protects natural ecosystems for future generations."
     },
     {
       icon: Users,
       title: "Expert Guides",
-      description: "Our experienced local guides bring insider knowledge and authentic stories that make every journey unforgettable."
+      description: "Our local guides carry centuries of knowledge, storytelling heritage, and a deep understanding of Kenya’s culture."
     }
   ];
 
@@ -38,105 +38,142 @@ const About = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/10">
+    <div className="min-h-screen bg-background scroll-smooth">
+
       <Navbar />
-      
-      <main className="container mx-auto px-4 py-16">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-display font-bold text-primary mb-6">
-            Tapestry of Experience
+
+      {/* ✅ HERO WITH LAYERED PARALLAX */}
+      <section
+        className="relative h-screen bg-fixed bg-center bg-cover bg-no-repeat flex items-center justify-center"
+        style={{ backgroundImage: `url(${heroSafari})` }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/90"></div>
+
+        {/* Subtle atmospheric fog */}
+        <div className="absolute inset-0 opacity-30 bg-[url('/images/fog-layer.png')] bg-cover mix-blend-screen animate-pulse"></div>
+
+        <div className="relative z-10 text-center text-white max-w-4xl px-4 animate-fade-in-up">
+          <h1 className="text-6xl md:text-7xl font-extrabold tracking-wide mb-6 drop-shadow-lg">
+            Experience Africa in Motion
           </h1>
-          <div className="max-w-4xl mx-auto space-y-6 text-lg text-muted-foreground leading-relaxed">
-            <p>
-              At Ryoko Tours Africa, we don't just plan trips — we curate moments that leave a mark.
-            </p>
-            <p>
-              We specialize in personalized, memory-filled tours for both local and international travelers.
-              Rooted in our name — Ryoko, meaning "travel" — our passion is guiding people through Kenya's 
-              lesser-seen sides with authenticity, depth, and heart.
-            </p>
-            <p>
-              From vibrant city streets to quiet forest trails, every journey with us is handcrafted to 
-              reflect the rhythms of Kenya and the stories that live within its land.
-            </p>
+          <p className="text-xl md:text-2xl leading-relaxed opacity-90">
+            Where breathtaking landscapes, heritage, and culture intertwine into unforgettable journeys.
+          </p>
+
+          <div className="mt-10">
+            <a
+              href="#about-content"
+              className="inline-block bg-white/20 backdrop-blur-md border border-white/40 px-6 py-3 rounded-lg text-lg hover:bg-white/30 transition-all shadow-xl"
+            >
+              Learn More
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <main id="about-content" className="container mx-auto px-4 py-20 space-y-28">
+
+        {/* INTRO */}
+        <div className="max-w-5xl mx-auto text-center space-y-8 animate-fade-in-up">
+          <h2 className="text-5xl font-display font-bold text-primary">
+            Tapestry of Experience
+          </h2>
+
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            Ryoko Tours Africa is more than a travel company—we are storytellers weaving memories into every journey.
+          </p>
+
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            Inspired by the name “Ryoko,” our mission is to show the world the untouched hearts of Kenya, beyond the ordinary.
+          </p>
+
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            Whether you're exploring bustling streets or quiet wilderness, each journey reflects rhythm, identity, and heritage.
+          </p>
+        </div>
+
+        {/* STATS + BACKGLOW */}
+        <div className="relative max-w-4xl mx-auto animate-fade-in-up">
+          {/* glow effect */}
+          <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-80 h-80 bg-orange-300/20 rounded-full blur-[150px]"></div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 relative z-10">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center group">
+                <div className="text-4xl font-bold text-primary mb-2 group-hover:scale-110 transition-transform">
+                  {stat.number}
+                </div>
+                <div className="text-muted-foreground tracking-wide">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Stats Section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
-          {stats.map((stat, index) => (
-            <div key={index} className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-primary mb-2">{stat.number}</div>
-              <div className="text-muted-foreground">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Mission & Vision Section */}
-        <div className="grid md:grid-cols-2 gap-8 mb-16">
-          <Card className="bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
-            <CardContent className="p-8">
-              <h2 className="text-3xl font-display font-bold text-primary mb-4">Our Mission</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                To offer memorable and personalized tour services that connect travelers with 
-                Kenya's people, nature, and soul.
+        {/* MISSION & VISION with GLASSMORPHISM */}
+        <div className="grid md:grid-cols-2 gap-10 max-w-6xl mx-auto animate-fade-in-up">
+          <Card className="border-none backdrop-blur-xl bg-white/10 shadow-2xl rounded-2xl overflow-hidden">
+            <CardContent className="p-12">
+              <h2 className="text-4xl font-bold text-primary mb-4">Our Mission</h2>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                To craft meaningful, transformative journeys that immerse travelers in the beauty and soul of Kenya.
               </p>
             </CardContent>
           </Card>
-          
-          <Card className="bg-gradient-to-r from-accent/5 to-primary/5 border-accent/20">
-            <CardContent className="p-8">
-              <h2 className="text-3xl font-display font-bold text-primary mb-4">Our Vision</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                To become a leading brand in guiding both Kenyans and the world through rich, 
-                meaningful experiences that go beyond the surface.
+
+          <Card className="border-none backdrop-blur-xl bg-white/10 shadow-2xl rounded-2xl">
+            <CardContent className="p-12">
+              <h2 className="text-4xl font-bold text-primary mb-4">Our Vision</h2>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                To elevate African tourism globally by delivering immersive experiences that enrich, educate, and inspire.
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Values Section (unchanged as requested) */}
-        <div className="mb-16">
-          <h2 className="text-3xl font-display font-bold text-primary text-center mb-12">
+        {/* VALUES with radial glow and motion */}
+        <section className="max-w-6xl mx-auto animate-fade-in-up">
+          <h2 className="text-5xl font-display font-bold text-primary text-center mb-16">
             Our Values
           </h2>
-          <div className="grid md:grid-cols-2 gap-8">
+
+          <div className="grid md:grid-cols-2 gap-12">
             {values.map((value, index) => (
-              <Card key={index} className="group hover:shadow-elegant transition-all duration-300">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="bg-primary/10 p-3 rounded-lg group-hover:bg-primary/20 transition-colors">
-                      <value.icon className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-primary mb-2">{value.title}</h3>
-                      <p className="text-muted-foreground leading-relaxed">{value.description}</p>
-                    </div>
+              <Card
+                key={index}
+                className="group border-none bg-white/5 backdrop-blur-lg shadow-xl rounded-xl hover:scale-[1.02] hover:shadow-2xl transition-all duration-300"
+              >
+                <CardContent className="p-10 flex gap-8 items-start">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-orange-300/30 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <value.icon className="relative w-10 h-10 text-primary z-10" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-semibold text-primary mb-3">{value.title}</h3>
+                    <p className="text-muted-foreground leading-relaxed">{value.description}</p>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Call to Action with client CTA (verbatim) */}
-        <Card className="bg-background text-center border border-orange-200">
-          <CardContent className="p-8 md:p-12">
-            <h2 className="text-3xl font-display font-bold mb-4">
-              Come journey with us. Let’s create your perfect tapestry of experience.
+        {/* CTA */}
+        <Card className="border-none shadow-2xl bg-gradient-to-br from-orange-200/40 to-yellow-100/40 backdrop-blur-xl text-center animate-fade-in-up rounded-2xl">
+          <CardContent className="p-16">
+            <h2 className="text-4xl md:text-5xl font-display font-bold mb-6 text-primary">
+              Begin your journey. Let’s create something unforgettable together.
             </h2>
-            <p className="sr-only">Client CTA</p>
-            <div className="mt-8">
-              <a href="/destinations">
-                <span className="inline-block bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-black font-semibold rounded-md px-4 md:px-6 py-2 transition-all">
-                  Explore Destinations
-                </span>
-              </a>
-            </div>
+
+            <a href="/destinations">
+              <span className="inline-block bg-gradient-to-r from-orange-500 to-yellow-500 hover:scale-110 transition-all text-black font-bold rounded-xl px-8 py-4 text-xl shadow-xl">
+                Explore Destinations
+              </span>
+            </a>
           </CardContent>
         </Card>
+
       </main>
+
       <Services />
       <Footer />
     </div>
