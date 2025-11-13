@@ -249,73 +249,82 @@ const Destinations: React.FC = () => {
         </div>
 
         {/* Pricing banner */}
-        <div className="mb-6">
-          <div className="mx-auto max-w-xl rounded-2xl p-4" style={{ background: 'linear-gradient(90deg, #f7971e 0%, #ffd200 100%)' }}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+        <div className="mb-6 w-full">
+          <div
+            className="mx-auto w-full max-w-4xl rounded-2xl p-4 sm:p-6"
+            style={{ background: 'linear-gradient(90deg, #f7971e 0%, #ffd200 100%)' }}
+          >
+            <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <div className="text-sm font-medium text-black">Residency:</div>
-                <div className="bg-white px-4 py-1 rounded-full font-medium text-black">
+                <div className="bg-white px-3 py-1 rounded-full font-medium text-black text-sm">
                   {selectedResidency === 'nonResident' ? 'Non-resident' : (selectedResidency === 'resident' ? 'Resident' : 'Citizen')}
                 </div>
               </div>
-              <div ref={residencyMenuRef}>
-                <Button
-                  className="bg-white text-black px-4 py-1 rounded-full"
-                  onClick={() => { setShowResidencyMenu(s => !s); }}
-                >
-                  Change
-                </Button>
 
-                {showResidencyMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 overflow-hidden">
-                    {residencyOptions.map((opt) => (
-                      <button
-                        key={opt.key}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-black"
-                        onClick={() => handleSelectResidency(opt.key)}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+              <div className="flex items-center justify-end min-w-[120px]">
+                <div className="relative" ref={residencyMenuRef}>
+                  <Button
+                    className="bg-white text-black px-4 py-1 rounded-full"
+                    onClick={() => { setShowResidencyMenu(s => !s); }}
+                  >
+                    Change
+                  </Button>
+
+                  {showResidencyMenu && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 overflow-hidden">
+                      {residencyOptions.map((opt) => (
+                        <button
+                          key={opt.key}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-black"
+                          onClick={() => handleSelectResidency(opt.key)}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="mb-8 flex items-center gap-4">
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex items-center gap-2">
             <Filter className="w-5 h-5 text-muted-foreground" />
             <span className="font-semibold text-muted-foreground">Filter by:</span>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            {[
-              { id: 'all', name: 'All Experiences' },
-              { id: 'Wildlife', name: 'Wildlife' },
-              { id: 'Cultural', name: 'Cultural' },
-              { id: 'Historical', name: 'Historical' },
-              { id: 'Adventure', name: 'Adventure' },
-            ].map(c => (
-              <Button
-                key={c.id}
-                variant={selectedCategory === c.id ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategory(c.id)}
-              >
-                {c.name}
-              </Button>
-            ))}
+          <div className="overflow-x-auto w-full sm:w-auto">
+            <div className="inline-flex gap-3 py-2">
+              {[
+                { id: 'all', name: 'All Experiences' },
+                { id: 'Wildlife', name: 'Wildlife' },
+                { id: 'Cultural', name: 'Cultural' },
+                { id: 'Historical', name: 'Historical' },
+                { id: 'Adventure', name: 'Adventure' },
+              ].map(c => (
+                <Button
+                  key={c.id}
+                  variant={selectedCategory === c.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedCategory(c.id)}
+                  className="whitespace-nowrap"
+                >
+                  {c.name}
+                </Button>
+              ))}
+            </div>
           </div>
 
-          <div className="ml-auto flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Sort:</span>
+          <div className="mt-3 sm:mt-0 sm:ml-auto flex items-center gap-2 w-full sm:w-auto">
+            <span className="text-sm text-muted-foreground hidden sm:inline">Sort:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="h-9 rounded-md border bg-background px-3 text-sm"
+              className="h-9 rounded-md border bg-background px-3 text-sm w-full sm:w-auto"
             >
               <option value="recommended">Recommended</option>
               <option value="priceAsc">Price: Low to High</option>

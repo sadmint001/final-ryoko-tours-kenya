@@ -74,207 +74,70 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <main className="pt-20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold font-playfair text-foreground mb-2">
-              Admin Dashboard
-            </h1>
-            <p className="text-muted-foreground">
-              Manage your website content and settings
-            </p>
+    <div className="min-h-screen px-4 py-6 sm:px-6 md:px-8">
+      <header className="mb-4">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold leading-tight text-white">Admin Dashboard</h1>
+        <p className="mt-1 text-sm sm:text-base text-slate-300 max-w-xl">Manage your website content and settings</p>
+      </header>
+
+      {/* Tabs: horizontal scroll on small screens */}
+      <nav className="mt-4 mb-6">
+        <div className="overflow-x-auto pb-2 -mx-4 sm:mx-0">
+          <div className="inline-flex gap-2 px-4 sm:px-0">
+            {['Overview','Destinations','Blogs','Testimonials','Settings','Analytics','Users'].map((t) => (
+              <button
+                key={t}
+                className="whitespace-nowrap text-sm sm:text-base px-3 py-2 rounded-md bg-white/5 hover:bg-white/8 transition-colors"
+                aria-label={t}
+              >
+                {t}
+              </button>
+            ))}
           </div>
-
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-9">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="destinations">Destinations</TabsTrigger>
-              <TabsTrigger value="blogs">Blogs</TabsTrigger>
-              <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
-              <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="analytics-charts">Analytics Charts</TabsTrigger>
-              <TabsTrigger value="users">Users</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="overview" className="space-y-6">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Destinations</CardTitle>
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">12</div>
-                    <p className="text-xs text-muted-foreground">
-                      Active destinations
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Blogs</CardTitle>
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">8</div>
-                    <p className="text-xs text-muted-foreground">
-                      Published articles
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Testimonials</CardTitle>
-                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">24</div>
-                    <p className="text-xs text-muted-foreground">
-                      Customer reviews
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Newsletter Subscribers</CardTitle>
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">156</div>
-                    <p className="text-xs text-muted-foreground">
-                      Active subscribers
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Quick Actions</CardTitle>
-                    <CardDescription>
-                      Common administrative tasks
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => setActiveTab('destinations')}
-                    >
-                      <MapPin className="mr-2 h-4 w-4" />
-                      Manage Destinations
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => setActiveTab('blogs')}
-                    >
-                      <FileText className="mr-2 h-4 w-4" />
-                      Create New Blog Post
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => setActiveTab('testimonials')}
-                    >
-                      <MessageSquare className="mr-2 h-4 w-4" />
-                      Review Testimonials
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => setActiveTab('settings')}
-                    >
-                      <Settings className="mr-2 h-4 w-4" />
-                      Update Site Settings
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Recent Activity</CardTitle>
-                    <CardDescription>
-                      Latest changes and updates
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">New destination added</p>
-                        <p className="text-xs text-muted-foreground">Mount Kilimanjaro Adventure - 2 hours ago</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Blog post published</p>
-                        <p className="text-xs text-muted-foreground">"Top 10 Safari Tips" - 1 day ago</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Pricing updated</p>
-                        <p className="text-xs text-muted-foreground">Nairobi National Park - 3 days ago</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">New testimonial</p>
-                        <p className="text-xs text-muted-foreground">5-star review from Sarah M. - 1 week ago</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="destinations">
-              <DestinationManagement />
-            </TabsContent>
-
-            <TabsContent value="blogs">
-              <BlogManagement />
-            </TabsContent>
-
-            <TabsContent value="testimonials">
-              <TestimonialManagement />
-            </TabsContent>
-
-            <TabsContent value="newsletter">
-              <NewsletterManagement />
-            </TabsContent>
-
-            <TabsContent value="settings">
-              <SiteSettingsManagement />
-            </TabsContent>
-
-            <TabsContent value="analytics">
-              <AnalyticsDashboard />
-            </TabsContent>
-            <TabsContent value="analytics-charts">
-              <AnalyticsCharts />
-            </TabsContent>
-            <TabsContent value="users">
-              <UsersDashboard />
-            </TabsContent>
-          </Tabs>
         </div>
-      </main>
+      </nav>
 
-      <Footer />
+      {/* Stats grid: responsive columns */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Example stat card - duplicate / map over your data */}
+        <div className="rounded-2xl p-4 sm:p-6 border border-white/6 bg-gradient-to-b from-white/3 to-white/2">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xs sm:text-sm text-slate-300">Total Destinations</h3>
+              <div className="mt-2 text-2xl sm:text-3xl font-bold text-white">12</div>
+              <p className="mt-1 text-xs text-slate-400">Active destinations</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl p-4 sm:p-6 border border-white/6 bg-gradient-to-b from-white/3 to-white/2">
+          <div>
+            <h3 className="text-xs sm:text-sm text-slate-300">Total Blogs</h3>
+            <div className="mt-2 text-2xl sm:text-3xl font-bold text-white">8</div>
+            <p className="mt-1 text-xs text-slate-400">Published articles</p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl p-4 sm:p-6 border border-white/6 bg-gradient-to-b from-white/3 to-white/2">
+          <div>
+            <h3 className="text-xs sm:text-sm text-slate-300">Total Users</h3>
+            <div className="mt-2 text-2xl sm:text-3xl font-bold text-white">234</div>
+            <p className="mt-1 text-xs text-slate-400">Active accounts</p>
+          </div>
+        </div>
+
+        {/* Add additional cards as needed - they will wrap responsively */}
+      </section>
+
+      {/* Lower content area: stack on mobile, grid on larger screens */}
+      <section className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="rounded-2xl p-4 sm:p-6 border border-white/6 bg-background/60">
+          {/* Recent activity / quick actions */}
+        </div>
+        <div className="rounded-2xl p-4 sm:p-6 border border-white/6 bg-background/60">
+          {/* Settings / shortcuts */}
+        </div>
+      </section>
     </div>
   );
 };
