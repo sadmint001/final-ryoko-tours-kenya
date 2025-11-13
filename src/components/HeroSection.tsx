@@ -1,35 +1,23 @@
 import { Button } from '@/components/ui/button';
 import { ChevronRight, Star, Users, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react'; 
-import heroImage1 from '@/assets/hero-1-elephant.jpg';
-import heroImage2 from '@/assets/hero-2-lions.jpg';
-import heroImage3 from '/lovable-uploads/73327ee8-9c0a-46bc-bb2d-790af95674a4.png';
-import heroImage4 from '/lovable-uploads/0495d7fd-3442-44b2-a254-6666dcde17d0.png';
-import heroImage5 from '/lovable-uploads/69adab17-1c5d-40e0-af0c-031e44b5af13.png';
-import heroImage6 from '/lovable-uploads/67714bb6-efb7-46fc-9d50-40094c91c610.png';
+import { useEffect, useState } from 'react';
+
+// Dynamically import all hero images using Vite's import.meta.glob
+const heroImages = Object.values(
+  import.meta.glob('@/assets/herobg*.{jpg,png}', { eager: true, import: 'default' })
+);
 
 const HeroSection = () => {
-  const heroImages = [
-    heroImage1,
-    heroImage2, 
-    heroImage3,
-    heroImage4,
-    heroImage5,
-    heroImage6
-  ];
-
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => 
-        (prevIndex + 1) % heroImages.length
-      );
-    }, 15000); // Change image every 5 seconds
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
+    }, 15000); // Change image every 15 seconds
 
     return () => clearInterval(interval);
-  }, [heroImages.length]);
+  }, []);
 
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -57,18 +45,18 @@ const HeroSection = () => {
             <span className="font-opensans font-medium text-safari-cream">Tapestry of Experience</span>
           </div>
 
-          {/* Main Headline - Sophisticated Typography */}
+          {/* Main Headline */}
           <h1 className="text-6xl md:text-8xl font-bold font-playfair mb-8 animate-fade-up leading-tight">
             <span className="block text-safari-cream">Experience</span>
             <span className="block bg-gradient-luxury bg-clip-text text-transparent">Africa Beyond Safaris</span>
           </h1>
 
-          {/* Elegant Description */}
+          {/* Description */}
           <p className="text-xl md:text-2xl font-opensans mb-10 opacity-95 max-w-4xl mx-auto animate-fade-up leading-relaxed text-safari-cream/90">
             Immerse yourself in curated journeys that blend luxury with authenticity. From intimate wildlife encounters to profound cultural connections — every moment crafted with sophistication.
           </p>
 
-          {/* Premium CTA Buttons */}
+          {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16 animate-fade-up">
             <Link to="/destinations">
               <Button size="lg" className="group bg-gradient-luxury hover:shadow-glow text-earth-brown border-0 px-8 py-4 font-semibold text-lg rounded-xl transition-all duration-300">

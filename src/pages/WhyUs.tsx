@@ -1,7 +1,6 @@
+import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 
 // ✅ Importing local assets
 import whyUs1 from '@/assets/whyus1.jpg';
@@ -69,30 +68,25 @@ const pillars: Pillar[] = [
   }
 ];
 
-const WhyUs = () => {
+const WhyUs: React.FC = () => {
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash) {
+      const el = document.getElementById(hash);
+      if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+    }
+  }, []);
+
+  // step badge colors used when rendering the steps/cards
   const stepColors = [
-    'from-fuchsia-500 to-purple-500',
-    'from-indigo-500 to-blue-500',
-    'from-sky-500 to-cyan-500',
-    'from-amber-500 to-orange-500',
+    '#9f7aea', // purple-400
+    '#fb923c', // orange-400
+    '#34d399', // emerald-400
+    '#f59e0b'  // amber-400
   ];
 
-  const location = useLocation();
-
-  useEffect(() => {
-    if (location.hash) {
-      const id = location.hash.replace('#', '');
-      const el = document.getElementById(id);
-      if (el) {
-        setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-        el.classList.add('ring-2', 'ring-orange-400', 'rounded-xl');
-        setTimeout(() => el.classList.remove('ring-2', 'ring-orange-400', 'rounded-xl'), 2000);
-      }
-    }
-  }, [location]);
-
   return (
-    <div className="min-h-screen bg-background">
+    <div>
       <Navbar />
       <main className="pt-24">
         <div className="container mx-auto px-4 pb-16">

@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ResidencyProvider } from "./contexts/ResidencyContext";
@@ -39,6 +39,8 @@ const App = () => (
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/about" element={<About />} />
             <Route path="/why-us" element={<WhyUs />} />
+            <Route path="/WhyUs" element={<Navigate to="/why-us" replace />} />
+            <Route path="/whyus" element={<Navigate to="/why-us" replace />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/booking" element={<Booking />} />
             <Route path="/booking-success" element={<BookingSuccess />} />

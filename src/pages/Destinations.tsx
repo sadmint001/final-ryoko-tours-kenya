@@ -57,13 +57,10 @@ const Destinations: React.FC = () => {
     setShowResidencyMenu(false);
   }, [setSelectedResidency]);
 
-  // debug
   useEffect(() => {
-    // eslint-disable-next-line no-console
     console.log('Destinations: selectedResidency ->', selectedResidency);
   }, [selectedResidency]);
 
-  // restore residency from localStorage if present
   useEffect(() => {
     try {
       const stored = localStorage.getItem('selectedResidency');
@@ -71,10 +68,8 @@ const Destinations: React.FC = () => {
         setSelectedResidency(stored as any);
       }
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // click outside to close dropdown
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
       if (residencyMenuRef.current && !residencyMenuRef.current.contains(e.target as Node)) {
@@ -85,7 +80,6 @@ const Destinations: React.FC = () => {
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
-  // load destinations
   useEffect(() => {
     let mounted = true;
     const sb: any = supabase;
@@ -118,7 +112,6 @@ const Destinations: React.FC = () => {
         }));
         setAllDestinations(mapped);
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error('Failed to load destinations', err);
       } finally {
         if (mounted) setLoading(false);
@@ -142,14 +135,12 @@ const Destinations: React.FC = () => {
     };
   }, []);
 
-  // URL sync for filters
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const c = params.get('category');
     const s = params.get('sort');
     if (c) setSelectedCategory(c);
     if (s) setSortBy(s);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
   useEffect(() => {
@@ -171,7 +162,6 @@ const Destinations: React.FC = () => {
     switch (sortBy) {
       case 'priceAsc': return (a.pricing.citizenPrice || 0) - (b.pricing.citizenPrice || 0);
       case 'priceDesc': return (b.pricing.citizenPrice || 0) - (a.pricing.citizenPrice || 0);
-      case 'rating': return 0; // ratings removed
       case 'duration': return (a.duration || 0) - (b.duration || 0);
       default: return 0;
     }
@@ -196,8 +186,16 @@ const Destinations: React.FC = () => {
         <main className="container mx-auto px-4 py-20">
           <div className="flex flex-col items-center gap-6">
             <h2 className="text-3xl font-display font-bold text-primary">Select your residency</h2>
-            <p className="max-w-xl text-center text-muted-foreground">
-              We show availability and prices based on your residency. Choose one to continue.
+
+            {/* Updated section */}
+            <p className="max-w-xl text-center text-muted-foreground leading-relaxed">
+              To provide accurate tour details and offers, please confirm your status in Kenya:
+              <br /><br />
+              <span className="block text-left mx-auto w-fit">
+                ▢ Kenyan Citizen<br />
+                ▢ Kenyan Resident (Non-citizen living or working in Kenya)<br />
+                ▢ Non-resident / International Visitor
+              </span>
             </p>
 
             <div ref={residencyMenuRef} className="relative">
@@ -223,11 +221,13 @@ const Destinations: React.FC = () => {
               )}
             </div>
 
-            {/* keep the original selector (optional) */}
             <div>
               <ResidencySelector
                 selectedResidency={selectedResidency}
-                onResidencyChange={(val) => { setSelectedResidency(val); try { localStorage.setItem('selectedResidency', val); } catch {} }}
+                onResidencyChange={(val) => { 
+                  setSelectedResidency(val); 
+                  try { localStorage.setItem('selectedResidency', val); } catch {} 
+                }}
               />
             </div>
           </div>
@@ -243,7 +243,9 @@ const Destinations: React.FC = () => {
       <main className="container mx-auto px-4 py-16">
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-display font-bold text-primary">Discover Kenya</h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">Embark on unforgettable adventures across the most spectacular destinations in Kenya</p>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Embark on unforgettable adventures across the most spectacular destinations in Kenya
+          </p>
         </div>
 
         {/* Pricing banner */}
@@ -357,7 +359,6 @@ const Destinations: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Pricing */}
                 {selectedResidency && (
                   <div className="text-center w-full bg-slate-50 dark:bg-white p-3 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-300">
                     <div className="text-sm font-medium" style={{ color: '#000' }}>As low as</div>
