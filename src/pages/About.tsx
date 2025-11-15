@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Heart, Globe, Shield, Users, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Services from '@/components/Services';
@@ -30,7 +31,7 @@ const About = () => {
       icon: Users,
       title: "Expert Guides",
       description:
-        "Our local guides carry centuries of knowledge, storytelling heritage, and a deep understanding of Kenya’s culture."
+        "Our local guides carry centuries of knowledge, storytelling heritage, and a deep understanding of Kenya's culture."
     }
   ];
 
@@ -45,34 +46,33 @@ const About = () => {
     <div className="min-h-screen bg-background scroll-smooth">
       <Navbar />
 
-      {/* ✅ HERO SECTION */}
+      {/* Updated Hero Section to match Contact page */}
       <section
-        className="relative h-screen bg-fixed bg-center bg-cover bg-no-repeat flex items-center justify-center"
+        className="relative h-[60vh] flex items-center justify-center bg-cover bg-center overflow-hidden"
         style={{ backgroundImage: `url(${heroSafari})` }}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/90"></div>
-        <div className="absolute inset-0 opacity-20 bg-[url('/images/fog-layer.png')] bg-cover mix-blend-screen animate-pulse"></div>
-
-        <div className="relative z-10 text-center text-white max-w-4xl px-4 animate-fade-in-up">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-wide mb-6 drop-shadow-lg" style={{ color: '#fff' }}>
-            Tapestry of Experience's!
-          </h1>
-          <p className="text-xl md:text-2xl leading-relaxed opacity-90">
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]" />
+        <motion.div
+          className="relative z-10 text-center px-6"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+        >
+          <motion.h1
+            className="text-5xl md:text-6xl font-display font-bold text-white drop-shadow-xl"
+            initial={{ scale: 1.1 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 1 }}
+          >
+            "Tapestry of Experience"
+          </motion.h1>
+          <p className="mt-4 text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
             Every journey we create is a masterpiece — a blend of Kenya's rhythm, soul, and the stories waiting to be lived.
           </p>
-
-          <div className="mt-10">
-            <a
-              href="#about-content"
-              className="inline-block bg-white/20 backdrop-blur-md border border-white/40 px-6 py-3 rounded-lg text-lg hover:bg-white/30 transition-all shadow-xl"
-            >
-              Discover More
-            </a>
-          </div>
-        </div>
+        </motion.div>
       </section>
 
-      {/* ✅ BREADCRUMB */}
+      {/* Breadcrumb */}
       <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border-t border-b border-orange-100 py-4 shadow-sm">
         <div className="container mx-auto flex items-center gap-2 text-muted-foreground text-sm md:text-base px-4">
           <a href="/" className="hover:text-orange-500 transition-colors">
@@ -85,16 +85,16 @@ const About = () => {
 
       <main id="about-content" className="container mx-auto px-4 py-20 space-y-28">
 
-        {/* ✅ INTRODUCTION */}
+        {/* Introduction */}
         <div className="max-w-5xl mx-auto text-center space-y-8 animate-fade-in-up">
           <h2 className="text-5xl font-display font-bold text-primary">Who We Are</h2>
 
           <p className="text-lg text-muted-foreground leading-relaxed">
-            Ryoko Tours Africa isn’t just a travel company — we’re curators of wonder, weaving stories of discovery, culture, and adventure into each journey.
+            Ryoko Tours Africa isn't just a travel company — we're curators of wonder, weaving stories of discovery, culture, and adventure into each journey.
           </p>
 
           <p className="text-lg text-muted-foreground leading-relaxed">
-            Inspired by the name “Ryoko,” meaning “journey,” we aim to reveal the heart of Kenya and Africa — from the golden savannahs to the vibrant city streets.
+            Inspired by the name "Ryoko," meaning "journey," we aim to reveal the heart of Kenya and Africa — from the golden savannahs to the vibrant city streets.
           </p>
 
           <p className="text-lg text-muted-foreground leading-relaxed">
@@ -102,7 +102,7 @@ const About = () => {
           </p>
         </div>
 
-        {/* ✅ STATS */}
+        {/* Stats */}
         <div className="relative max-w-4xl mx-auto animate-fade-in-up">
           <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-80 h-80 bg-orange-300/20 rounded-full blur-[150px]"></div>
 
@@ -118,13 +118,13 @@ const About = () => {
           </div>
         </div>
 
-        {/* ✅ MISSION & VISION */}
+        {/* Mission & Vision */}
         <div className="grid md:grid-cols-2 gap-10 max-w-6xl mx-auto animate-fade-in-up">
           <Card className="border-none backdrop-blur-xl bg-white/10 shadow-2xl rounded-2xl overflow-hidden">
             <CardContent className="p-12">
               <h2 className="text-4xl font-bold text-primary mb-4">Our Mission</h2>
               <p className="text-muted-foreground text-lg leading-relaxed">
-                To craft transformative travel experiences that immerse our guests in Africa’s soul, fostering cultural connection, growth, and adventure.
+                To craft transformative travel experiences that immerse our guests in Africa's soul, fostering cultural connection, growth, and adventure.
               </p>
             </CardContent>
           </Card>
@@ -133,13 +133,13 @@ const About = () => {
             <CardContent className="p-12">
               <h2 className="text-4xl font-bold text-primary mb-4">Our Vision</h2>
               <p className="text-muted-foreground text-lg leading-relaxed">
-                To position Kenya and Africa as global leaders in authentic, sustainable tourism — where every traveler leaves as an ambassador of the continent’s beauty.
+                To position Kenya and Africa as global leaders in authentic, sustainable tourism — where every traveler leaves as an ambassador of the continent's beauty.
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* ✅ VALUES */}
+        {/* Values */}
         <section className="max-w-6xl mx-auto animate-fade-in-up">
           <h2 className="text-5xl font-display font-bold text-primary text-center mb-16">
             Our Core Values
@@ -166,11 +166,11 @@ const About = () => {
           </div>
         </section>
 
-        {/* ✅ CTA */}
+        {/* CTA */}
         <Card className="border-none shadow-2xl bg-gradient-to-br from-orange-200/40 to-yellow-100/40 backdrop-blur-xl text-center animate-fade-in-up rounded-2xl">
           <CardContent className="p-16">
             <h2 className="text-4xl md:text-5xl font-display font-bold mb-6 text-primary">
-              Begin your journey with us — together, let’s create a story worth telling.
+              Begin your journey with us — together, let's create a story worth telling.
             </h2>
 
             <a href="/destinations">

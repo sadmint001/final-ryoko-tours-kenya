@@ -45,9 +45,9 @@ const Destinations: React.FC = () => {
   const [showResidencyMenu, setShowResidencyMenu] = useState<boolean>(false);
 
   const residencyOptions = [
-    { key: 'citizen', label: 'Citizen' },
-    { key: 'resident', label: 'Resident' },
-    { key: 'nonResident', label: 'Non-resident' },
+    { key: 'citizen', label: 'Kenyan Citizen' },
+    { key: 'resident', label: 'Kenyan Resident (Non-citizen living or working in Kenya)' },
+    { key: 'nonResident', label: 'Non-resident / International Visitor' },
   ];
 
   const handleSelectResidency = useCallback((key: string) => {
@@ -167,6 +167,15 @@ const Destinations: React.FC = () => {
     }
   });
 
+  // Custom price formatting function based on residency
+  const formatPriceByResidency = (price: number, residency: string) => {
+    if (residency === 'citizen') {
+      return `KSh ${price.toLocaleString()}`;
+    } else {
+      return `$${price.toLocaleString()}`;
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen">
@@ -187,16 +196,16 @@ const Destinations: React.FC = () => {
           <div className="flex flex-col items-center gap-6">
             <h2 className="text-3xl font-display font-bold text-primary">Select your residency</h2>
 
-            {/* Updated section */}
-            <p className="max-w-xl text-center text-muted-foreground leading-relaxed">
+            {/* Fixed text visibility for dark mode */}
+            <p className="max-w-xl text-center text-foreground leading-relaxed">
               To provide accurate tour details and offers, please confirm your status in Kenya:
-              <br /><br />
-              <span className="block text-left mx-auto w-fit">
-                ▢ Kenyan Citizen<br />
-                ▢ Kenyan Resident (Non-citizen living or working in Kenya)<br />
-                ▢ Non-resident / International Visitor
-              </span>
             </p>
+
+            <div className="text-left max-w-xl mx-auto space-y-2 text-foreground">
+              <div>▢ Kenyan Citizen</div>
+              <div>▢ Kenyan Resident (Non-citizen living or working in Kenya)</div>
+              <div>▢ Non-resident / International Visitor</div>
+            </div>
 
             <div ref={residencyMenuRef} className="relative">
               <Button
@@ -207,11 +216,11 @@ const Destinations: React.FC = () => {
               </Button>
 
               {showResidencyMenu && (
-                <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 overflow-hidden">
+                <div className="absolute left-0 mt-2 w-80 bg-white rounded-md shadow-lg z-50 overflow-hidden border border-gray-200">
                   {residencyOptions.map((opt) => (
                     <button
                       key={opt.key}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                      className="w-full text-left px-4 py-3 hover:bg-gray-100 text-sm text-black border-b border-gray-100 last:border-b-0"
                       onClick={() => handleSelectResidency(opt.key)}
                     >
                       {opt.label}
@@ -258,33 +267,24 @@ const Destinations: React.FC = () => {
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="text-sm font-medium text-black">Residency:</div>
                 <div className="bg-white px-3 py-1 rounded-full font-medium text-black text-sm">
-                  {selectedResidency === 'nonResident' ? 'Non-resident' : (selectedResidency === 'resident' ? 'Resident' : 'Citizen')}
+                  {selectedResidency === 'nonResident' ? 'Non-resident / International Visitor' : 
+                   selectedResidency === 'resident' ? 'Kenyan Resident' : 'Kenyan Citizen'}
+                </div>
+                <div className="text-sm font-medium text-black">
+                  Currency: {selectedResidency === 'citizen' ? 'KSh' : 'USD'}
                 </div>
               </div>
 
               <div className="flex items-center justify-end min-w-[120px]">
-                <div className="relative" ref={residencyMenuRef}>
-                  <Button
-                    className="bg-white text-black px-4 py-1 rounded-full"
-                    onClick={() => { setShowResidencyMenu(s => !s); }}
-                  >
-                    Change
-                  </Button>
-
-                  {showResidencyMenu && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 overflow-hidden">
-                      {residencyOptions.map((opt) => (
-                        <button
-                          key={opt.key}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-black"
-                          onClick={() => handleSelectResidency(opt.key)}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <Button
+                  className="bg-white text-black px-4 py-1 rounded-full"
+                  onClick={() => {
+                    setSelectedResidency(null);
+                    try { localStorage.removeItem('selectedResidency'); } catch {}
+                  }}
+                >
+                  Change
+                </Button>
               </div>
             </div>
           </div>
@@ -371,8 +371,8 @@ const Destinations: React.FC = () => {
                 {selectedResidency && (
                   <div className="text-center w-full bg-slate-50 dark:bg-white p-3 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-300">
                     <div className="text-sm font-medium" style={{ color: '#000' }}>As low as</div>
-                    <div className="text-2xl font-bold" style={{ color: '#f97316' }}>
-                      {formatPrice(getPriceByResidency(dest.pricing, selectedResidency))}
+                    <div className="text-lg font-bold" style={{ color: '#f97316' }}>
+                      {formatPriceByResidency(getPriceByResidency(dest.pricing, selectedResidency), selectedResidency)}
                       <span className="text-sm font-normal ml-1" style={{ color: '#000' }}>per person</span>
                     </div>
                   </div>

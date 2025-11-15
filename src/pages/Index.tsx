@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
 import BlogSection from '@/components/BlogSection';
@@ -6,39 +6,6 @@ import Footer from '@/components/Footer';
 import Partners from '@/components/Partners';
 import { Award, Heart, ShieldCheck, Users, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-// ✅ Inline Google Translate Component
-const GoogleTranslate: React.FC = () => {
-  useEffect(() => {
-    const scriptId = 'google-translate-script';
-    if (!document.getElementById(scriptId)) {
-      const addScript = document.createElement('script');
-      addScript.id = scriptId;
-      addScript.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-      document.body.appendChild(addScript);
-    }
-
-    (window as any).googleTranslateElementInit = () => {
-      if (document.getElementById('google_translate_element')) {
-        new (window as any).google.translate.TranslateElement(
-          {
-            pageLanguage: 'en',
-            includedLanguages: 'en,ja,zh-CN,zh-TW,ko,fr,de,es,it,ru,ar,pt',
-            layout: (window as any).google.translate.TranslateElement.InlineLayout.SIMPLE,
-          },
-          'google_translate_element'
-        );
-      }
-    };
-  }, []);
-
-  return (
-    <div
-      id="google_translate_element"
-      className="absolute right-4 top-4 z-50 bg-slate-900/60 rounded-lg px-2 py-1"
-    ></div>
-  );
-};
 
 const Index = () => {
   const navigate = useNavigate();
@@ -56,9 +23,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen relative">
-      {/* Navbar and Google Translate */}
+      {/* Navbar with integrated Google Translate */}
       <Navbar />
-      <GoogleTranslate />
 
       <HeroSection />
 

@@ -91,7 +91,7 @@ const WhyUs: React.FC = () => {
       <main className="pt-24">
         <div className="container mx-auto px-4 pb-16">
           <h1 className="text-4xl md:text-5xl font-bold font-playfair text-primary mb-6 text-center">
-            Why Choose Ryoko Tours Africa
+            Why Choose Ryoko Tours Africa ?
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed mb-10 text-center max-w-3xl mx-auto">
             Because we don’t just take you places — we take you personally. Our purpose is to redefine travel through service, authenticity, and safety, crafting journeys that connect you with the heart of Africa.
