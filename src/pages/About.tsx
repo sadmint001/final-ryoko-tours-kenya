@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Services from '@/components/Services';
-import heroSafari from '../assets/hero-safari.jpg';
+import whyUs2 from '@/assets/whyus2.jpg';
 
 const About = () => {
   const values = [
@@ -46,10 +46,10 @@ const About = () => {
     <div className="min-h-screen bg-background scroll-smooth">
       <Navbar />
 
-      {/* Updated Hero Section to match Contact page */}
+      {/* Updated Hero Section with whyus2.jpg and inline white text */}
       <section
         className="relative h-[60vh] flex items-center justify-center bg-cover bg-center overflow-hidden"
-        style={{ backgroundImage: `url(${heroSafari})` }}
+        style={{ backgroundImage: `url(${whyUs2})` }}
       >
         <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]" />
         <motion.div
@@ -59,14 +59,18 @@ const About = () => {
           transition={{ duration: 1 }}
         >
           <motion.h1
-            className="text-5xl md:text-6xl font-display font-bold text-white drop-shadow-xl"
+            className="text-5xl md:text-6xl font-display font-bold drop-shadow-xl"
+            style={{ color: 'white' }}
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
             transition={{ duration: 1 }}
           >
-            "Tapestry of Experience"
+            Tapestry of Experience
           </motion.h1>
-          <p className="mt-4 text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
+          <p 
+            className="mt-4 text-lg md:text-xl max-w-2xl mx-auto"
+            style={{ color: 'white' }}
+          >
             Every journey we create is a masterpiece — a blend of Kenya's rhythm, soul, and the stories waiting to be lived.
           </p>
         </motion.div>

@@ -63,7 +63,7 @@ const Contact = () => {
       icon: Mail,
       title: "Email Us",
       content: ["info@ryokotoursafrica.com", "booking@ryokotoursafrica.com", "support@ryokotoursafrica.com"],
-      description: "We’re available 24/7 via email"
+      description: "We're available 24/7 via email"
     },
     {
       icon: Phone,
@@ -102,14 +102,18 @@ const Contact = () => {
           transition={{ duration: 1 }}
         >
           <motion.h1
-            className="text-5xl md:text-6xl font-display font-bold text-white drop-shadow-xl"
+            className="text-5xl md:text-6xl font-display font-bold drop-shadow-xl"
+            style={{ color: 'white' }}
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
             transition={{ duration: 1 }}
           >
             Contact Us
           </motion.h1>
-          <p className="mt-4 text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
+          <p 
+            className="mt-4 text-lg md:text-xl max-w-2xl mx-auto"
+            style={{ color: 'white' }}
+          >
             Plan your dream safari or get assistance from our dedicated team.
           </p>
         </motion.div>

@@ -58,7 +58,7 @@ const pillars: Pillar[] = [
     id: 'stories-worth-telling',
     title: 'Stories Worth Telling',
     body: "We believe travel should leave you with more than photos — it should give you a story. With Ryoko Tours Africa, every trip becomes a personal narrative of wonder, connection, and meaning.",
-    detail: "Whether it’s the laughter shared with your guide, a sunset over the savannah, or a child’s smile in a village — these are the stories that stay long after you return home.",
+    detail: "Whether it's the laughter shared with your guide, a sunset over the savannah, or a child's smile in a village — these are the stories that stay long after you return home.",
     bullets: [
       "Create lifelong memories through authentic experiences",
       "Share moments that spark inspiration and belonging",
@@ -94,7 +94,7 @@ const WhyUs: React.FC = () => {
             Why Choose Ryoko Tours Africa ?
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed mb-10 text-center max-w-3xl mx-auto">
-            Because we don’t just take you places — we take you personally. Our purpose is to redefine travel through service, authenticity, and safety, crafting journeys that connect you with the heart of Africa.
+            Because we don't just take you places — we take you personally. Our purpose is to redefine travel through service, authenticity, and safety, crafting journeys that connect you with the heart of Africa.
           </p>
 
           {/* Pillars Section with Parallax */}
@@ -118,26 +118,28 @@ const WhyUs: React.FC = () => {
                 />
 
                 {/* Overlay Content */}
-                <div className="relative z-10 p-10 md:p-16 text-white bg-black/40 backdrop-blur-sm">
+                <div className="relative z-10 p-10 md:p-16 bg-black/40 backdrop-blur-sm">
                   <div className="max-w-4xl mx-auto">
                     <div className="flex items-start gap-4 mb-6">
                       <div className={`rounded-xl bg-gradient-to-r ${stepColors[index % stepColors.length]} px-3 py-2 shadow-lg`}>
-                        <div className="text-[10px] uppercase opacity-90 leading-none text-white">Step</div>
-                        <div className="text-lg font-bold leading-none text-white">
+                        <div className="text-[10px] uppercase opacity-90 leading-none" style={{ color: 'white' }}>Step</div>
+                        <div className="text-lg font-bold leading-none" style={{ color: 'white' }}>
                           {String(index + 1).padStart(2, '0')}
                         </div>
                       </div>
-                      <h2 className="text-3xl md:text-4xl font-bold font-playfair">{pillar.title}</h2>
+                      <h2 className="text-3xl md:text-4xl font-bold font-playfair" style={{ color: 'white' }}>
+                        {pillar.title}
+                      </h2>
                     </div>
 
-                    <p className="text-lg leading-relaxed mb-4 text-gray-100">{pillar.body}</p>
+                    <p className="text-lg leading-relaxed mb-4" style={{ color: 'white' }}>{pillar.body}</p>
                     {pillar.detail && (
-                      <p className="text-md leading-relaxed mb-6 text-gray-200">{pillar.detail}</p>
+                      <p className="text-md leading-relaxed mb-6" style={{ color: 'white' }}>{pillar.detail}</p>
                     )}
                     {pillar.bullets && (
-                      <ul className="list-disc pl-6 space-y-2 text-gray-200">
+                      <ul className="list-disc pl-6 space-y-2">
                         {pillar.bullets.map((b, i) => (
-                          <li key={i} className="leading-relaxed">{b}</li>
+                          <li key={i} className="leading-relaxed" style={{ color: 'white' }}>{b}</li>
                         ))}
                       </ul>
                     )}

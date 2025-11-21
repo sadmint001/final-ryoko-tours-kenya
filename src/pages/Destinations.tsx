@@ -194,19 +194,8 @@ const Destinations: React.FC = () => {
         <Navbar />
         <main className="container mx-auto px-4 py-20">
           <div className="flex flex-col items-center gap-6">
-            <h2 className="text-3xl font-display font-bold text-primary">Select your residency</h2>
-
-            {/* Fixed text visibility for dark mode */}
-            <p className="max-w-xl text-center text-foreground leading-relaxed">
-              To provide accurate tour details and offers, please confirm your status in Kenya:
-            </p>
-
-            <div className="text-left max-w-xl mx-auto space-y-2 text-foreground">
-              <div>▢ Kenyan Citizen</div>
-              <div>▢ Kenyan Resident (Non-citizen living or working in Kenya)</div>
-              <div>▢ Non-resident / International Visitor</div>
-            </div>
-
+            <h2 className="text-3xl font-display font-bold text-primary">Please Confirm your Status in Kenya</h2>
+            
             <div ref={residencyMenuRef} className="relative">
               <Button
                 className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white px-6 py-2 rounded-full"
@@ -230,15 +219,7 @@ const Destinations: React.FC = () => {
               )}
             </div>
 
-            <div>
-              <ResidencySelector
-                selectedResidency={selectedResidency}
-                onResidencyChange={(val) => { 
-                  setSelectedResidency(val); 
-                  try { localStorage.setItem('selectedResidency', val); } catch {} 
-                }}
-              />
-            </div>
+            {/* Removed the second ResidencySelector component that was causing duplicate buttons */}
           </div>
         </main>
         <Footer />

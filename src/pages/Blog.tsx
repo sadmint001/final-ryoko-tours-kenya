@@ -57,14 +57,32 @@ const Blog = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/10">
       <Navbar />
-      <header className="container mx-auto px-4 pt-24 md:pt-28 pb-6 text-center">
-        <h1 className="text-4xl md:text-5xl font-display font-bold text-primary">
-          Blog: Safari Travel Tips & Stories
-        </h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto mt-4">
-          Get inspired with articles on wildlife, culture, and adventure across Kenya.
-        </p>
-      </header>
+      
+      {/* Hero Image Section */}
+      <section className="relative h-96 w-full overflow-hidden">
+        <img
+          src="/src/assets/whyus1.jpg"
+          alt="Kenyan Safari Landscape"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+          <div className="text-center px-4">
+            <h1 
+              className="text-4xl md:text-5xl font-display font-bold mb-4"
+              style={{ color: 'white' }}
+            >
+              Blog: Safari Travel Tips & Stories
+            </h1>
+            <p 
+              className="text-xl max-w-2xl mx-auto"
+              style={{ color: 'white' }}
+            >
+              Get inspired with articles on wildlife, culture, and adventure across Kenya.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <main>
         <BlogSection />
       </main>
