@@ -1,79 +1,128 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { subscribePresence } from '@/lib/analytics';
-
-type Stat = { label: string; value: string | number };
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 
 const AnalyticsDashboard = () => {
-  const [stats, setStats] = useState<Stat[]>([]);
-  const [online, setOnline] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalViews: 0,
+    uniqueVisitors: 0,
+    popularPages: []
+  });
 
   useEffect(() => {
-    const unsub = subscribePresence(setOnline);
-    return unsub;
+    fetchAnalytics();
   }, []);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      const { data: totalViews } = await supabase
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true);
+      
+      // Fix: Use proper Supabase query without .group()
+      const { data: pageViews, error } = await supabase
         .from('page_views')
-        .select('id', { count: 'exact', head: true });
+        .select('*');
 
-      const { data: today } = await supabase
-        .from('page_views')
-        .select('id', { count: 'exact', head: true })
-        .gte('created_at', new Date(new Date().setHours(0,0,0,0)).toISOString());
+      if (error) {
+        console.error('Error fetching page views:', error);
+        return;
+      }
 
-      const { data: byPath } = await supabase
-        .from('page_views')
-        .select('path, count:path', { count: 'exact' })
-        .group('path')
-        .order('count', { ascending: false })
-        .limit(5);
+      // Manual grouping in JavaScript
+      const pageCounts = pageViews?.reduce((acc, view) => {
+        const page = view.page_path || 'unknown';
+        acc[page] = (acc[page] || 0) + 1;
+        return acc;
+      }, {});
 
-      setStats([
-        { label: 'Online Now', value: online },
-        { label: 'Total Views', value: (totalViews as any)?.length ?? 0 },
-        { label: 'Today', value: (today as any)?.length ?? 0 },
-      ]);
-      // Store top paths inside state for rendering below
-      setTop(byPath as any);
-    };
-    fetchStats();
-  }, [online]);
+      const popularPages = Object.entries(pageCounts || {})
+        .map(([page, count]) => ({ page, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
 
-  const [top, setTop] = useState<{ path: string; count: number }[]>([]);
+      // Get unique visitors (assuming you have a user_id or session_id column)
+      const uniqueVisitors = new Set(pageViews?.map(view => view.user_id || view.session_id)).size;
+
+      setStats({
+        totalViews: pageViews?.length || 0,
+        uniqueVisitors,
+        popularPages
+      });
+
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex justify-center items-center h-32">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 md:grid-cols-3">
-        {stats.map((s) => (
-          <Card key={s.label}>
-            <CardHeader>
-              <CardTitle className="text-sm text-muted-foreground">{s.label}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{s.value}</div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Page Views</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalViews}</div>
+            <p className="text-xs text-muted-foreground">All time views</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Unique Visitors</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.uniqueVisitors}</div>
+            <p className="text-xs text-muted-foreground">Distinct users</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Most Popular</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {stats.popularPages[0]?.page || 'N/A'}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {stats.popularPages[0]?.count || 0} views
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Top Pages</CardTitle>
+          <CardTitle>Popular Pages</CardTitle>
+          <CardDescription>Most visited pages on your site</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            {top.map((row) => (
-              <div key={row.path} className="flex justify-between">
-                <span className="text-muted-foreground">{row.path}</span>
-                <span className="font-semibold">{row.count}</span>
-              </div>
-            ))}
-            {top.length === 0 && <div className="text-muted-foreground">No data yet</div>}
-          </div>
+          {stats.popularPages.length > 0 ? (
+            <div className="space-y-2">
+              {stats.popularPages.map(({ page, count }, index) => (
+                <div key={page} className="flex justify-between items-center p-2 rounded-lg bg-muted/50">
+                  <span className="font-medium">{page}</span>
+                  <span className="text-sm text-muted-foreground">{count} views</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground">No page view data available</p>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -81,5 +130,3 @@ const AnalyticsDashboard = () => {
 };
 
 export default AnalyticsDashboard;
-
-

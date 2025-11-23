@@ -1,64 +1,114 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-
-interface UserRow {
-  id: string;
-  email: string;
-  role: string;
-}
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, User, Mail, Calendar } from 'lucide-react';
 
 const UsersDashboard = () => {
-  const [users, setUsers] = useState<UserRow[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const fetchUsers = async () => {
-    setLoading(true);
-    const { data, error } = await supabase.from('users').select('id, email, raw_user_meta_data');
-    if (!error && data) {
-      setUsers(data.map((u: any) => ({
-        id: u.id,
-        email: u.email,
-        role: u.raw_user_meta_data?.role || 'user',
-      })));
-    }
-    setLoading(false);
-  };
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  const updateRole = async (id: string, newRole: string) => {
-    setLoading(true);
-    await supabase.rpc('set_user_role', { user_id: id, role: newRole });
-    await fetchUsers();
-    setLoading(false);
+  const fetchUsers = async () => {
+    try {
+      // Fix: Use the correct table name - likely 'profiles' instead of 'users'
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching users:', error);
+        // Alternative: Try auth.users if profiles doesn't work
+        await fetchAuthUsers();
+        return;
+      }
+
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const fetchAuthUsers = async () => {
+    try {
+      // Alternative method to get users through admin API
+      const { data, error } = await supabase.auth.admin.listUsers();
+      if (error) throw error;
+      
+      setUsers(data.users.map(user => ({
+        id: user.id,
+        email: user.email,
+        created_at: user.created_at,
+        last_sign_in_at: user.last_sign_in_at
+      })));
+    } catch (error) {
+      console.error('Error fetching auth users:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex justify-center items-center h-32">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Users</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading && <div>Loading...</div>}
-        <div className="space-y-2">
-          {users.map((user) => (
-            <div key={user.id} className="flex justify-between items-center">
-              <span>{user.email}</span>
-              <span className="text-muted-foreground">{user.role || 'user'}</span>
-              <div className="space-x-2">
-                <Button size="sm" variant="outline" disabled={user.role === 'admin'} onClick={() => updateRole(user.id, 'admin')}>Promote to Admin</Button>
-                <Button size="sm" variant="outline" disabled={user.role === 'user' || !user.role} onClick={() => updateRole(user.id, 'user')}>Demote to User</Button>
-              </div>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>User Management</CardTitle>
+          <CardDescription>Manage registered users and their permissions</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {users.length > 0 ? (
+            <div className="space-y-4">
+              {users.map((user) => (
+                <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <div className="bg-primary/10 p-2 rounded-full">
+                      <User className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{user.email}</p>
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                        <div className="flex items-center space-x-1">
+                          <Calendar className="h-3 w-3" />
+                          <span>
+                            Joined {new Date(user.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        {user.last_sign_in_at && (
+                          <div className="flex items-center space-x-1">
+                            <Mail className="h-3 w-3" />
+                            <span>
+                              Last active {new Date(user.last_sign_in_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    User ID: {user.id.slice(0, 8)}...
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-          {users.length === 0 && !loading && <div>No users found.</div>}
-        </div>
-      </CardContent>
-    </Card>
+          ) : (
+            <p className="text-muted-foreground">No users found</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
