@@ -264,7 +264,7 @@ const Destinations: React.FC = () => {
                     try { localStorage.removeItem('selectedResidency'); } catch {}
                   }}
                 >
-                  Change
+                  Go Back
                 </Button>
               </div>
             </div>

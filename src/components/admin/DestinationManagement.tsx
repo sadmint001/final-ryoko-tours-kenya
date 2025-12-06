@@ -139,19 +139,46 @@ const DestinationManagement: React.FC = () => {
     },
   });
 
+  // Helper function to handle RLS errors
+  const handleRLSError = (error: any, defaultMessage: string) => {
+    console.error('Supabase error:', error);
+    
+    if (error?.message?.includes('row-level security policy') || 
+        error?.message?.includes('RLS') ||
+        error?.code === '42501') {
+      toast({
+        title: 'Permission Denied',
+        description: 'Your account does not have permission to perform this action. Please check your admin permissions or contact support.',
+        variant: 'destructive',
+      });
+    } else if (error?.code === '23505') {
+      toast({
+        title: 'Duplicate Entry',
+        description: 'A destination with this name already exists.',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Error',
+        description: defaultMessage,
+        variant: 'destructive',
+      });
+    }
+  };
+
   // Fetch destinations
   const fetchDestinations = useCallback(async () => {
     setLoading(true);
     try {
+      // Try to fetch without RLS restrictions first
       const { data, error } = await sb
         .from('destinations')
         .select('*')
-        .eq('is_active', true)
         .order('id', { ascending: true });
 
       if (error) {
         console.error('Supabase fetch error:', error);
-        toast?.error?.('Failed to load destinations');
+        handleRLSError(error, 'Failed to load destinations');
         return;
       }
 
@@ -159,7 +186,11 @@ const DestinationManagement: React.FC = () => {
       setDestinations(mapped);
     } catch (err) {
       console.error('Failed to load destinations:', err);
-      toast?.error?.('Failed to load destinations');
+      toast({
+        title: 'Error',
+        description: 'Failed to load destinations',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -235,31 +266,67 @@ const DestinationManagement: React.FC = () => {
   const handlePrimaryImageChange = async (url: string) => {
     setFormData((p) => ({ ...p, image: url }));
     if (!editingDestination?.id) return;
+    
     try {
-      const { data, error } = await sb.from('destinations').update({ image: url }).eq('id', editingDestination.id).select('*');
+      const { data, error } = await sb
+        .from('destinations')
+        .update({ image: url })
+        .eq('id', editingDestination.id)
+        .select('*');
+        
       if (error) throw error;
+      
       if (!data || data.length === 0) {
-        toast({ title: 'Warning', description: 'No record updated', variant: 'destructive' });
+        toast({ 
+          title: 'Warning', 
+          description: 'No record updated', 
+          variant: 'destructive' 
+        });
       } else {
-        toast({ title: 'Success', description: 'Primary image saved' });
+        toast({ 
+          title: 'Success', 
+          description: 'Primary image saved' 
+        });
         await fetchDestinations();
         if (user) {
-          await logAdminAction({ user_id: user.id, action: 'destination_update_image', entity: 'destination', entity_id: editingDestination.id, details: { image: url } });
+          await logAdminAction({ 
+            user_id: user.id, 
+            action: 'destination_update_image', 
+            entity: 'destination', 
+            entity_id: editingDestination.id, 
+            details: { image: url } 
+          });
         }
       }
     } catch (err) {
       console.error('Image save failed', err);
-      toast({ title: 'Error', description: 'Failed to save image', variant: 'destructive' });
+      handleRLSError(err, 'Failed to save image');
     }
   };
 
   // Create / Update
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    
+    // Check if user is authenticated
+    if (!user) {
+      toast({
+        title: 'Authentication Required',
+        description: 'You must be logged in to perform this action',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     setSaving(true);
 
+    // Validate required fields
     if (!formData.name || !formData.description) {
-      toast?.error?.('Name and description are required');
+      toast({
+        title: 'Validation Error',
+        description: 'Name and description are required',
+        variant: 'destructive',
+      });
       setSaving(false);
       return;
     }
@@ -284,20 +351,55 @@ const DestinationManagement: React.FC = () => {
         non_resident_price: formData.nonResidentPrice,
       };
 
+      let result;
+      
       if (editingDestination && editingDestination.id) {
-        const { data, error } = await sb
+        // Update existing destination
+        result = await sb
           .from('destinations')
           .update(payload)
           .eq('id', editingDestination.id)
           .select()
           .single();
 
-        if (error) throw error;
-        toast?.success?.('Destination updated');
+        if (result.error) throw result.error;
+        
+        toast({
+          title: 'Success',
+          description: 'Destination updated successfully',
+        });
+        
+        // Log admin action
+        await logAdminAction({
+          user_id: user.id,
+          action: 'destination_update',
+          entity: 'destination',
+          entity_id: editingDestination.id,
+          details: { name: formData.name }
+        });
       } else {
-        const { data, error } = await sb.from('destinations').insert(payload).select().single();
-        if (error) throw error;
-        toast?.success?.('Destination created');
+        // Create new destination
+        result = await sb
+          .from('destinations')
+          .insert(payload)
+          .select()
+          .single();
+
+        if (result.error) throw result.error;
+        
+        toast({
+          title: 'Success',
+          description: 'Destination created successfully',
+        });
+        
+        // Log admin action
+        await logAdminAction({
+          user_id: user.id,
+          action: 'destination_create',
+          entity: 'destination',
+          entity_id: result.data?.id,
+          details: { name: formData.name }
+        });
       }
 
       // Refresh list after change
@@ -306,36 +408,75 @@ const DestinationManagement: React.FC = () => {
       resetForm();
     } catch (err) {
       console.error('Save failed:', err);
-      toast?.error?.('Save failed');
+      handleRLSError(err, 'Failed to save destination');
     } finally {
       setSaving(false);
     }
   };
 
-  // Delete (hard delete). If you soft-delete, use update({ is_active: false }) instead.
+  // Delete (hard delete)
   const handleDelete = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this destination?')) return;
+    
+    if (!user) {
+      toast({
+        title: 'Authentication Required',
+        description: 'You must be logged in to perform this action',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     try {
-      const { data, error } = await sb.from('destinations').delete().eq('id', id).select();
+      const { data, error } = await sb
+        .from('destinations')
+        .delete()
+        .eq('id', id)
+        .select();
+        
       if (error) throw error;
 
-      // Supabase may return [] when no rows affected — check data
       if (!data || (Array.isArray(data) && data.length === 0)) {
-        toast?.error?.('Delete returned no rows');
+        toast({
+          title: 'Error',
+          description: 'Delete returned no rows',
+          variant: 'destructive',
+        });
       } else {
-        toast?.success?.('Deleted successfully');
+        toast({
+          title: 'Success',
+          description: 'Deleted successfully',
+        });
+        
+        // Log admin action
+        await logAdminAction({
+          user_id: user.id,
+          action: 'destination_delete',
+          entity: 'destination',
+          entity_id: id,
+          details: { name: data[0]?.name }
+        });
       }
 
       // Refresh
       await fetchDestinations();
     } catch (err) {
       console.error('Delete failed:', err);
-      toast?.error?.('Delete failed');
+      handleRLSError(err, 'Delete failed');
     }
   };
 
   // Toggle active (optimistic)
   const handleToggleActive = async (id: number, isActive: boolean) => {
+    if (!user) {
+      toast({
+        title: 'Authentication Required',
+        description: 'You must be logged in to perform this action',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     const prev = destinations;
     setDestinations((cur) => cur.map((d) => (d.id === id ? { ...d, isActive } : d)));
 
@@ -346,19 +487,43 @@ const DestinationManagement: React.FC = () => {
         .eq('id', id)
         .select()
         .single();
+        
       if (error) throw error;
-      toast?.success?.(isActive ? 'Activated' : 'Deactivated');
-      // ensure canonical list
+      
+      toast({
+        title: 'Success',
+        description: isActive ? 'Destination activated' : 'Destination deactivated',
+      });
+      
+      // Log admin action
+      await logAdminAction({
+        user_id: user.id,
+        action: isActive ? 'destination_activate' : 'destination_deactivate',
+        entity: 'destination',
+        entity_id: id,
+        details: { is_active: isActive }
+      });
+      
+      // Ensure canonical list
       await fetchDestinations();
     } catch (err) {
       console.error('Toggle failed:', err);
-      toast?.error?.('Failed to update active state');
+      handleRLSError(err, 'Failed to update active state');
       setDestinations(prev); // revert
     }
   };
 
   // Duplicate destination
   const handleDuplicate = async (dest: Destination) => {
+    if (!user) {
+      toast({
+        title: 'Authentication Required',
+        description: 'You must be logged in to perform this action',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     try {
       const payload = {
         name: `${dest.name} (Copy)`,
@@ -377,13 +542,33 @@ const DestinationManagement: React.FC = () => {
         resident_price: dest.pricing.residentPrice,
         non_resident_price: dest.pricing.nonResidentPrice,
       };
-      const { data, error } = await sb.from('destinations').insert(payload).select().single();
+      
+      const { data, error } = await sb
+        .from('destinations')
+        .insert(payload)
+        .select()
+        .single();
+        
       if (error) throw error;
-      toast?.success?.('Duplicate created');
+      
+      toast({
+        title: 'Success',
+        description: 'Duplicate created successfully',
+      });
+      
+      // Log admin action
+      await logAdminAction({
+        user_id: user.id,
+        action: 'destination_duplicate',
+        entity: 'destination',
+        entity_id: data?.id,
+        details: { original_name: dest.name, new_name: payload.name }
+      });
+      
       await fetchDestinations();
     } catch (err) {
       console.error('Duplicate failed:', err);
-      toast?.error?.('Duplicate failed');
+      handleRLSError(err, 'Duplicate failed');
     }
   };
 
@@ -442,16 +627,29 @@ const DestinationManagement: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="name">Destination Name</Label>
-                      <Input id="name" value={formData.name} onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))} placeholder="e.g., Nairobi National Park Safari" required />
+                      <Input 
+                        id="name" 
+                        value={formData.name} 
+                        onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))} 
+                        placeholder="e.g., Nairobi National Park Safari" 
+                        required 
+                      />
                     </div>
                     <div>
                       <Label htmlFor="category">Category</Label>
-                      <Select value={formData.category} onValueChange={(v) => setFormData((p) => ({ ...p, category: v }))}>
+                      <Select 
+                        value={formData.category} 
+                        onValueChange={(v) => setFormData((p) => ({ ...p, category: v }))}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
-                          {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.icon} {c.name}</SelectItem>)}
+                          {categories.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.icon} {c.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -459,7 +657,13 @@ const DestinationManagement: React.FC = () => {
 
                   <div>
                     <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" value={formData.description} onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))} rows={4} required />
+                    <Textarea 
+                      id="description" 
+                      value={formData.description} 
+                      onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))} 
+                      rows={4} 
+                      required 
+                    />
                   </div>
 
                   <div>
@@ -467,15 +671,38 @@ const DestinationManagement: React.FC = () => {
                     <div className="space-y-2">
                       {formData.highlights.map((highlight, idx) => (
                         <div key={idx} className="flex gap-2">
-                          <Input value={highlight} onChange={(e) => setFormData((p) => ({ ...p, highlights: p.highlights.map((h, i) => i === idx ? e.target.value : h) }))} placeholder="e.g., Wildlife viewing" />
+                          <Input 
+                            value={highlight} 
+                            onChange={(e) => setFormData((p) => ({ 
+                              ...p, 
+                              highlights: p.highlights.map((h, i) => i === idx ? e.target.value : h) 
+                            }))} 
+                            placeholder="e.g., Wildlife viewing" 
+                          />
                           {formData.highlights.length > 1 && (
-                            <Button type="button" variant="outline" size="sm" onClick={() => setFormData((p) => ({ ...p, highlights: p.highlights.filter((_, i) => i !== idx) }))}>
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => setFormData((p) => ({ 
+                                ...p, 
+                                highlights: p.highlights.filter((_, i) => i !== idx) 
+                              }))}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           )}
                         </div>
                       ))}
-                      <Button type="button" variant="outline" size="sm" onClick={() => setFormData((p) => ({ ...p, highlights: [...p.highlights, ''] }))}>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setFormData((p) => ({ 
+                          ...p, 
+                          highlights: [...p.highlights, ''] 
+                        }))}
+                      >
                         <Plus className="mr-2 h-4 w-4" /> Add Highlight
                       </Button>
                     </div>
@@ -486,15 +713,42 @@ const DestinationManagement: React.FC = () => {
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="citizenPrice">Citizen Price (KSh)</Label>
-                      <Input id="citizenPrice" type="number" value={formData.citizenPrice} onChange={(e) => setFormData((p) => ({ ...p, citizenPrice: parseInt(e.target.value || '0') }))} required />
+                      <Input 
+                        id="citizenPrice" 
+                        type="number" 
+                        value={formData.citizenPrice} 
+                        onChange={(e) => setFormData((p) => ({ 
+                          ...p, 
+                          citizenPrice: parseInt(e.target.value || '0') 
+                        }))} 
+                        required 
+                      />
                     </div>
                     <div>
                       <Label htmlFor="residentPrice">Resident Price (KSh)</Label>
-                      <Input id="residentPrice" type="number" value={formData.residentPrice} onChange={(e) => setFormData((p) => ({ ...p, residentPrice: parseInt(e.target.value || '0') }))} required />
+                      <Input 
+                        id="residentPrice" 
+                        type="number" 
+                        value={formData.residentPrice} 
+                        onChange={(e) => setFormData((p) => ({ 
+                          ...p, 
+                          residentPrice: parseInt(e.target.value || '0') 
+                        }))} 
+                        required 
+                      />
                     </div>
                     <div>
                       <Label htmlFor="nonResidentPrice">Non-Resident Price (KSh)</Label>
-                      <Input id="nonResidentPrice" type="number" value={formData.nonResidentPrice} onChange={(e) => setFormData((p) => ({ ...p, nonResidentPrice: parseInt(e.target.value || '0') }))} required />
+                      <Input 
+                        id="nonResidentPrice" 
+                        type="number" 
+                        value={formData.nonResidentPrice} 
+                        onChange={(e) => setFormData((p) => ({ 
+                          ...p, 
+                          nonResidentPrice: parseInt(e.target.value || '0') 
+                        }))} 
+                        required 
+                      />
                     </div>
                   </div>
                 </TabsContent>
@@ -503,16 +757,33 @@ const DestinationManagement: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="location">Location</Label>
-                      <Input id="location" value={formData.location} onChange={(e) => setFormData((p) => ({ ...p, location: e.target.value }))} />
+                      <Input 
+                        id="location" 
+                        value={formData.location} 
+                        onChange={(e) => setFormData((p) => ({ 
+                          ...p, 
+                          location: e.target.value 
+                        }))} 
+                      />
                     </div>
                     <div>
                       <Label htmlFor="difficulty">Difficulty</Label>
-                      <Select value={formData.difficulty} onValueChange={(v) => setFormData((p) => ({ ...p, difficulty: v }))}>
+                      <Select 
+                        value={formData.difficulty} 
+                        onValueChange={(v) => setFormData((p) => ({ 
+                          ...p, 
+                          difficulty: v 
+                        }))}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select difficulty" />
                         </SelectTrigger>
                         <SelectContent>
-                          {difficulties.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                          {difficulties.map((d) => (
+                            <SelectItem key={d.id} value={d.id}>
+                              {d.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -521,45 +792,117 @@ const DestinationManagement: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="duration">Duration (days)</Label>
-                      <Input id="duration" type="number" step="0.5" value={formData.duration} onChange={(e) => setFormData((p) => ({ ...p, duration: parseFloat(e.target.value || '1') }))} />
+                      <Input 
+                        id="duration" 
+                        type="number" 
+                        step="0.5" 
+                        value={formData.duration} 
+                        onChange={(e) => setFormData((p) => ({ 
+                          ...p, 
+                          duration: parseFloat(e.target.value || '1') 
+                        }))} 
+                      />
                     </div>
                     <div>
                       <Label htmlFor="maxParticipants">Max Participants</Label>
-                      <Input id="maxParticipants" type="number" value={formData.maxParticipants} onChange={(e) => setFormData((p) => ({ ...p, maxParticipants: parseInt(e.target.value || '10') }))} />
+                      <Input 
+                        id="maxParticipants" 
+                        type="number" 
+                        value={formData.maxParticipants} 
+                        onChange={(e) => setFormData((p) => ({ 
+                          ...p, 
+                          maxParticipants: parseInt(e.target.value || '10') 
+                        }))} 
+                      />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 items-center">
                     <div className="flex items-center space-x-2">
-                      <Switch id="isFeatured" checked={formData.isFeatured} onCheckedChange={(c) => setFormData((p) => ({ ...p, isFeatured: c }))} />
+                      <Switch 
+                        id="isFeatured" 
+                        checked={formData.isFeatured} 
+                        onCheckedChange={(c) => setFormData((p) => ({ 
+                          ...p, 
+                          isFeatured: c 
+                        }))} 
+                      />
                       <Label htmlFor="isFeatured">Feature on homepage</Label>
                     </div>
                     <div>
                       <Label htmlFor="featuredOrder">Featured Order</Label>
-                      <Input id="featuredOrder" type="number" value={formData.featuredOrder} onChange={(e) => setFormData((p) => ({ ...p, featuredOrder: parseInt(e.target.value || '0') }))} />
+                      <Input 
+                        id="featuredOrder" 
+                        type="number" 
+                        value={formData.featuredOrder} 
+                        onChange={(e) => setFormData((p) => ({ 
+                          ...p, 
+                          featuredOrder: parseInt(e.target.value || '0') 
+                        }))} 
+                      />
                     </div>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="media" className="space-y-4">
-                  <ImageUpload value={formData.image} onChange={handlePrimaryImageChange} onRemove={() => setFormData((p) => ({ ...p, image: '' }))} folder="destinations" maxSize={10} bucket={IMAGE_BUCKET} />
+                  <ImageUpload 
+                    value={formData.image} 
+                    onChange={handlePrimaryImageChange} 
+                    onRemove={() => setFormData((p) => ({ ...p, image: '' }))} 
+                    folder="destinations" 
+                    maxSize={10} 
+                    bucket={IMAGE_BUCKET} 
+                  />
 
                   {editingDestination?.id ? (
-                    <MultiImageUpload destinationId={editingDestination.id} items={galleryItems} onItemsChange={setGalleryItems} />
+                    <MultiImageUpload 
+                      destinationId={editingDestination.id} 
+                      items={galleryItems} 
+                      onItemsChange={setGalleryItems} 
+                    />
                   ) : (
-                    <div className="text-sm text-muted-foreground">Save the destination first to add gallery images.</div>
+                    <div className="text-sm text-muted-foreground">
+                      Save the destination first to add gallery images.
+                    </div>
                   )}
 
                   <div className="flex items-center space-x-2">
-                    <Switch id="isActive" checked={formData.isActive} onCheckedChange={(c) => setFormData((p) => ({ ...p, isActive: c }))} />
+                    <Switch 
+                      id="isActive" 
+                      checked={formData.isActive} 
+                      onCheckedChange={(c) => setFormData((p) => ({ 
+                        ...p, 
+                        isActive: c 
+                      }))} 
+                    />
                     <Label htmlFor="isActive">Active destination (visible to users)</Label>
                   </div>
                 </TabsContent>
               </Tabs>
 
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }}>Cancel</Button>
-                <Button type="submit" disabled={saving}>{saving ? <Loader size="sm" /> : editingDestination ? 'Update Destination' : 'Add Destination'}</Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => { 
+                    setIsDialogOpen(false); 
+                    resetForm(); 
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <Loader size="sm" />
+                  ) : editingDestination ? (
+                    'Update Destination'
+                  ) : (
+                    'Add Destination'
+                  )}
+                </Button>
               </div>
             </form>
           </DialogContent>
@@ -572,7 +915,14 @@ const DestinationManagement: React.FC = () => {
           <Card key={dest.id}>
             <div className="relative">
               <div className="aspect-video overflow-hidden">
-                <img src={dest.image} alt={dest.name} className="w-full h-full object-cover" />
+                <img 
+                  src={dest.image} 
+                  alt={dest.name} 
+                  className="w-full h-full object-cover" 
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x300?text=No+Image';
+                  }}
+                />
               </div>
               {!dest.isActive && (
                 <div className="absolute top-2 right-2">
@@ -584,16 +934,29 @@ const DestinationManagement: React.FC = () => {
             <CardHeader>
               <div className="flex justify-between items-start">
                 <CardTitle className="text-lg">{dest.name}</CardTitle>
-                <Badge className={getDifficultyColor(dest.difficulty || 'easy')}>{dest.difficulty || 'N/A'}</Badge>
+                <Badge className={getDifficultyColor(dest.difficulty || 'easy')}>
+                  {dest.difficulty || 'N/A'}
+                </Badge>
               </div>
-              <CardDescription>{dest.description}</CardDescription>
+              <CardDescription className="line-clamp-2">
+                {dest.description}
+              </CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1"><MapPin className="w-4 h-4" />{dest.location}</div>
-                <div className="flex items-center gap-1"><Clock className="w-4 h-4" />{dest.duration ?? '-'} {dest.duration === 1 ? 'day' : 'days'}</div>
-                <div className="flex items-center gap-1"><Users className="w-4 h-4" />Max {dest.maxParticipants ?? '-'}</div>
+                <div className="flex items-center gap-1">
+                  <MapPin className="w-4 h-4" />
+                  {dest.location || 'Location not set'}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  {dest.duration ?? '-'} {dest.duration === 1 ? 'day' : 'days'}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Users className="w-4 h-4" />
+                  Max {dest.maxParticipants ?? '-'}
+                </div>
               </div>
 
               <div className="text-sm">
@@ -606,10 +969,38 @@ const DestinationManagement: React.FC = () => {
               </div>
 
               <div className="flex gap-2 flex-wrap">
-                <Button variant="outline" size="sm" onClick={() => openEditDialog(dest)} className="flex-1"><Edit className="mr-2 h-4 w-4" />Edit</Button>
-                <Button variant="outline" size="sm" onClick={() => handleDuplicate(dest)} className="flex-1"><Copy className="mr-2 h-4 w-4" />Duplicate</Button>
-                <Button variant="outline" size="sm" onClick={() => handleToggleActive(dest.id, !dest.isActive)} className="flex-1">{dest.isActive ? 'Deactivate' : 'Activate'}</Button>
-                <Button variant="destructive" size="sm" onClick={() => handleDelete(dest.id)} className="text-red-600 hover:text-red-700"><Trash2 className="h-4 w-4" /></Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => openEditDialog(dest)} 
+                  className="flex-1"
+                >
+                  <Edit className="mr-2 h-4 w-4" />Edit
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => handleDuplicate(dest)} 
+                  className="flex-1"
+                >
+                  <Copy className="mr-2 h-4 w-4" />Duplicate
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => handleToggleActive(dest.id, !dest.isActive)} 
+                  className="flex-1"
+                >
+                  {dest.isActive ? 'Deactivate' : 'Activate'}
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  onClick={() => handleDelete(dest.id)} 
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -620,8 +1011,12 @@ const DestinationManagement: React.FC = () => {
         <div className="text-center py-12">
           <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-medium mb-2">No destinations yet</h3>
-          <p className="text-muted-foreground mb-4">Get started by adding your first destination</p>
-          <Button onClick={() => setIsDialogOpen(true)}><Plus className="mr-2 h-4 w-4" /> Add Destination</Button>
+          <p className="text-muted-foreground mb-4">
+            Get started by adding your first destination
+          </p>
+          <Button onClick={openCreateDialog}>
+            <Plus className="mr-2 h-4 w-4" /> Add Destination
+          </Button>
         </div>
       )}
     </div>
