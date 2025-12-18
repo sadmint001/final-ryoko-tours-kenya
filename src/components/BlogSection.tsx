@@ -22,6 +22,7 @@ interface BlogPost {
   tags: string[];
   published_at: string;
   created_at: string;
+  slug: string;
 }
 
 const BlogSection = () => {
@@ -171,87 +172,103 @@ const BlogSection = () => {
             <h3 className="text-2xl font-bold text-foreground mb-8 text-center">Featured Stories</h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {featuredPosts.map((post) => (
-                <Card 
+                <Link 
                   key={post.id} 
-                  className="group hover:shadow-elegant transition-all duration-300 overflow-hidden cursor-pointer"
-                  onClick={() => {
-                    incrementViews(post.id);
-                    // You can navigate to a detail page here
-                  }}
+                  to={`/blog/${post.slug || post.id}`}
+                  className="group block"
+                  onClick={() => incrementViews(post.id)}
                 >
-                  <div className="aspect-[16/9] overflow-hidden relative">
-                    <img 
-                      src={post.cover_image || '/placeholder-image.jpg'} 
-                      alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        e.currentTarget.src = '/placeholder-image.jpg';
-                      }}
-                    />
-                    <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground">
-                      Featured
-                    </Badge>
-                  </div>
-                  
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between mb-3">
-                      <Badge variant="secondary" className="text-xs">
-                        {post.category || 'Uncategorized'}
+                  <Card className="hover:shadow-elegant transition-all duration-300 overflow-hidden h-full">
+                    <div className="aspect-[16/9] overflow-hidden relative">
+                      <img 
+                        src={post.cover_image || '/placeholder-image.jpg'} 
+                        alt={post.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder-image.jpg';
+                        }}
+                      />
+                      <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground">
+                        Featured
                       </Badge>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {post.read_time || '5 min read'}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Eye className="w-3 h-3" />
-                          {(post.views || 0).toLocaleString()} views
-                        </div>
-                      </div>
                     </div>
-                    <CardTitle className="text-xl lg:text-2xl group-hover:text-primary transition-colors duration-200 leading-tight">
-                      {post.title}
-                    </CardTitle>
-                  </CardHeader>
-                  
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4 leading-relaxed">
-                      {post.excerpt}
-                    </p>
                     
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <User className="w-4 h-4" />
-                          <span>{post.author}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>{post.published_at ? new Date(post.published_at).toLocaleDateString() : 'Not published'}</span>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between mb-3">
+                        <Badge variant="secondary" className="text-xs">
+                          {post.category || 'Uncategorized'}
+                        </Badge>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {post.read_time || '5 min read'}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Eye className="w-3 h-3" />
+                            {(post.views || 0).toLocaleString()} views
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Heart className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Share2 className="w-4 h-4" />
-                        </Button>
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200 text-primary" />
+                      <CardTitle className="text-xl lg:text-2xl group-hover:text-primary transition-colors duration-200 leading-tight">
+                        {post.title}
+                      </CardTitle>
+                    </CardHeader>
+                    
+                    <CardContent>
+                      <p className="text-muted-foreground mb-4 leading-relaxed">
+                        {post.excerpt}
+                      </p>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <User className="w-4 h-4" />
+                            <span>{post.author}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            <span>{post.published_at ? new Date(post.published_at).toLocaleDateString() : 'Not published'}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              // Handle like functionality
+                            }}
+                          >
+                            <Heart className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              // Handle share functionality
+                            }}
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </Button>
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200 text-primary" />
+                        </div>
                       </div>
-                    </div>
 
-                    {post.tags && post.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-3">
-                        {post.tags.map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                      {post.tags && post.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-3">
+                          {post.tags.map((tag, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           </div>
@@ -268,67 +285,70 @@ const BlogSection = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {regularPosts.map((post) => (
-              <Card 
+              <Link 
                 key={post.id} 
-                className="group hover:shadow-elegant transition-all duration-300 overflow-hidden animate-fade-in cursor-pointer"
+                to={`/blog/${post.slug || post.id}`}
+                className="group block"
                 onClick={() => incrementViews(post.id)}
               >
-                <div className="aspect-[4/3] overflow-hidden">
-                  <img 
-                    src={post.cover_image || '/placeholder-image.jpg'} 
-                    alt={post.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      e.currentTarget.src = '/placeholder-image.jpg';
-                    }}
-                  />
-                </div>
-                
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant="secondary" className="text-xs">
-                      {post.category || 'Uncategorized'}
-                    </Badge>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      {post.read_time || '5 min read'}
-                    </div>
+                <Card className="hover:shadow-elegant transition-all duration-300 overflow-hidden h-full">
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img 
+                      src={post.cover_image || '/placeholder-image.jpg'} 
+                      alt={post.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholder-image.jpg';
+                      }}
+                    />
                   </div>
-                  <CardTitle className="text-lg group-hover:text-primary transition-colors duration-200 leading-tight">
-                    {post.title}
-                  </CardTitle>
-                </CardHeader>
-                
-                <CardContent>
-                  <p className="text-muted-foreground mb-4 text-sm line-clamp-3 leading-relaxed">
-                    {post.excerpt}
-                  </p>
                   
-                  <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1">
-                        <User className="w-3 h-3" />
-                        <span className="text-xs">{post.author}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
-                        <span className="text-xs">{(post.views || 0).toLocaleString()}</span>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {post.category || 'Uncategorized'}
+                      </Badge>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Clock className="w-3 h-3" />
+                        {post.read_time || '5 min read'}
                       </div>
                     </div>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
-                  </div>
+                    <CardTitle className="text-lg group-hover:text-primary transition-colors duration-200 leading-tight">
+                      {post.title}
+                    </CardTitle>
+                  </CardHeader>
+                  
+                  <CardContent>
+                    <p className="text-muted-foreground mb-4 text-sm line-clamp-3 leading-relaxed">
+                      {post.excerpt}
+                    </p>
+                    
+                    <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          <span className="text-xs">{post.author}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Eye className="w-3 h-3" />
+                          <span className="text-xs">{(post.views || 0).toLocaleString()}</span>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                    </div>
 
-                  {post.tags && post.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {post.tags.slice(0, 2).map((tag, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                    {post.tags && post.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {post.tags.slice(0, 2).map((tag, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
 
