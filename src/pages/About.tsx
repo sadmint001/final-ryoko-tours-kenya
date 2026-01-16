@@ -106,21 +106,8 @@ const About = () => {
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="relative max-w-4xl mx-auto animate-fade-in-up">
-          <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-80 h-80 bg-orange-300/20 rounded-full blur-[150px]"></div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 relative z-10">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center group">
-                <div className="text-4xl font-bold text-primary mb-2 group-hover:scale-110 transition-transform">
-                  {stat.number}
-                </div>
-                <div className="text-muted-foreground tracking-wide">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+       {/* Stats */}
+    
 
         {/* Mission & Vision */}
         <div className="grid md:grid-cols-2 gap-10 max-w-6xl mx-auto animate-fade-in-up">

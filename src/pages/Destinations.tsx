@@ -3,14 +3,12 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Clock, Users, ExternalLink, Filter } from 'lucide-react';
+import { MapPin, Clock, Users, ExternalLink, Filter, ArrowLeft } from 'lucide-react';
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Loader from '@/components/ui/loader';
-import ResidencySelector from '@/components/ResidencySelector';
 import { getPriceByResidency, formatPrice } from '@/lib/pricing';
-import { useResidency } from '@/contexts/ResidencyContext';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Destination {
@@ -36,11 +34,17 @@ const Destinations: React.FC = () => {
   const [allDestinations, setAllDestinations] = useState<Destination[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recommended');
+  const [selectedResidency, setSelectedResidency] = useState<string | null>(() => {
+    // Check sessionStorage first (cleared when tab closes)
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('destinationResidency');
+      return stored;
+    }
+    return null;
+  });
 
   const location = useLocation();
   const navigate = useNavigate();
-
-  const { selectedResidency, setSelectedResidency } = useResidency();
   const residencyMenuRef = useRef<HTMLDivElement | null>(null);
   const [showResidencyMenu, setShowResidencyMenu] = useState<boolean>(false);
 
@@ -50,24 +54,65 @@ const Destinations: React.FC = () => {
     { key: 'nonResident', label: 'Non-resident / International Visitor' },
   ];
 
-  const handleSelectResidency = useCallback((key: string) => {
-    localStorage.clear(); // Clear all localStorage to reset state
-    setSelectedResidency(key as any);
-    try { localStorage.setItem('selectedResidency', key); } catch {}
-    setShowResidencyMenu(false);
-  }, [setSelectedResidency]);
-
+  // Handle browser back button
   useEffect(() => {
-    console.log('Destinations: selectedResidency ->', selectedResidency);
-  }, [selectedResidency]);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('selectedResidency');
-      if (stored && !selectedResidency) {
-        setSelectedResidency(stored as any);
+    const handleBackButton = (event: PopStateEvent) => {
+      if (selectedResidency) {
+        // Clear residency and stay on page
+        clearResidency();
+        // Prevent default back navigation
+        event.preventDefault();
+        // Update URL without navigating
+        window.history.pushState(null, '', window.location.pathname);
       }
-    } catch {}
+    };
+
+    // Add initial history state
+    window.history.pushState(null, '', window.location.href);
+
+    window.addEventListener('popstate', handleBackButton);
+
+    return () => {
+      window.removeEventListener('popstate', handleBackButton);
+    };
+  }, [selectedResidency, navigate]);
+
+  // Clear session data when leaving page
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      sessionStorage.removeItem('destinationResidency');
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // Optional: Clear after user leaves page
+        setTimeout(() => {
+          if (document.visibilityState === 'hidden') {
+            sessionStorage.removeItem('destinationResidency');
+          }
+        }, 30000); // Clear after 30 seconds of being away
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  const handleSelectResidency = useCallback((key: string) => {
+    // Store in sessionStorage (cleared when browser/tab closes)
+    sessionStorage.setItem('destinationResidency', key);
+    setSelectedResidency(key);
+    setShowResidencyMenu(false);
+  }, []);
+
+  const clearResidency = useCallback(() => {
+    sessionStorage.removeItem('destinationResidency');
+    setSelectedResidency(null);
   }, []);
 
   useEffect(() => {
@@ -176,6 +221,11 @@ const Destinations: React.FC = () => {
     }
   };
 
+  // Manual back button handler
+  const handleManualBack = () => {
+    clearResidency();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen">
@@ -218,8 +268,6 @@ const Destinations: React.FC = () => {
                 </div>
               )}
             </div>
-
-            {/* Removed the second ResidencySelector component that was causing duplicate buttons */}
           </div>
         </main>
         <Footer />
@@ -231,6 +279,18 @@ const Destinations: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/10">
       <Navbar />
       <main className="container mx-auto px-4 py-16">
+        {/* Header with back button */}
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            variant="ghost"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            onClick={handleManualBack}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Residency Selection
+          </Button>
+        </div>
+
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-display font-bold text-primary">Discover Kenya</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -238,7 +298,7 @@ const Destinations: React.FC = () => {
           </p>
         </div>
 
-        {/* Pricing banner */}
+        {/* Pricing banner - REMOVED GO BACK BUTTON */}
         <div className="mb-6 w-full">
           <div
             className="mx-auto w-full max-w-4xl rounded-2xl p-4 sm:p-6"
@@ -256,17 +316,7 @@ const Destinations: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end min-w-[120px]">
-                <Button
-                  className="bg-white text-black px-4 py-1 rounded-full"
-                  onClick={() => {
-                    setSelectedResidency(null);
-                    try { localStorage.removeItem('selectedResidency'); } catch {}
-                  }}
-                >
-                  Go Back
-                </Button>
-              </div>
+              {/* Removed Go Back Button */}
             </div>
           </div>
         </div>
@@ -360,7 +410,7 @@ const Destinations: React.FC = () => {
                 )}
 
                 <div className="flex gap-3">
-                  <Link to={`/booking?destination=${dest.id}`} className="flex-1">
+                  <Link to={`/booking?destination=${dest.id}&residency=${selectedResidency}`} className="flex-1">
                     <Button className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-black font-medium">Book Now</Button>
                   </Link>
                   <Button variant="outline" className="flex-1 border-orange-500 text-orange-600 hover:bg-orange-50">

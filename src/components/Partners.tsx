@@ -41,7 +41,6 @@ const Partners: React.FC = () => {
       id: 1, 
       name: 'Karunguru Gated Community', 
       logo: karunguru, 
-      url: 'https://karunguru.com',
       alt: 'Karunguru Gated Community logo',
       order: 1 
     },
@@ -49,7 +48,7 @@ const Partners: React.FC = () => {
       id: 2, 
       name: 'Gatura Greens Farm', 
       logo: gaturaGreens, 
-      url: 'https://gaturagreens.com',
+
       alt: 'Gatura Greens Farm logo',
       order: 2 
     }
@@ -64,23 +63,20 @@ const Partners: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center justify-items-center max-w-4xl mx-auto">
           {items.sort((a,b)=>(a.order??0)-(b.order??0)).map((p) => (
-            <a 
-              key={p.id} 
-              href={p.url || '#'} 
-              target={p.url?"_blank":"_self"} 
-              rel="noopener noreferrer" 
+            <div
+              key={p.id}
               aria-label={p.name}
               className="w-full"
             >
               <Card className="p-8 flex items-center justify-center h-48 hover:scale-105 transition-transform duration-300 hover:shadow-lg hover:shadow-orange-500/10">
-                <img 
-                  src={p.logo} 
-                  alt={p.alt || p.name} 
+                <img
+                  src={p.logo}
+                  alt={p.alt || p.name}
                   className="max-h-32 w-auto object-contain rotate-90 transform hover:brightness-110 transition-all"
-                  loading="lazy" 
+                  loading="lazy"
                 />
               </Card>
-            </a>
+            </div>
           ))}
         </div>
       </div>

@@ -92,14 +92,6 @@ const BlogSection = () => {
     return (
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Safari Stories & Travel Tips
-            </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Loading blog posts...
-            </p>
-          </div>
           <div className="flex items-center justify-center h-64">
             <Loader2 className="animate-spin h-8 w-8 text-primary" />
           </div>
@@ -128,15 +120,6 @@ const BlogSection = () => {
   return (
     <section className="py-16 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Safari Stories & Travel Tips
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Get inspired and informed with our latest articles about wildlife, culture, and adventure in Kenya
-          </p>
-        </div>
-
         {/* Search and Filter Section */}
         <div className="max-w-4xl mx-auto mb-12">
           <div className="flex flex-col md:flex-row gap-4 mb-6">

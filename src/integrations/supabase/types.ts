@@ -14,39 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
-      blogs: {
+      blog_posts: {
         Row: {
-          author_id: string
-          content: string
-          cover_image_url: string | null
+          author: string | null
+          category: string | null
+          content: string | null
+          cover_image: string | null
           created_at: string
           excerpt: string | null
-          id: string
+          featured: boolean | null
+          id: number
+          likes: number | null
           published: boolean | null
+          published_at: string | null
+          read_time: string | null
+          slug: string | null
+          tags: string[] | null
           title: string
           updated_at: string
+          views: number | null
         }
         Insert: {
-          author_id: string
-          content: string
-          cover_image_url?: string | null
+          author?: string | null
+          category?: string | null
+          content?: string | null
+          cover_image?: string | null
           created_at?: string
           excerpt?: string | null
-          id?: string
+          featured?: boolean | null
+          id?: number
+          likes?: number | null
           published?: boolean | null
+          published_at?: string | null
+          read_time?: string | null
+          slug?: string | null
+          tags?: string[] | null
           title: string
           updated_at?: string
+          views?: number | null
         }
         Update: {
-          author_id?: string
-          content?: string
-          cover_image_url?: string | null
+          author?: string | null
+          category?: string | null
+          content?: string | null
+          cover_image?: string | null
           created_at?: string
           excerpt?: string | null
-          id?: string
+          featured?: boolean | null
+          id?: number
+          likes?: number | null
           published?: boolean | null
+          published_at?: string | null
+          read_time?: string | null
+          slug?: string | null
+          tags?: string[] | null
           title?: string
           updated_at?: string
+          views?: number | null
         }
         Relationships: []
       }

@@ -13,24 +13,19 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Progress } from '@/components/ui/progress';
+import { Tables } from '@/integrations/supabase/types';
+import { Link } from 'react-router-dom';
 
-interface Blog {
-  id: number;
-  title: string;
-  excerpt: string;
-  content: string;
-  cover_image: string;
-  author: string;
-  category: string;
-  read_time: string;
-  views: number;
-  featured: boolean;
-  published: boolean;
-  tags: string[];
-  published_at: string;
-  created_at: string;
-  updated_at: string;
-}
+type Blog = Tables<'blog_posts'>;
+
+const generateSlug = (title: string) => {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+};
 
 const BlogManagement = () => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -199,19 +194,11 @@ const BlogManagement = () => {
     }
 
     try {
+      const slug = generateSlug(formData.title);
       const blogData = {
-        title: formData.title,
-        excerpt: formData.excerpt,
-        content: formData.content,
-        cover_image: formData.cover_image,
-        author: formData.author,
-        category: formData.category,
-        read_time: formData.read_time,
-        featured: formData.featured,
-        published: formData.published,
-        tags: formData.tags,
-        published_at: formData.published ? new Date().toISOString().split('T')[0] : null,
-        updated_at: new Date().toISOString()
+        ...formData,
+        slug,
+        published_at: formData.published ? new Date().toISOString() : null,
       };
 
       if (editingBlog) {
@@ -231,10 +218,7 @@ const BlogManagement = () => {
         // Create new blog
         const { error } = await supabase
           .from('blog_posts')
-          .insert([{
-            ...blogData,
-            created_at: new Date().toISOString()
-          }]);
+          .insert([blogData]);
 
         if (error) throw error;
 
@@ -260,15 +244,15 @@ const BlogManagement = () => {
   const handleEdit = (blog: Blog) => {
     setEditingBlog(blog);
     setFormData({
-      title: blog.title,
-      excerpt: blog.excerpt,
-      content: blog.content || blog.excerpt,
-      cover_image: blog.cover_image,
-      author: blog.author,
-      category: blog.category || 'Wildlife',
-      read_time: blog.read_time || '5 min read',
+      title: blog.title || '',
+      excerpt: blog.excerpt || '',
+      content: blog.content || '',
+      cover_image: blog.cover_image || '',
+      author: blog.author || '',
+      category: blog.category || '',
+      read_time: blog.read_time || '',
       featured: blog.featured || false,
-      published: blog.published || true,
+      published: blog.published || false,
       tags: blog.tags || [],
       tagInput: ''
     });
@@ -316,7 +300,7 @@ const BlogManagement = () => {
         .from('blog_posts')
         .update({ 
           published: !blog.published,
-          published_at: !blog.published ? new Date().toISOString().split('T')[0] : null
+          published_at: !blog.published ? new Date().toISOString() : null
         })
         .eq('id', blog.id);
 
@@ -411,10 +395,7 @@ const BlogManagement = () => {
     try {
       const { error } = await supabase
         .from('blog_posts')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString()
-        })
+        .update(updates)
         .eq('id', blogId);
 
       if (error) throw error;
@@ -748,6 +729,10 @@ const BlogManagement = () => {
                       <span className="text-sm text-muted-foreground">
                         {blog.views?.toLocaleString()} views
                       </span>
+                      <Link to={`/blog/${blog.slug || blog.id}`} target="_blank" className="text-sm text-primary hover:underline flex items-center gap-1">
+                        <ExternalLink className="h-3 w-3" />
+                        View
+                      </Link>
                     </div>
                     
                     <CardTitle className="text-lg">{blog.title}</CardTitle>
