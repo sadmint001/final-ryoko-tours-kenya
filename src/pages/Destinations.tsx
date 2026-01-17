@@ -8,8 +8,10 @@ import { MapPin, Clock, Users, ExternalLink, Filter, ArrowLeft } from 'lucide-re
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Loader from '@/components/ui/loader';
-import { getPriceByResidency, formatPrice } from '@/lib/pricing';
+import { getPriceByResidency } from '@/lib/pricing';
 import { supabase } from '@/integrations/supabase/client';
+import { useResidencyPersistence } from '@/hooks/useResidencyPersistence';
+import { getResidencyDisplay, getCurrency, formatPriceByResidency } from '@/lib/residencyUtils';
 
 interface Destination {
   id: number;
@@ -34,19 +36,12 @@ const Destinations: React.FC = () => {
   const [allDestinations, setAllDestinations] = useState<Destination[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recommended');
-  const [selectedResidency, setSelectedResidency] = useState<string | null>(() => {
-    // Check sessionStorage first (cleared when tab closes)
-    if (typeof window !== 'undefined') {
-      const stored = sessionStorage.getItem('destinationResidency');
-      return stored;
-    }
-    return null;
-  });
+  const [showResidencyMenu, setShowResidencyMenu] = useState<boolean>(false);
 
+  const { selectedResidency, setResidency, clearResidency } = useResidencyPersistence();
   const location = useLocation();
   const navigate = useNavigate();
   const residencyMenuRef = useRef<HTMLDivElement | null>(null);
-  const [showResidencyMenu, setShowResidencyMenu] = useState<boolean>(false);
 
   const residencyOptions = [
     { key: 'citizen', label: 'Kenyan Citizen' },
@@ -58,24 +53,19 @@ const Destinations: React.FC = () => {
   useEffect(() => {
     const handleBackButton = (event: PopStateEvent) => {
       if (selectedResidency) {
-        // Clear residency and stay on page
         clearResidency();
-        // Prevent default back navigation
         event.preventDefault();
-        // Update URL without navigating
         window.history.pushState(null, '', window.location.pathname);
       }
     };
 
-    // Add initial history state
     window.history.pushState(null, '', window.location.href);
-
     window.addEventListener('popstate', handleBackButton);
 
     return () => {
       window.removeEventListener('popstate', handleBackButton);
     };
-  }, [selectedResidency, navigate]);
+  }, [selectedResidency, clearResidency]);
 
   // Clear session data when leaving page
   useEffect(() => {
@@ -85,12 +75,11 @@ const Destinations: React.FC = () => {
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
-        // Optional: Clear after user leaves page
         setTimeout(() => {
           if (document.visibilityState === 'hidden') {
             sessionStorage.removeItem('destinationResidency');
           }
-        }, 30000); // Clear after 30 seconds of being away
+        }, 30000);
       }
     };
 
@@ -103,18 +92,6 @@ const Destinations: React.FC = () => {
     };
   }, []);
 
-  const handleSelectResidency = useCallback((key: string) => {
-    // Store in sessionStorage (cleared when browser/tab closes)
-    sessionStorage.setItem('destinationResidency', key);
-    setSelectedResidency(key);
-    setShowResidencyMenu(false);
-  }, []);
-
-  const clearResidency = useCallback(() => {
-    sessionStorage.removeItem('destinationResidency');
-    setSelectedResidency(null);
-  }, []);
-
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
       if (residencyMenuRef.current && !residencyMenuRef.current.contains(e.target as Node)) {
@@ -125,19 +102,29 @@ const Destinations: React.FC = () => {
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
+  const handleSelectResidency = useCallback((key: string) => {
+    setResidency(key);
+    setShowResidencyMenu(false);
+  }, [setResidency]);
+
+  const handleManualBack = () => {
+    clearResidency();
+  };
+
   useEffect(() => {
     let mounted = true;
-    const sb: any = supabase;
     const load = async () => {
       setLoading(true);
       try {
-        const { data, error } = await sb
+        const { data, error } = await supabase
           .from('destinations')
           .select('*')
           .eq('is_active', true)
           .order('id', { ascending: true });
+        
         if (error) throw error;
         if (!mounted) return;
+        
         const mapped: Destination[] = (data || []).map((d: any) => ({
           id: d.id,
           name: d.name,
@@ -165,7 +152,7 @@ const Destinations: React.FC = () => {
 
     load();
 
-    const channel = (supabase as any)
+    const channel = supabase
       .channel('public:destinations')
       .on(
         'postgres_changes',
@@ -176,7 +163,7 @@ const Destinations: React.FC = () => {
 
     return () => {
       mounted = false;
-      try { channel.unsubscribe(); } catch {}
+      channel.unsubscribe();
     };
   }, []);
 
@@ -191,10 +178,12 @@ const Destinations: React.FC = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (selectedCategory && selectedCategory !== params.get('category')) {
-      if (selectedCategory === 'all') params.delete('category'); else params.set('category', selectedCategory);
+      if (selectedCategory === 'all') params.delete('category'); 
+      else params.set('category', selectedCategory);
     }
     if (sortBy && sortBy !== params.get('sort')) {
-      if (sortBy === 'recommended') params.delete('sort'); else params.set('sort', sortBy);
+      if (sortBy === 'recommended') params.delete('sort'); 
+      else params.set('sort', sortBy);
     }
     navigate({ pathname: location.pathname, search: params.toString() ? `?${params.toString()}` : '' }, { replace: true });
   }, [selectedCategory, sortBy, location.pathname, location.search, navigate]);
@@ -211,20 +200,6 @@ const Destinations: React.FC = () => {
       default: return 0;
     }
   });
-
-  // Custom price formatting function based on residency
-  const formatPriceByResidency = (price: number, residency: string) => {
-    if (residency === 'citizen') {
-      return `KSh ${price.toLocaleString()}`;
-    } else {
-      return `$${price.toLocaleString()}`;
-    }
-  };
-
-  // Manual back button handler
-  const handleManualBack = () => {
-    clearResidency();
-  };
 
   if (loading) {
     return (
@@ -298,7 +273,7 @@ const Destinations: React.FC = () => {
           </p>
         </div>
 
-        {/* Pricing banner - REMOVED GO BACK BUTTON */}
+        {/* Pricing banner */}
         <div className="mb-6 w-full">
           <div
             className="mx-auto w-full max-w-4xl rounded-2xl p-4 sm:p-6"
@@ -308,15 +283,12 @@ const Destinations: React.FC = () => {
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="text-sm font-medium text-black">Residency:</div>
                 <div className="bg-white px-3 py-1 rounded-full font-medium text-black text-sm">
-                  {selectedResidency === 'nonResident' ? 'Non-resident / International Visitor' : 
-                   selectedResidency === 'resident' ? 'Kenyan Resident' : 'Kenyan Citizen'}
+                  {getResidencyDisplay(selectedResidency)}
                 </div>
                 <div className="text-sm font-medium text-black">
-                  Currency: {selectedResidency === 'citizen' ? 'KSh' : 'USD'}
+                  Currency: {getCurrency(selectedResidency)}
                 </div>
               </div>
-
-              {/* Removed Go Back Button */}
             </div>
           </div>
         </div>
@@ -410,12 +382,14 @@ const Destinations: React.FC = () => {
                 )}
 
                 <div className="flex gap-3">
-                  <Link to={`/booking?destination=${dest.id}&residency=${selectedResidency}`} className="flex-1">
+                  <Link to={`/destinations/${dest.id}?residency=${selectedResidency}`} className="flex-1">
                     <Button className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-black font-medium">Book Now</Button>
                   </Link>
-                  <Button variant="outline" className="flex-1 border-orange-500 text-orange-600 hover:bg-orange-50">
-                    View Details <ExternalLink className="w-4 h-4 ml-2" />
-                  </Button>
+                  <Link to={`/destinations/${dest.id}?residency=${selectedResidency}`} className="flex-1">
+                    <Button variant="outline" className="w-full border-orange-500 text-orange-600 hover:bg-orange-50">
+                      View Details <ExternalLink className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
