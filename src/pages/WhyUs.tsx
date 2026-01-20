@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { Award, Heart, ShieldCheck, Users, CheckCircle2 } from 'lucide-react';
 
-// ✅ Importing local assets
+// Using the same local assets
 import whyUs1 from '@/assets/whyus1.jpg';
 import whyUs2 from '@/assets/whyus2.jpg';
 import whyUs3 from '@/assets/whyus3.jpg';
@@ -15,6 +16,9 @@ type Pillar = {
   detail?: string;
   bullets?: string[];
   image: string;
+  icon: React.ReactNode;
+  accentColor: string;
+  gradient: string;
 };
 
 const pillars: Pillar[] = [
@@ -28,7 +32,10 @@ const pillars: Pillar[] = [
       "Professional, warm, and responsive travel assistance",
       "Personalized itineraries tailored to your pace and preference"
     ],
-    image: whyUs1
+    image: whyUs1,
+    icon: <Award className="w-8 h-8" />,
+    accentColor: "amber",
+    gradient: "from-amber-500 to-orange-600"
   },
   {
     id: 'unforgettable-experiences',
@@ -40,7 +47,10 @@ const pillars: Pillar[] = [
       "Handpicked destinations that balance adventure and relaxation",
       "Custom routes showcasing Kenya’s hidden gems and natural wonders"
     ],
-    image: whyUs2
+    image: whyUs2,
+    icon: <Heart className="w-8 h-8" />,
+    accentColor: "rose",
+    gradient: "from-rose-500 to-pink-600"
   },
   {
     id: 'safety-first',
@@ -52,7 +62,10 @@ const pillars: Pillar[] = [
       "24-hour emergency assistance and real-time tracking",
       "Verified partners and secure online booking systems"
     ],
-    image: whyUs3
+    image: whyUs3,
+    icon: <ShieldCheck className="w-8 h-8" />,
+    accentColor: "emerald",
+    gradient: "from-emerald-500 to-teal-600"
   },
   {
     id: 'stories-worth-telling',
@@ -64,7 +77,10 @@ const pillars: Pillar[] = [
       "Share moments that spark inspiration and belonging",
       "Return home with a heart full of stories, not just souvenirs"
     ],
-    image: whyUs4
+    image: whyUs4,
+    icon: <Users className="w-8 h-8" />,
+    accentColor: "blue",
+    gradient: "from-blue-500 to-indigo-600"
   }
 ];
 
@@ -73,83 +89,121 @@ const WhyUs: React.FC = () => {
     const hash = window.location.hash.slice(1);
     if (hash) {
       const el = document.getElementById(hash);
-      if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+      if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     }
   }, []);
 
-  // step badge colors used when rendering the steps/cards
-  const stepColors = [
-    '#9f7aea', // purple-400
-    '#fb923c', // orange-400
-    '#34d399', // emerald-400
-    '#f59e0b'  // amber-400
-  ];
-
   return (
-    <div>
+    <div className="min-h-screen relative bg-slate-50 dark:bg-slate-900 transition-colors duration-500">
       <Navbar />
-      <main className="pt-24">
-        <div className="container mx-auto px-4 pb-16">
-          <h1 className="text-4xl md:text-5xl font-bold font-playfair text-primary mb-6 text-center">
-            Why Choose Ryoko Tours Africa ?
-          </h1>
-          <p className="text-lg text-muted-foreground leading-relaxed mb-10 text-center max-w-3xl mx-auto">
-            Because we don't just take you places — we take you personally. Our purpose is to redefine travel through service, authenticity, and safety, crafting journeys that connect you with the heart of Africa.
-          </p>
 
-          {/* Pillars Section with Parallax */}
-          <div className="space-y-20">
-            {pillars.map((pillar, index) => (
-              <section
-                key={pillar.id}
-                id={pillar.id}
-                className="relative rounded-3xl overflow-hidden shadow-xl"
-              >
-                {/* Parallax Background */}
-                <div
-                  className="absolute inset-0 bg-center bg-cover bg-fixed"
-                  style={{
-                    backgroundImage: `url(${pillar.image})`,
-                    backgroundAttachment: 'fixed',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    filter: 'brightness(60%)',
-                  }}
-                />
+      {/* Hero Section */}
+      <div className="relative pt-32 pb-20 overflow-hidden">
+        {/* Decorative Background - Light */}
+        <div className="absolute inset-0 overflow-hidden dark:hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-bl from-amber-100/40 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-emerald-100/30 to-transparent rounded-full blur-3xl"></div>
+        </div>
+        {/* Decorative Background - Dark */}
+        <div className="absolute inset-0 overflow-hidden hidden dark:block pointer-events-none">
+          <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-bl from-amber-500/10 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-emerald-500/10 to-transparent rounded-full blur-3xl"></div>
+        </div>
 
-                {/* Overlay Content */}
-                <div className="relative z-10 p-10 md:p-16 bg-black/40 backdrop-blur-sm">
-                  <div className="max-w-4xl mx-auto">
-                    <div className="flex items-start gap-4 mb-6">
-                      <div className={`rounded-xl bg-gradient-to-r ${stepColors[index % stepColors.length]} px-3 py-2 shadow-lg`}>
-                        <div className="text-[10px] uppercase opacity-90 leading-none" style={{ color: 'white' }}>Step</div>
-                        <div className="text-lg font-bold leading-none" style={{ color: 'white' }}>
-                          {String(index + 1).padStart(2, '0')}
-                        </div>
-                      </div>
-                      <h2 className="text-3xl md:text-4xl font-bold font-playfair" style={{ color: 'white' }}>
-                        {pillar.title}
-                      </h2>
-                    </div>
-
-                    <p className="text-lg leading-relaxed mb-4" style={{ color: 'white' }}>{pillar.body}</p>
-                    {pillar.detail && (
-                      <p className="text-md leading-relaxed mb-6" style={{ color: 'white' }}>{pillar.detail}</p>
-                    )}
-                    {pillar.bullets && (
-                      <ul className="list-disc pl-6 space-y-2">
-                        {pillar.bullets.map((b, i) => (
-                          <li key={i} className="leading-relaxed" style={{ color: 'white' }}>{b}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-              </section>
-            ))}
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="text-center max-w-4xl mx-auto">
+            <h1 className="text-4xl md:text-6xl font-bold font-serif text-slate-800 dark:text-white mb-8 leading-tight">
+              Why Choose
+              <span className="block mt-2 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 bg-clip-text text-transparent">
+                Ryoko Tours Africa?
+              </span>
+            </h1>
+            <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl mx-auto">
+              Because we don't just take you places — we take you personally. Our purpose is to redefine travel through service, authenticity, and safety.
+            </p>
           </div>
         </div>
+      </div>
+
+      <main className="container mx-auto px-4 pb-24 space-y-32">
+        {pillars.map((pillar, index) => (
+          <section
+            key={pillar.id}
+            id={pillar.id}
+            className={`flex flex-col lg:flex-row gap-12 lg:gap-20 items-center ${index % 2 === 1 ? 'lg:flex-row-reverse' : ''}`}
+          >
+            {/* Image Side */}
+            <div className="w-full lg:w-1/2 relative group">
+              <div
+                className={`
+                  absolute -inset-4 rounded-[2.5rem] rotate-2 opacity-70 blur-xl transition-all duration-500 group-hover:rotate-0 group-hover:scale-105
+                  bg-gradient-to-br ${pillar.gradient}
+                `}
+              ></div>
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl aspect-[4/3] transform transition-transform duration-500 group-hover:-translate-y-2">
+                <img
+                  src={pillar.image}
+                  alt={pillar.title}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+
+                {/* Glass overlay on image bottom */}
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                  <div className={`
+                    inline-flex items-center gap-2 px-4 py-2 rounded-full 
+                    bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium
+                    transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500
+                  `}>
+                    <span className="text-2xl">{pillar.icon}</span>
+                    <span>{pillar.title}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Text Side */}
+            <div className="w-full lg:w-1/2">
+              <div className={`
+                inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-8 shadow-lg
+                bg-gradient-to-br ${pillar.gradient} text-white
+                transform transition-all duration-500 hover:scale-110 hover:rotate-3
+              `}>
+                {pillar.icon}
+              </div>
+
+              <h2 className="text-3xl md:text-4xl font-bold font-serif text-slate-800 dark:text-white mb-6">
+                {pillar.title}
+              </h2>
+
+              <div className="space-y-6 text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+                <p>
+                  {pillar.body}
+                </p>
+                {pillar.detail && (
+                  <p className="font-medium text-slate-700 dark:text-slate-200">
+                    {pillar.detail}
+                  </p>
+                )}
+              </div>
+
+              {pillar.bullets && (
+                <div className="mt-8 space-y-4">
+                  {pillar.bullets.map((bullet, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-3 group/item p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                    >
+                      <CheckCircle2 className={`w-6 h-6 flex-shrink-0 mt-0.5 text-${pillar.accentColor}-500 dark:text-${pillar.accentColor}-400 group-hover/item:scale-110 transition-transform`} />
+                      <span className="text-slate-700 dark:text-slate-300">{bullet}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        ))}
       </main>
+
       <Footer />
     </div>
   );

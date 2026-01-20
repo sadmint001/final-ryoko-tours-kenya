@@ -7,16 +7,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Star, Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Edit, Trash2, Star, Loader2, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface Testimonial {
-  id: string;
+  id: number; // Changed to number to match bigint SQL
   name: string;
   content: string;
   rating: number;
   location: string;
+  source: 'google' | 'tripadvisor';
   visible: boolean;
   created_at: string;
   updated_at: string;
@@ -35,6 +37,7 @@ const TestimonialManagement = () => {
     content: '',
     rating: 5,
     location: '',
+    source: 'google' as 'google' | 'tripadvisor',
     visible: true
   });
 
@@ -50,17 +53,12 @@ const TestimonialManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching testimonials:', error);
         throw error;
       }
       setTestimonials(data || []);
     } catch (error) {
       console.error('Error fetching testimonials:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch testimonials',
-        variant: 'destructive'
-      });
+      // Don't toast error if table missing, just show empty
     } finally {
       setLoading(false);
     }
@@ -69,13 +67,14 @@ const TestimonialManagement = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    
+
     try {
       const testimonialData = {
         name: formData.name.trim(),
         content: formData.content.trim(),
         rating: formData.rating,
         location: formData.location.trim(),
+        source: formData.source,
         visible: formData.visible,
         updated_at: new Date().toISOString()
       };
@@ -87,11 +86,8 @@ const TestimonialManagement = () => {
           .eq('id', editingTestimonial.id);
 
         if (error) throw error;
-        
-        toast({
-          title: 'Success',
-          description: 'Testimonial updated successfully'
-        });
+
+        toast({ title: 'Success', description: 'Testimonial updated successfully' });
       } else {
         const { error } = await supabase
           .from('testimonials')
@@ -101,11 +97,8 @@ const TestimonialManagement = () => {
           }]);
 
         if (error) throw error;
-        
-        toast({
-          title: 'Success',
-          description: 'Testimonial created successfully'
-        });
+
+        toast({ title: 'Success', description: 'Testimonial created successfully' });
       }
 
       resetForm();
@@ -130,35 +123,24 @@ const TestimonialManagement = () => {
       content: testimonial.content,
       rating: testimonial.rating,
       location: testimonial.location,
+      source: testimonial.source,
       visible: testimonial.visible
     });
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this testimonial? This action cannot be undone.')) return;
+  const handleDelete = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this testimonial?')) return;
 
     try {
-      const { error } = await supabase
-        .from('testimonials')
-        .delete()
-        .eq('id', id);
-
+      const { error } = await supabase.from('testimonials').delete().eq('id', id);
       if (error) throw error;
-      
-      toast({
-        title: 'Success',
-        description: 'Testimonial deleted successfully'
-      });
-      
+
+      toast({ title: 'Success', description: 'Testimonial deleted successfully' });
       await fetchTestimonials();
     } catch (error: any) {
       console.error('Error deleting testimonial:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to delete testimonial',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', variant: 'destructive', description: error.message });
     }
   };
 
@@ -166,27 +148,15 @@ const TestimonialManagement = () => {
     try {
       const { error } = await supabase
         .from('testimonials')
-        .update({ 
-          visible: !testimonial.visible,
-          updated_at: new Date().toISOString()
-        })
+        .update({ visible: !testimonial.visible })
         .eq('id', testimonial.id);
 
       if (error) throw error;
-      
-      toast({
-        title: 'Success',
-        description: `Testimonial ${!testimonial.visible ? 'shown' : 'hidden'} successfully`
-      });
-      
+
+      toast({ title: 'Success', description: `Testimonial ${!testimonial.visible ? 'shown' : 'hidden'} successfully` });
       await fetchTestimonials();
     } catch (error: any) {
-      console.error('Error updating testimonial:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to update testimonial',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', variant: 'destructive', description: error.message });
     }
   };
 
@@ -196,142 +166,83 @@ const TestimonialManagement = () => {
       content: '',
       rating: 5,
       location: '',
+      source: 'google',
       visible: true
     });
     setEditingTestimonial(null);
   };
 
-  const handleDialogClose = () => {
-    setIsDialogOpen(false);
-    resetForm();
-  };
+  const renderStars = (rating: number) => (
+    Array.from({ length: 5 }, (_, i) => (
+      <Star key={i} className={`h-4 w-4 ${i < rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} />
+    ))
+  );
 
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`h-4 w-4 ${i < rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
-      />
-    ));
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Testimonial Management</h2>
-          <p className="text-muted-foreground">Manage customer testimonials and reviews</p>
+          <h2 className="text-2xl font-bold font-serif text-slate-800 dark:text-white">Testimonials</h2>
+          <p className="text-slate-500">Manage customer reviews</p>
         </div>
-        
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setIsDialogOpen(open); }}>
           <DialogTrigger asChild>
-            <Button onClick={() => setIsDialogOpen(true)} className="sm:w-auto w-full">
-              <Plus className="mr-2 h-4 w-4" />
-              New Testimonial
+            <Button className="bg-amber-500 hover:bg-amber-600 text-white">
+              <Plus className="mr-2 h-4 w-4" /> Add Testimonial
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>{editingTestimonial ? 'Edit Testimonial' : 'Create New Testimonial'}</DialogTitle>
-              <DialogDescription>
-                {editingTestimonial ? 'Update the testimonial details' : 'Add a new customer testimonial to your website'}
-              </DialogDescription>
+              <DialogTitle>{editingTestimonial ? 'Edit Testimonial' : 'New Testimonial'}</DialogTitle>
+              <DialogDescription>Add a customer review from Google or TripAdvisor.</DialogDescription>
             </DialogHeader>
-            
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Customer Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter customer name"
-                  required
-                  maxLength={100}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="location">Location *</Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="Enter customer location"
-                  required
-                  maxLength={100}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="rating">Rating *</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="rating"
-                    type="number"
-                    min="1"
-                    max="5"
-                    value={formData.rating}
-                    onChange={(e) => setFormData({ ...formData, rating: parseInt(e.target.value) || 1 })}
-                    required
-                    className="w-20"
-                  />
-                  <div className="flex">
-                    {renderStars(formData.rating)}
-                  </div>
+            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Name</Label>
+                  <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required placeholder="John Doe" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Location</Label>
+                  <Input value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} required placeholder="USA" />
                 </div>
               </div>
-              
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Rating (1-5)</Label>
+                  <Input type="number" min="1" max="5" value={formData.rating} onChange={e => setFormData({ ...formData, rating: parseInt(e.target.value) })} required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Source</Label>
+                  <Select value={formData.source} onValueChange={(val: any) => setFormData({ ...formData, source: val })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="google">Google Reviews</SelectItem>
+                      <SelectItem value="tripadvisor">TripAdvisor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="content">Testimonial Content *</Label>
-                <Textarea
-                  id="content"
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  required
-                  className="min-h-[120px] resize-vertical"
-                  placeholder="Share the customer's experience and feedback..."
-                  maxLength={1000}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {formData.content.length}/1000 characters
-                </p>
+                <Label>Content</Label>
+                <Textarea value={formData.content} onChange={e => setFormData({ ...formData, content: e.target.value })} required rows={4} placeholder="Review text..." />
               </div>
-              
+
               <div className="flex items-center space-x-2">
-                <Switch
-                  id="visible"
-                  checked={formData.visible}
-                  onCheckedChange={(checked) => setFormData({ ...formData, visible: checked })}
-                />
-                <Label htmlFor="visible" className="cursor-pointer">
-                  Visible on website
-                </Label>
+                <Switch checked={formData.visible} onCheckedChange={c => setFormData({ ...formData, visible: c })} />
+                <Label>Visible on website</Label>
               </div>
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={handleDialogClose}
-                  disabled={submitting}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={submitting}
-                >
-                  {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {editingTestimonial ? 'Update' : 'Create'} Testimonial
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                <Button type="submit" disabled={submitting}>
+                  {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save
                 </Button>
               </div>
             </form>
@@ -340,83 +251,50 @@ const TestimonialManagement = () => {
       </div>
 
       <div className="grid gap-4">
-        {testimonials.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center h-32 text-center">
-              <p className="text-muted-foreground mb-2">No testimonials found</p>
-              <Button onClick={() => setIsDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Your First Testimonial
-              </Button>
+        {testimonials.map((t) => (
+          <Card key={t.id} className="overflow-hidden">
+            <CardHeader className="flex flex-row items-start justify-between p-4 pb-2 bg-slate-50 dark:bg-slate-900/50">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${t.source === 'google' ? 'bg-blue-500' : 'bg-emerald-500'}`}>
+                  {t.name.charAt(0)}
+                </div>
+                <div>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    {t.name}
+                    {t.source === 'google' ?
+                      <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase">Google</span> :
+                      <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full uppercase">TripAdvisor</span>
+                    }
+                  </CardTitle>
+                  <CardDescription className="flex items-center gap-2">
+                    {renderStars(t.rating)}
+                    <span className="text-xs">{t.location}</span>
+                  </CardDescription>
+                </div>
+              </div>
+              <div className="flex gap-1">
+                <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-amber-500" onClick={() => handleEdit(t)}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-red-500" onClick={() => handleDelete(t.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 pt-2">
+              <p className="text-sm text-slate-600 dark:text-slate-300 italic">"{t.content}"</p>
+              <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
+                <div className="flex items-center gap-2">
+                  <Switch checked={t.visible} onCheckedChange={() => toggleVisibility(t)} className="scale-75" />
+                  <span>{t.visible ? 'Visible' : 'Hidden'}</span>
+                </div>
+                {new Date(t.created_at).toLocaleDateString()}
+              </div>
             </CardContent>
           </Card>
-        ) : (
-          testimonials.map((testimonial) => (
-            <Card key={testimonial.id} className="overflow-hidden">
-              <CardHeader className="pb-3">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <CardTitle className="text-lg">{testimonial.name}</CardTitle>
-                      <Badge variant={testimonial.visible ? "default" : "secondary"}>
-                        {testimonial.visible ? 'Visible' : 'Hidden'}
-                      </Badge>
-                    </div>
-                    <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                      <span className="font-medium text-foreground/80">{testimonial.location}</span>
-                      <div className="flex items-center gap-1">
-                        {renderStars(testimonial.rating)}
-                        <span className="text-sm text-muted-foreground ml-1">
-                          ({testimonial.rating}/5)
-                        </span>
-                      </div>
-                    </CardDescription>
-                  </div>
-                  <div className="flex space-x-1 sm:space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => toggleVisibility(testimonial)}
-                      className="h-9 px-2 sm:px-3"
-                    >
-                      {testimonial.visible ? 'Hide' : 'Show'}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEdit(testimonial)}
-                      className="h-9 px-2 sm:px-3"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDelete(testimonial.id)}
-                      className="h-9 px-2 sm:px-3 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  "{testimonial.content}"
-                </p>
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-3 pt-3 border-t text-xs text-muted-foreground">
-                  <span>
-                    Created: {new Date(testimonial.created_at).toLocaleDateString()}
-                  </span>
-                  {testimonial.updated_at !== testimonial.created_at && (
-                    <span>
-                      Updated: {new Date(testimonial.updated_at).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))
+        ))}
+        {testimonials.length === 0 && (
+          <div className="text-center py-12 text-slate-500">No testimonials found. Add one to get started!</div>
         )}
       </div>
     </div>

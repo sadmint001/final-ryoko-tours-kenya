@@ -186,3 +186,123 @@ All colors MUST be HSL.
     @apply bg-background text-foreground pt-6;
   }
 }
+
+/* Hero Image Floating Animation - Creates a lively, breathing effect */
+@keyframes float-hero {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-15px) scale(1.02);
+  }
+}
+
+@keyframes float-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(15 85% 60% / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px hsl(43 96% 56% / 0.5);
+  }
+}
+
+.hero-float {
+  animation: float-hero 6s ease-in-out infinite;
+  will-change: transform;
+}
+
+.hero-float-subtle {
+  animation: float-subtle 4s ease-in-out infinite;
+  will-change: transform;
+}
+
+.shimmer-effect {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(43 96% 56% / 0.2) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* Icon Bounce Animation */
+@keyframes icon-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.icon-bounce:hover {
+  animation: icon-bounce 0.5s ease-in-out;
+}
+
+/* Tab Transition Effect */
+.tab-content-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.tab-content-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.3s ease-out;
+}
+
+/* Section Card Hover Effects */
+.section-card {
+  transition: all 0.3s ease;
+}
+
+.section-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px -15px hsl(25 35% 25% / 0.25);
+}
+
+/* Bullet Point Animation */
+@keyframes bullet-appear {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.bullet-animated {
+  animation: bullet-appear 0.3s ease-out forwards;
+}
+
+.bullet-animated:nth-child(1) { animation-delay: 0.1s; }
+.bullet-animated:nth-child(2) { animation-delay: 0.2s; }
+.bullet-animated:nth-child(3) { animation-delay: 0.3s; }
+.bullet-animated:nth-child(4) { animation-delay: 0.4s; }
+.bullet-animated:nth-child(5) { animation-delay: 0.5s; }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,25 +39,69 @@ const Contact = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const form = e.currentTarget; // Capture form reference immediately
     setLoading(true);
 
     try {
-      const form = e.currentTarget;
-      form.submit(); // Sends via FormSubmit
+      // 1. Send data to Supabase
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert([
+          {
+            name: formData.name,
+            email: formData.email,
+            subject: formData.subject,
+            message: formData.message,
+            created_at: new Date().toISOString(),
+            status: 'unread' // assuming a status column exists or default
+          }
+        ]);
+
+      if (error) {
+        console.error('Error saving message:', error);
+        throw error; // Throw to catch block to prevent form submission and show error
+      }
+
+      // 2. Submit form to FormSubmit (email service) via AJAX
+      // This prevents the redirect and "submit" errors, keeping the user on the site
+      try {
+        await fetch("https://formsubmit.co/ajax/info@ryokotoursafrica.com", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            subject: formData.subject,
+            message: formData.message,
+            _captcha: "false"
+          })
+        });
+      } catch (emailError) {
+        console.error("Email service error:", emailError);
+        // We don't block the success flow if email fails, since Supabase saved it.
+      }
+
       toast({
         title: "Message Sent!",
         description: "Thank you for contacting us. We'll get back to you within 24 hours.",
       });
       setFormData({ name: '', email: '', subject: '', message: '' });
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Submission error:", err);
       toast({
         title: "Error",
-        description: "There was an error sending your message. Please try again later.",
+        description: err.message || "There was an error sending your message. Please try again later.",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
+
+
 
   const contactInfo = [
     {
@@ -110,7 +155,7 @@ const Contact = () => {
           >
             Contact Us
           </motion.h1>
-          <p 
+          <p
             className="mt-4 text-lg md:text-xl max-w-2xl mx-auto"
             style={{ color: 'white' }}
           >
@@ -147,10 +192,8 @@ const Contact = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form 
-                  action="https://formsubmit.co/info@ryokotoursafrica.com" 
-                  method="POST" 
-                  onSubmit={handleSubmit} 
+                <form
+                  onSubmit={handleSubmit}
                   className="space-y-6"
                 >
                   <input type="hidden" name="_captcha" value="false" />
