@@ -83,41 +83,34 @@ const PartnersSection: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-center justify-items-center max-w-4xl mx-auto">
+        <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 max-w-5xl mx-auto">
           {items.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((p, index) => (
             <div
               key={p.id}
               aria-label={p.name}
-              className="w-full group"
+              className="group"
             >
               <div
                 className="
-                  relative overflow-hidden rounded-3xl
+                  relative overflow-hidden rounded-2xl
                   bg-white dark:bg-slate-800
                   border border-slate-200 dark:border-slate-700
-                  shadow-lg hover:shadow-2xl
-                  flex items-center justify-center p-8 h-64
+                  shadow-md hover:shadow-xl
+                  flex items-center justify-center p-6 w-32 h-32 md:w-40 md:h-40
                   transform transition-all duration-500
-                  hover:-translate-y-2 hover:scale-[1.02]
+                  hover:-translate-y-1 hover:scale-[1.05]
                 "
               >
-                {/* Floating particle effect on hover */}
-                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                  <Star className="w-4 h-4 text-amber-400 fill-amber-400 animate-pulse" />
-                </div>
-
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 dark:from-amber-500/10 dark:to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
                 <img
                   src={p.logo}
                   alt={p.alt || p.name}
-                  className="max-h-40 w-auto object-contain transition-all duration-500 filter grayscale group-hover:grayscale-0 group-hover:scale-110 drop-shadow-sm group-hover:drop-shadow-lg"
+                  className="h-14 w-14 md:h-16 md:w-16 object-contain transition-all duration-500 rotate-90 drop-shadow-sm group-hover:drop-shadow-md"
                   loading="lazy"
                 />
 
-                {/* Name shown on hover for accessibility/clarity */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-slate-800 dark:via-slate-800/90 translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex justify-center">
-                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{p.name}</span>
+                {/* Name shown on hover */}
+                <div className="absolute inset-0 flex items-end justify-center pb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tighter text-center px-2 line-clamp-1">{p.name}</span>
                 </div>
               </div>
             </div>

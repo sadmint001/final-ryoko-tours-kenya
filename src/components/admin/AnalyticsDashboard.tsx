@@ -81,51 +81,51 @@ const AnalyticsDashboard = () => {
         {/* Total Views */}
         <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-0 shadow-lg">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-white/80">Total Page Views</CardTitle>
+            <CardTitle className="text-sm font-bold text-white uppercase tracking-wider">Total Page Views</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-3xl font-bold">{stats.totalViews}</div>
-              <Eye className="h-8 w-8 text-white/50" />
+              <div className="text-4xl font-bold text-white">{stats.totalViews}</div>
+              <Eye className="h-10 w-10 text-white/40" />
             </div>
           </CardContent>
         </Card>
 
         {/* Unique Visitors */}
-        <Card className="bg-gradient-to-br from-blue-500 to-cyan-600 text-white border-0 shadow-lg">
+        <Card className="bg-gradient-to-br from-blue-500 to-cyan-600 text-white border-0 shadow-lg hover:shadow-cyan-500/10 transition-shadow">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-white/80">Unique Visitors</CardTitle>
+            <CardTitle className="text-sm font-bold text-white uppercase tracking-wider">Unique Visitors</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-3xl font-bold">{stats.uniqueVisitors}</div>
-              <Users className="h-8 w-8 text-white/50" />
+              <div className="text-4xl font-bold text-white">{stats.uniqueVisitors}</div>
+              <Users className="h-10 w-10 text-white/40" />
             </div>
           </CardContent>
         </Card>
 
         {/* Total Bookings */}
-        <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-0 shadow-lg">
+        <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-0 shadow-lg hover:shadow-emerald-500/10 transition-shadow">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-white/80">Total Bookings</CardTitle>
+            <CardTitle className="text-sm font-bold text-white uppercase tracking-wider">Total Bookings</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-3xl font-bold">{stats.totalBookings}</div>
-              <Calendar className="h-8 w-8 text-white/50" />
+              <div className="text-4xl font-bold text-white">{stats.totalBookings}</div>
+              <Calendar className="h-10 w-10 text-white/40" />
             </div>
           </CardContent>
         </Card>
 
         {/* Messages */}
-        <Card className="bg-gradient-to-br from-amber-500 to-orange-600 text-white border-0 shadow-lg">
+        <Card className="bg-gradient-to-br from-amber-500 to-orange-600 text-white border-0 shadow-lg hover:shadow-amber-500/10 transition-shadow">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-white/80">Messages</CardTitle>
+            <CardTitle className="text-sm font-bold text-white uppercase tracking-wider">Messages</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-3xl font-bold">{stats.totalMessages}</div>
-              <Mail className="h-8 w-8 text-white/50" />
+              <div className="text-4xl font-bold text-white">{stats.totalMessages}</div>
+              <Mail className="h-10 w-10 text-white/40" />
             </div>
           </CardContent>
         </Card>

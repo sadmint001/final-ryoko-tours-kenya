@@ -58,6 +58,17 @@ const tours: Tour[] = [
         gradient: 'from-lime-500 to-green-600',
         hoverGradient: 'group-hover:from-lime-400 group-hover:to-green-500',
         accentColor: 'lime'
+    },
+    {
+        key: 'Signature',
+        title: 'Signature Experience',
+        icon: <Sparkles className="w-6 h-6" />,
+        emoji: '✨',
+        desc: "Exclusively crafted journeys for the discerning traveler, featuring our most premium offerings",
+        tags: ['Private Safari', 'Luxury Stay', 'Unique Moments'],
+        gradient: 'from-indigo-600 to-purple-600',
+        hoverGradient: 'group-hover:from-indigo-500 group-hover:to-purple-500',
+        accentColor: 'purple'
     }
 ];
 
@@ -70,7 +81,7 @@ const FeaturedToursSection = () => {
     };
 
     return (
-        <section className="relative py-24 overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-500">
+        <section id="featured-tours" className="relative py-24 overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-500">
             {/* Decorative Background Elements - Light Mode */}
             <div className="absolute inset-0 overflow-hidden dark:hidden">
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-amber-100/50 to-orange-100/30 rounded-full blur-3xl"></div>
@@ -90,7 +101,7 @@ const FeaturedToursSection = () => {
             <div className="relative z-10 max-w-7xl mx-auto px-4">
                 {/* Section Header */}
                 <div className="text-center mb-16">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20 border border-amber-500/20 dark:border-amber-500/30 mb-6">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20 border border-amber-500/30 dark:border-amber-500/30 mb-6 font-medium">
                         <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                         <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Curated Experiences</span>
                     </div>
@@ -106,7 +117,7 @@ const FeaturedToursSection = () => {
                 </div>
 
                 {/* Tours Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                     {tours.map((tour, index) => (
                         <article
                             key={tour.key}
@@ -129,14 +140,14 @@ const FeaturedToursSection = () => {
                 shadow-lg hover:shadow-2xl
                 transform transition-all duration-500
                 hover:-translate-y-2 hover:scale-[1.02]
-                ${index === 0 ? 'md:col-span-2 lg:col-span-1' : ''}
+                ${index === 0 ? 'md:col-span-2 lg:col-span-2' : ''}
               `}
                         >
-                            {/* Animated gradient border on hover */}
+                            {/* Animated gradient background on hover */}
                             <div className={`absolute inset-0 bg-gradient-to-r ${tour.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl`}></div>
 
                             {/* Card inner content */}
-                            <div className="relative m-[2px] rounded-[22px] bg-white dark:bg-slate-800 p-8 h-full">
+                            <div className="relative m-[2px] rounded-[22px] bg-white dark:bg-slate-800 p-8 h-full transition-colors duration-500 group-hover:bg-transparent">
                                 {/* Top Row: Icon + Title + Arrow */}
                                 <div className="flex items-start justify-between mb-6">
                                     <div className="flex items-center gap-4">
@@ -149,6 +160,7 @@ const FeaturedToursSection = () => {
                       transform transition-all duration-500
                       group-hover:scale-110 group-hover:rotate-3
                       group-hover:shadow-xl
+                      group-hover:from-white group-hover:to-white
                     `}>
                                             <span className="text-3xl animate-bounce-subtle">{tour.emoji}</span>
                                             {/* Glow effect */}
@@ -156,15 +168,10 @@ const FeaturedToursSection = () => {
                                         </div>
 
                                         <div>
-                                            <h3 className="text-xl font-bold text-slate-800 dark:text-white font-serif group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text transition-all duration-300"
-                                                style={{
-                                                    backgroundImage: hoveredTour === tour.key
-                                                        ? `linear-gradient(to right, var(--tw-gradient-stops))`
-                                                        : 'none'
-                                                }}>
+                                            <h3 className="text-xl font-bold text-slate-800 dark:text-white font-serif transition-colors duration-300 group-hover:text-white">
                                                 {tour.title}
                                             </h3>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Explore experiences →</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 transition-colors duration-300 group-hover:text-white/80">Explore experiences →</p>
                                         </div>
                                     </div>
 
@@ -174,21 +181,21 @@ const FeaturedToursSection = () => {
                     bg-slate-100 dark:bg-slate-700
                     flex items-center justify-center
                     transform transition-all duration-500
-                    group-hover:bg-gradient-to-r ${tour.gradient}
+                    group-hover:bg-white
                     group-hover:scale-110
                     group-hover:shadow-lg
                   `}>
                                         <ArrowRight className={`
                       w-5 h-5 text-slate-400 dark:text-slate-500
                       transform transition-all duration-500
-                      group-hover:text-white
+                      group-hover:text-amber-600
                       group-hover:translate-x-1
                     `} />
                                     </div>
                                 </div>
 
                                 {/* Description */}
-                                <p className="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
+                                <p className="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed transition-colors duration-300 group-hover:text-white/90">
                                     {tour.desc}
                                 </p>
 
@@ -204,9 +211,10 @@ const FeaturedToursSection = () => {
                         text-slate-700 dark:text-slate-300
                         border border-slate-200 dark:border-slate-600
                         transform transition-all duration-300
-                        group-hover:bg-gradient-to-r group-hover:${tour.gradient}
-                        group-hover:text-white group-hover:border-transparent
+                        group-hover:bg-white/20
+                        group-hover:text-white group-hover:border-white/30
                         group-hover:shadow-md
+                        backdrop-blur-sm
                       `}
                                             style={{
                                                 transitionDelay: `${tagIndex * 50}ms`
@@ -220,10 +228,10 @@ const FeaturedToursSection = () => {
 
                                 {/* Floating particles on hover */}
                                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-                                    <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+                                    <Sparkles className="w-4 h-4 text-white animate-pulse" />
                                 </div>
                                 <div className="absolute bottom-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100">
-                                    <Sparkles className="w-3 h-3 text-amber-300 animate-pulse" />
+                                    <Sparkles className="w-3 h-3 text-white/80 animate-pulse" />
                                 </div>
                             </div>
                         </article>

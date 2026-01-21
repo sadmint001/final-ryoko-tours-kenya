@@ -26,9 +26,8 @@ const HeroSection = () => {
         {heroImages.map((image, index) => (
           <div
             key={index}
-            className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ${
-              index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-            }`}
+            className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+              }`}
             style={{ backgroundImage: `url(${image})` }}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-earth-brown/70 via-earth-brown/50 to-transparent"></div>
@@ -48,7 +47,7 @@ const HeroSection = () => {
           {/* Main Headline */}
           <h1 className="text-6xl md:text-8xl font-bold font-playfair mb-8 animate-fade-up leading-tight">
             <span className="block text-safari-cream">Experience</span>
-            <span className="block bg-gradient-luxury bg-clip-text text-transparent">Africa Beyond Safaris</span>
+            <span className="block bg-gradient-luxury bg-clip-text text-transparent">Africa Beyond Safari</span>
           </h1>
 
           {/* Description */}

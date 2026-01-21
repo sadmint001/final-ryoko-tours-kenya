@@ -1,103 +1,122 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Instagram } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Mail, Phone, MapPin, Instagram, Sparkles, MessageCircle, ArrowUpRight } from 'lucide-react';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleTourLinkClick = (e: React.MouseEvent, category: string) => {
+    e.preventDefault();
+    if (location.pathname === '/') {
+      const element = document.getElementById('featured-tours');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      navigate('/?scroll=featured-tours');
+    }
+  };
 
   const footerLinks = [
     {
-      title: "Quick Links",
+      title: "Navigation",
       links: [
         { name: "Home", href: "/" },
         { name: "Destinations", href: "/destinations" },
         { name: "About Us", href: "/about" },
         { name: "Contact", href: "/contact" },
-        { name: "Admin Login", href: "/admin" },
       ]
     },
     {
-      title: "Tour Types",
+      title: "Tour Experiences",
       links: [
-        { name: "Cultural Trips", href: "/destinations?category=Cultural" },
-        { name: "Safari Adventures", href: "/destinations?category=Wildlife" },
-        { name: "City Tours", href: "/destinations?category=Historical" },
-        { name: "Custom Experiences", href: "/destinations?category=Adventure" },
+        { name: "Wildlife Safari", href: "#", category: "Wildlife" },
+        { name: "Cultural & Arts", href: "#", category: "Historical" },
+        { name: "Nature & Hiking", href: "#", category: "Nature" },
+        { name: "Farming & Coffee", href: "#", category: "Farming" },
+        { name: "Signature Luxe", href: "#", category: "Signature" },
       ]
     },
     {
-      title: "Contact Info",
+      title: "Contact",
       links: [
         { name: "info@ryokotoursafrica.com", href: "mailto:info@ryokotoursafrica.com", icon: Mail },
-        { name: "0797758216", href: "https://wa.me/254797758216", icon: Phone },
+        { name: "+254 797 758 216", href: "https://wa.me/254797758216", icon: MessageCircle },
         { name: "Nairobi, Kenya", href: "https://www.google.com/maps/search/?api=1&query=Nairobi%2C%20Kenya", icon: MapPin },
       ]
     }
   ];
 
   return (
-    <footer className="bg-earth-brown text-white">
-      <div className="container mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Company Info */}
-          <div className="lg:col-span-1">
-            <h3 className="text-2xl font-bold font-playfair text-safari-gold mb-4">
-              Ryoko Tours Africa
-            </h3>
-            <p className="text-white/80 leading-relaxed mb-6">
-              Curated adventures, cultural moments, and unforgettable memories — 
-              from the wild to the streets of Kenya.
+    <footer className="relative bg-earth-brown dark:bg-[#0a0a0a] text-white pt-24 pb-12 overflow-hidden transition-colors duration-500">
+      {/* Exotic Cinematic Overlays */}
+      <div className="absolute inset-0 pointer-events-none opacity-40">
+        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-amber-600/10 dark:bg-amber-600/10 blur-[100px] rounded-full" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-orange-600/10 dark:bg-orange-600/10 blur-[100px] rounded-full" />
+      </div>
+
+      <div className="container mx-auto px-6 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
+          {/* Brand Identity */}
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <h3 className="text-3xl font-serif font-bold tracking-tight bg-gradient-to-r from-amber-200 via-amber-400 to-orange-500 bg-clip-text text-transparent">
+                RYOKO TOURS
+              </h3>
+              <div className="h-0.5 w-12 bg-amber-500" />
+            </div>
+            <p className="text-white/80 dark:text-slate-400 text-lg leading-relaxed font-medium">
+              Curating exotic African journeys that transcend traditional travel. Immerse yourself in the soul of Kenya through our authentic, high-end experiences.
             </p>
-            <div className="flex space-x-4">
-              <a 
-                href="https://wa.me/254797758216" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-safari-gold/20 transition-colors"
-              >
-                <Phone className="w-5 h-5" />
-              </a>
-              <a 
-                href="mailto:info@ryokotoursafrica.com"
-                className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-safari-gold/20 transition-colors"
-              >
-                <Mail className="w-5 h-5" />
-              </a>
-              <a 
-                href="https://instagram.com/ryokotoursafrica" 
-                className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-safari-gold/20 transition-colors"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
+            <div className="flex gap-4">
+              {[
+                { icon: MessageCircle, href: "https://wa.me/254797758216" },
+                { icon: Instagram, href: "https://instagram.com/ryokotoursafrica" },
+                { icon: Mail, href: "mailto:info@ryokotoursafrica.com" }
+              ].map((social, i) => (
+                <a
+                  key={i}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-12 h-12 bg-white/10 dark:bg-white/5 border border-white/20 rounded-2xl flex items-center justify-center hover:bg-amber-500/10 hover:border-amber-500/30 transition-all duration-300 group"
+                >
+                  <social.icon className="w-5 h-5 text-white/70 dark:text-slate-400 group-hover:text-amber-500 transition-colors" />
+                </a>
+              ))}
             </div>
           </div>
 
-          {/* Footer Links */}
+          {/* Dynamic Sections */}
           {footerLinks.map((section, index) => (
-            <div key={index}>
-              <h4 className="text-lg font-semibold font-playfair text-safari-gold mb-4">
+            <div key={index} className="space-y-8">
+              <h4 className="text-sm font-bold uppercase tracking-[0.3em] text-amber-500">
                 {section.title}
               </h4>
-              <ul className="space-y-3">
+              <ul className="space-y-4">
                 {section.links.map((link, linkIndex) => (
                   <li key={linkIndex}>
-                    {section.title === "Contact Info" ? (
+                    {section.title === "Tour Experiences" ? (
                       <a
                         href={link.href}
-                        className="text-white/80 hover:text-safari-gold transition-colors duration-300 flex items-center gap-2"
-                        target={link.href.startsWith('http') ? '_blank' : undefined}
-                        rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                        onClick={(e) => link.category && handleTourLinkClick(e, link.category)}
+                        className="text-white/70 dark:text-slate-400 hover:text-white transition-all duration-300 flex items-center gap-2 group text-lg"
                       >
-                        {link.icon && <link.icon className="w-4 h-4" />}
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 opacity-0 group-hover:opacity-100 transition-all" />
                         {link.name}
+                        <ArrowUpRight className="w-4 h-4 opacity-0 -translate-y-1 translate-x-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0 transition-all" />
                       </a>
                     ) : (
-                      <Link
-                        to={link.href}
-                        className="text-white/80 hover:text-safari-gold transition-colors duration-300"
+                      <a
+                        href={link.href}
+                        className="text-white/70 dark:text-slate-400 hover:text-white transition-all duration-300 flex items-center gap-3 group text-lg"
                       >
+                        {link.icon && <link.icon className="w-5 h-5 text-amber-500/80" />}
                         {link.name}
-                      </Link>
+                      </a>
                     )}
                   </li>
                 ))}
@@ -106,18 +125,24 @@ const Footer = () => {
           ))}
         </div>
 
-        {/* Bottom Section */}
-        <div className="border-t border-white/20 mt-12 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-white/60 text-sm">
-              © {currentYear} Ryoko Tours Africa. All rights reserved.
-            </p>
-            <div className="flex space-x-6 mt-4 md:mt-0">
-              <Link to="#" className="text-white/60 hover:text-safari-gold text-sm transition-colors">
-                Privacy Policy
+        {/* Global Branding Bottom Bar */}
+        <div className="pt-12 border-t border-white/10 dark:border-white/5">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+            <div className="flex items-center gap-3">
+              <Sparkles className="w-5 h-5 text-amber-500" />
+              <p className="text-white/60 dark:text-slate-500 text-sm font-medium tracking-wide">
+                © {currentYear} RYOKO TOURS AFRICA. BEYOND IMAGINATION.
+              </p>
+            </div>
+            <div className="flex gap-10">
+              <Link to="/admin" className="text-white/50 dark:text-slate-600 hover:text-amber-500 text-xs font-bold uppercase tracking-widest transition-colors">
+                Registry
               </Link>
-              <Link to="#" className="text-white/60 hover:text-safari-gold text-sm transition-colors">
-                Terms of Service
+              <Link to="#" className="text-white/50 dark:text-slate-600 hover:text-amber-500 text-xs font-bold uppercase tracking-widest transition-colors">
+                Ethics
+              </Link>
+              <Link to="#" className="text-white/50 dark:text-slate-600 hover:text-amber-500 text-xs font-bold uppercase tracking-widest transition-colors">
+                Privacy
               </Link>
             </div>
           </div>

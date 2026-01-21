@@ -2,18 +2,14 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { Menu, X, User, LogOut, Languages } from 'lucide-react';
+import { Menu, X, User, LogOut, Languages, ChevronDown, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 
-// ✅ Enhanced Google Translate Component for Navbar
-const GoogleTranslate: React.FC = () => {
-  const [isInitialized, setIsInitialized] = useState(false);
-
+// ✅ Silent Google Translate Provider (Handles only script and initialization)
+const GoogleTranslateProvider: React.FC = () => {
   useEffect(() => {
     const scriptId = 'google-translate-script';
-    
-    // Prevent multiple script loads
     if (!document.getElementById(scriptId)) {
       const addScript = document.createElement('script');
       addScript.id = scriptId;
@@ -22,257 +18,153 @@ const GoogleTranslate: React.FC = () => {
       document.body.appendChild(addScript);
     }
 
-    // Initialize Google Translate
     (window as any).googleTranslateElementInit = () => {
-      // Clean up any existing instances
-      const existingElement = document.getElementById('google_translate_element_navbar');
-      if (existingElement) {
-        existingElement.innerHTML = '';
+      new (window as any).google.translate.TranslateElement(
+        {
+          pageLanguage: 'en',
+          includedLanguages: 'en,ja,zh-CN,fr,de,es,it,ar',
+          autoDisplay: false,
+        },
+        'google-translate-silent-holder'
+      );
+    };
+
+    // Aggressive cleanup interval
+    const cleanupInterval = setInterval(() => {
+      // Hide banner frames
+      const banners = document.querySelectorAll('.goog-te-banner-frame');
+      banners.forEach(b => (b as HTMLElement).style.display = 'none');
+
+      // Reset body position which Google often shifts
+      if (document.body.style.top !== '0px') {
+        document.body.style.top = '0px';
       }
 
-      if (document.getElementById('google_translate_element_navbar')) {
-        try {
-          new (window as any).google.translate.TranslateElement(
-            {
-              pageLanguage: 'en',
-              includedLanguages: 'en,ja,zh-CN,zh-TW,ko,fr,de,es,it,ru,ar,pt',
-              layout: (window as any).google.translate.TranslateElement.InlineLayout.SIMPLE,
-              autoDisplay: false,
-            },
-            'google_translate_element_navbar'
-          );
-          setIsInitialized(true);
-          
-          // Force the widget to stay visible
-          restoreTranslateWidget();
-        } catch (error) {
-          console.warn('Google Translate initialization error:', error);
-        }
+      // Remove Google's injected <iframe> that causes the top bar
+      const skipIframe = document.querySelector('.skiptranslate iframe');
+      if (skipIframe) {
+        (skipIframe.parentElement as HTMLElement).style.display = 'none';
       }
-    };
 
-    // If script is already loaded, initialize immediately
-    if ((window as any).google?.translate?.TranslateElement) {
-      (window as any).googleTranslateElementInit();
-    }
+      // Hide tooltips
+      const tooltips = document.querySelectorAll('#goog-gt-tt');
+      tooltips.forEach(t => (t as HTMLElement).style.display = 'none');
+    }, 500);
 
-    // Set up interval to maintain the widget
-    const intervalId = setInterval(() => {
-      restoreTranslateWidget();
-    }, 1000);
-
-    // Restore on route changes
-    const restoreOnNavigation = () => {
-      setTimeout(restoreTranslateWidget, 100);
-    };
-
-    window.addEventListener('popstate', restoreOnNavigation);
-    window.addEventListener('pushState', restoreOnNavigation);
-
-    // Cleanup function
-    return () => {
-      clearInterval(intervalId);
-      window.removeEventListener('popstate', restoreOnNavigation);
-      window.removeEventListener('pushState', restoreOnNavigation);
-    };
+    return () => clearInterval(cleanupInterval);
   }, []);
 
-  // Function to restore and maintain the translate widget
-  const restoreTranslateWidget = () => {
-    // Remove Google's banner that hides content
-    const banners = document.querySelectorAll('.goog-te-banner-frame');
-    banners.forEach(banner => {
-      if (banner.parentNode) {
-        banner.parentNode.removeChild(banner);
-      }
-    });
+  return <div id="google-translate-silent-holder" className="hidden invisible h-0 w-0 overflow-hidden" />;
+};
 
-    // Remove the top bar that pushes content down
-    const topBar = document.querySelector('.goog-te-banner-frame');
-    if (topBar) {
-      (topBar as HTMLElement).style.display = 'none';
+// ✅ Custom Language Switcher Component
+const CustomLanguageSwitcher = () => {
+  const [currentLang, setCurrentLang] = useState('English');
+  const [isTranslating, setIsTranslating] = useState(false);
+
+  const languages = [
+    { code: 'en', name: 'English', flag: '🇬🇧' },
+    { code: 'ja', name: 'Japanese', flag: '🇯🇵' },
+    { code: 'zh-CN', name: 'Chinese', flag: '🇨🇳' },
+    { code: 'fr', name: 'French', flag: '🇫🇷' },
+    { code: 'de', name: 'German', flag: '🇩🇪' },
+    { code: 'it', name: 'Italian', flag: '🇮🇹' },
+    { code: 'es', name: 'Spanish', flag: '🇪🇸' },
+  ];
+
+  const changeLanguage = (langCode: string, langName: string) => {
+    if (langName === currentLang) return;
+
+    // Start smooth transition
+    setIsTranslating(true);
+
+    const googleCombo = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+    if (googleCombo) {
+      googleCombo.value = langCode;
+      googleCombo.dispatchEvent(new Event('change'));
+      setCurrentLang(langName);
+      localStorage.setItem('ryoko-selected-lang', langCode);
+
+      // End transition after Google has had a moment to work
+      setTimeout(() => setIsTranslating(false), 1200);
+    } else {
+      setIsTranslating(false);
     }
-
-    // Ensure the translate widget container is visible
-    const translateContainer = document.getElementById('google_translate_element_navbar');
-    if (translateContainer) {
-      translateContainer.style.display = 'block';
-      translateContainer.style.visibility = 'visible';
-      translateContainer.style.opacity = '1';
-    }
-
-    // Remove any iframes that might cover content
-    const iframes = document.querySelectorAll('.goog-te-banner-frame iframe');
-    iframes.forEach(iframe => {
-      (iframe as HTMLElement).style.display = 'none';
-    });
   };
 
-  // Apply custom styles
+  // Restore language on mount
   useEffect(() => {
-    const style = document.createElement('style');
-    style.innerHTML = `
-      /* Completely hide Google Translate banner and branding */
-      .goog-te-banner-frame {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0 !important;
-        width: 0 !important;
-        opacity: 0 !important;
-        position: absolute !important;
-        z-index: -9999 !important;
-      }
-      
-      .goog-te-banner {
-        display: none !important;
-      }
-      
-      .goog-logo-link {
-        display: none !important;
-      }
-      
-      .goog-te-gadget span {
-        display: none !important;
-      }
-      
-      /* Hide the language bar that appears at top */
-      .goog-te-banner-frame.skiptranslate {
-        display: none !important;
-        visibility: hidden !important;
-      }
-      
-      body {
-        top: 0 !important;
-      }
-      
-      /* Style the select dropdown to match your theme */
-      .goog-te-gadget {
-        color: transparent !important;
-        font-size: 0 !important;
-      }
-      
-      .goog-te-gadget select {
-        background: hsl(var(--background));
-        border: 1px solid hsl(var(--border));
-        border-radius: 6px;
-        padding: 6px 32px 6px 12px;
-        color: hsl(var(--foreground));
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='hsl(var(--foreground))' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 8px center;
-        background-size: 16px;
-        min-width: 140px;
-        transition: all 0.2s ease-in-out;
-      }
-      
-      .goog-te-gadget select:hover {
-        border-color: hsl(var(--primary));
-        background-color: hsl(var(--accent));
-      }
-      
-      .goog-te-gadget select:focus {
-        outline: none;
-        border-color: hsl(var(--primary));
-        box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
-      }
-      
-      /* Mobile styles */
-      @media (max-width: 768px) {
-        .goog-te-gadget select {
-          width: 100%;
-          margin-top: 8px;
-          min-width: unset;
-        }
-        
-        #google_translate_element_navbar {
-          width: 100%;
-        }
-      }
-      
-      /* Ensure the widget container is always visible */
-      #google_translate_element_navbar {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        position: relative !important;
-        z-index: 50 !important;
-      }
-      
-      /* Prevent page shift when translate loads */
-      body {
-        margin-top: 0 !important;
-        position: static !important;
-      }
-      
-      /* Hide any Google translate iframes */
-      .goog-te-banner-frame,
-      .goog-te-menu-frame,
-      .goog-te-ftab-frame {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        height: 0 !important;
-        width: 0 !important;
-      }
-    `;
-    document.head.appendChild(style);
-
-    // Apply styles immediately and on interval
-    restoreTranslateWidget();
-    const styleInterval = setInterval(restoreTranslateWidget, 2000);
-
-    return () => {
-      document.head.removeChild(style);
-      clearInterval(styleInterval);
-    };
-  }, [isInitialized]);
-
-  // Additional effect to handle route changes and maintain widget
-  useEffect(() => {
-    const handleRouteChange = () => {
-      // Small delay to ensure DOM is updated after route change
-      setTimeout(() => {
-        restoreTranslateWidget();
-        
-        // Re-initialize if widget is missing
-        const widget = document.getElementById('google_translate_element_navbar');
-        if (widget && !widget.querySelector('select')) {
-          if ((window as any).google?.translate?.TranslateElement) {
-            (window as any).googleTranslateElementInit();
+    const saved = localStorage.getItem('ryoko-selected-lang');
+    if (saved) {
+      const lang = languages.find(l => l.code === saved);
+      if (lang) {
+        const checkReady = setInterval(() => {
+          const googleCombo = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+          if (googleCombo) {
+            // Silently update without the full transition on initial load
+            googleCombo.value = lang.code;
+            googleCombo.dispatchEvent(new Event('change'));
+            setCurrentLang(lang.name);
+            clearInterval(checkReady);
           }
-        }
-      }, 500);
-    };
-
-    // Listen for route changes
-    window.addEventListener('popstate', handleRouteChange);
-    
-    // Override pushState to detect navigation
-    const originalPushState = history.pushState;
-    history.pushState = function(...args) {
-      originalPushState.apply(this, args);
-      handleRouteChange();
-    };
-
-    return () => {
-      window.removeEventListener('popstate', handleRouteChange);
-      history.pushState = originalPushState;
-    };
+        }, 300);
+        setTimeout(() => clearInterval(checkReady), 10000);
+      }
+    }
   }, []);
 
   return (
-    <div className="flex items-center">
-      <Languages className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
-      <div 
-        id="google_translate_element_navbar"
-        className="google-translate-container"
-        key="google-translate-widget" // Force re-render
-      ></div>
-    </div>
+    <>
+      {/* Premium Translation Overlay */}
+      {isTranslating && (
+        <div className="fixed inset-0 z-[1000] bg-background/60 backdrop-blur-md flex items-center justify-center transition-opacity duration-500 animate-in fade-in">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-primary font-serif italic text-lg animate-pulse">Translating Experience...</p>
+          </div>
+        </div>
+      )}
+
+      <div className="relative group">
+        <button className="flex items-center gap-2 px-3 py-2 rounded-full bg-accent/30 hover:bg-accent/50 border border-slate-200 dark:border-white/20 transition-all duration-300 backdrop-blur-sm">
+          <Languages className="w-4 h-4 text-primary" />
+          <span className="text-xs font-bold uppercase tracking-widest hidden lg:inline">{currentLang}</span>
+          <ChevronDown className="w-3 h-3 text-muted-foreground group-hover:rotate-180 transition-transform" />
+        </button>
+
+        {/* Dropdown Menu */}
+        <div className="absolute top-full right-0 mt-3 w-56 bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-white/20 rounded-2xl shadow-luxury opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[100] overflow-hidden backdrop-blur-xl scale-95 group-hover:scale-100 origin-top-right">
+          <div className="py-2 max-h-[350px] overflow-y-auto custom-scrollbar">
+            <div className="px-4 py-2 border-b border-border/50 mb-1">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Select Language</span>
+            </div>
+            {languages.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => changeLanguage(lang.code, lang.name)}
+                className={`
+                  w-full text-left px-4 py-3 
+                  hover:bg-primary/10 hover:text-primary 
+                  transition-all duration-200 
+                  flex items-center justify-between group/item
+                  ${currentLang === lang.name ? 'bg-primary/5 text-primary' : ''}
+                `}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl drop-shadow-sm group-hover/item:scale-110 transition-transform">{lang.flag}</span>
+                  <span className={`text-sm ${currentLang === lang.name ? 'font-bold' : 'font-medium'}`}>{lang.name}</span>
+                </div>
+                {currentLang === lang.name && (
+                  <div className="w-5 h-5 bg-primary/20 rounded-full flex items-center justify-center">
+                    <Check className="w-3 h-3 text-primary" />
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 
@@ -302,9 +194,9 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link to="/" className="group">
-              <img 
-                src="/lovable-uploads/7fb62c94-7164-4789-bdf7-04075cd81dc5.jpg" 
-                alt="Ryoko Africa Tours Logo" 
+              <img
+                src="/lovable-uploads/7fb62c94-7164-4789-bdf7-04075cd81dc5.jpg"
+                alt="Ryoko Africa Tours Logo"
                 className="h-14 w-14 md:h-16 md:w-16 object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-sm"
               />
             </Link>
@@ -317,26 +209,25 @@ const Navbar = () => {
                 <Link
                   key={link.name}
                   to={link.href}
-                  className={`text-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium font-opensans transition-colors duration-300 hover:bg-accent/50 ${
-                    location.pathname === link.href ? 'text-primary bg-accent/30' : ''
-                  }`}
+                  className={`text-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium font-opensans transition-colors duration-300 hover:bg-accent/50 ${location.pathname === link.href ? 'text-primary bg-accent/30' : ''
+                    }`}
                 >
                   {link.name}
                 </Link>
               ))}
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <ThemeToggle />
-              {/* Google Translate - Always available */}
-              <GoogleTranslate />
+              <GoogleTranslateProvider />
+              <CustomLanguageSwitcher />
               {user ? (
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2 text-muted-foreground">
                     <User className="w-4 h-4" />
                     <span className="text-sm">{user.email}</span>
                   </div>
-                  <Button 
+                  <Button
                     onClick={handleSignOut}
                     variant="outline"
                     size="sm"
@@ -381,24 +272,23 @@ const Navbar = () => {
                 <Link
                   key={link.name}
                   to={link.href}
-                  className={`text-foreground hover:text-primary block px-3 py-2 rounded-md text-base font-medium font-opensans transition-colors duration-300 ${
-                    location.pathname === link.href ? 'text-primary bg-accent/30' : ''
-                  }`}
+                  className={`text-foreground hover:text-primary block px-3 py-2 rounded-md text-base font-medium font-opensans transition-colors duration-300 ${location.pathname === link.href ? 'text-primary bg-accent/30' : ''
+                    }`}
                   onClick={() => setIsOpen(false)}
                 >
                   {link.name}
                 </Link>
               ))}
-              
+
               <div className="space-y-2 pt-4 border-t border-border">
                 <div className="px-3">
                   <ThemeToggle />
                 </div>
                 <div className="px-3">
-                  <GoogleTranslate />
+                  <CustomLanguageSwitcher />
                 </div>
               </div>
-              
+
               {user ? (
                 <div className="space-y-4 pt-4 border-t border-border">
                   <div className="flex items-center space-x-2 text-muted-foreground px-3">
@@ -406,7 +296,7 @@ const Navbar = () => {
                     <span className="text-sm">{user.email}</span>
                   </div>
                   <div className="px-3">
-                    <Button 
+                    <Button
                       onClick={handleSignOut}
                       variant="outline"
                       className="w-full"

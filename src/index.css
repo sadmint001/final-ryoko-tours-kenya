@@ -52,7 +52,7 @@ All colors MUST be HSL.
     --savanna-tan: 35 30% 75%;
     --safari-cream: 35 15% 95%;
     --cultural-amber: 35 85% 65%;
-    
+
     /* Sophisticated Gradients */
     --gradient-sunset: linear-gradient(135deg, hsl(15 85% 60%), hsl(43 96% 56%));
     --gradient-earth: linear-gradient(135deg, hsl(25 35% 25%), hsl(35 30% 35%));
@@ -60,7 +60,7 @@ All colors MUST be HSL.
     --gradient-luxury: linear-gradient(135deg, hsl(43 96% 56%), hsl(15 85% 60%), hsl(12 70% 55%));
     --gradient-warm: linear-gradient(180deg, hsl(35 15% 98%), hsl(35 20% 96%));
     --gradient-safari: linear-gradient(45deg, hsl(43 96% 56%), hsl(15 85% 60%));
-    
+
     /* Premium Shadows */
     --shadow-warm: 0 12px 40px -15px hsl(25 35% 25% / 0.25);
     --shadow-luxury: 0 8px 32px -8px hsl(15 85% 60% / 0.2);
@@ -126,6 +126,7 @@ All colors MUST be HSL.
 
 /* Ensure normal (light) mode text is black across the site */
 @layer base {
+
   /* Base text color for light mode */
   html:not(.dark) {
     color: #000 !important;
@@ -146,6 +147,7 @@ All colors MUST be HSL.
 }
 
 @layer base {
+
   /* Force key text tokens to black in light mode so all tailwind utilities using them render dark text */
   html:not(.dark) {
     /* When your theme uses hsl(var(--foreground)) this sets that var to black */
@@ -156,6 +158,54 @@ All colors MUST be HSL.
     --popover-foreground: 0 0% 0%;
     /* ensure any primary text utility that uses --primary doesn't become unreadable */
     --primary: 0 0% 0%;
+  }
+
+  /* --- Google Translate Seamless Integration --- */
+  html {
+    top: 0 !important;
+  }
+
+  body {
+    top: 0 !important;
+    position: static !important;
+  }
+
+  .goog-te-banner-frame,
+  .goog-te-banner-frame.skiptranslate,
+  .goog-te-banner,
+  .goog-te-menu-value,
+  .goog-te-gadget-icon,
+  .goog-te-gadget span,
+  iframe.goog-te-banner-frame,
+  #goog-gt-tt,
+  .goog-te-balloon-frame,
+  .skiptranslate>iframe,
+  .goog-tooltip,
+  .goog-tooltip:hover {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    z-index: -9999 !important;
+  }
+
+  .goog-text-highlight {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Hide Google's automatic tooltip on hover */
+  #goog-gt-tt,
+  .goog-te-balloon-frame,
+  .goog-te-balloon-frame-active {
+    display: none !important;
+  }
+
+  .goog-te-spinner-pos {
+    display: none !important;
   }
 
   /* Fallback overrides for common light-mode utility classes that may be hardcoded */
@@ -189,18 +239,24 @@ All colors MUST be HSL.
 
 /* Hero Image Floating Animation - Creates a lively, breathing effect */
 @keyframes float-hero {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) scale(1);
   }
+
   50% {
     transform: translateY(-15px) scale(1.02);
   }
 }
 
 @keyframes float-subtle {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-8px);
   }
@@ -210,15 +266,19 @@ All colors MUST be HSL.
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 20px hsl(15 85% 60% / 0.3);
   }
+
   50% {
     box-shadow: 0 0 40px hsl(43 96% 56% / 0.5);
   }
@@ -235,12 +295,10 @@ All colors MUST be HSL.
 }
 
 .shimmer-effect {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    hsl(43 96% 56% / 0.2) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      hsl(43 96% 56% / 0.2) 50%,
+      transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 3s ease-in-out infinite;
 }
@@ -251,9 +309,12 @@ All colors MUST be HSL.
 
 /* Icon Bounce Animation */
 @keyframes icon-bounce {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-4px);
   }
@@ -291,6 +352,7 @@ All colors MUST be HSL.
     opacity: 0;
     transform: translateX(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -301,8 +363,40 @@ All colors MUST be HSL.
   animation: bullet-appear 0.3s ease-out forwards;
 }
 
-.bullet-animated:nth-child(1) { animation-delay: 0.1s; }
-.bullet-animated:nth-child(2) { animation-delay: 0.2s; }
-.bullet-animated:nth-child(3) { animation-delay: 0.3s; }
-.bullet-animated:nth-child(4) { animation-delay: 0.4s; }
-.bullet-animated:nth-child(5) { animation-delay: 0.5s; }
+.bullet-animated:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.bullet-animated:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.bullet-animated:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.bullet-animated:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.bullet-animated:nth-child(5) {
+  animation-delay: 0.5s;
+}
+
+.ease-out-expo {
+  transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1) !important;
+}
+
+@keyframes ken-burns {
+  from {
+    transform: scale(1.1);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+.animate-ken-burns {
+  animation: ken-burns 15s ease-out-expo infinite alternate;
+}

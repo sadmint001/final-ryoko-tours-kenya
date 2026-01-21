@@ -236,51 +236,78 @@ const Destinations: React.FC = () => {
   // Block page until residency selected
   if (!selectedResidency) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-500">
+      <div className="min-h-screen bg-slate-900 relative flex flex-col transition-colors duration-500 overflow-hidden">
         <Navbar />
 
-        {/* Decorative Background */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-amber-500/10 to-transparent rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-orange-500/10 to-transparent rounded-full blur-3xl"></div>
+        {/* Epic Immersive Background */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/images/safari/safari_path.jpg"
+            alt="Safari Path"
+            className="w-full h-full object-cover scale-105 animate-in fade-in zoom-in duration-1000"
+          />
+          {/* Advanced Overlays */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />
         </div>
 
-        <main className="container mx-auto px-4 py-20 relative z-10 flex flex-col items-center justify-center min-h-[80vh]">
-          <div className="max-w-xl w-full text-center space-y-8 p-10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-white/10">
-            <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg rotate-3 mb-6">
-              <Globe className="w-10 h-10 text-white" />
+        <main className="flex-grow container mx-auto px-4 relative z-10 flex flex-col items-center justify-center py-10 mt-12">
+          <div className="max-w-lg w-full text-center space-y-6 p-8 bg-white/10 dark:bg-black/20 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/20 relative group">
+            {/* Clipping Layer for glossy shine only */}
+            <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden pointer-events-none">
+              <div className="absolute -top-[50%] -left-[50%] w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(255,255,255,0.1)_0%,transparent_70%)]" />
             </div>
 
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-800 dark:text-white">
-              Karibu Kenya
-            </h2>
-            <p className="text-lg text-slate-600 dark:text-slate-300">
-              To show you the best customized rates, please confirm your residency status.
-            </p>
+            <div className="relative space-y-6">
+              <div className="w-20 h-20 bg-white rounded-2xl mx-auto flex items-center justify-center shadow-luxury rotate-6 group-hover:rotate-0 transition-all duration-500 overflow-hidden border-2 border-amber-500/20">
+                <img
+                  src="/lovable-uploads/7fb62c94-7164-4789-bdf7-04075cd81dc5.jpg"
+                  alt="Ryoko Logo"
+                  className="w-full h-full object-cover"
+                />
+              </div>
 
-            <div ref={residencyMenuRef} className="relative w-full max-w-sm mx-auto">
-              <Button
-                className="w-full h-14 text-lg bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group"
-                onClick={() => setShowResidencyMenu(s => !s)}
-              >
-                <span>Select Residency</span>
-                <ChevronDown className={`ml-2 w-5 h-5 transition-transform duration-300 ${showResidencyMenu ? 'rotate-180' : ''}`} />
-              </Button>
+              <div className="space-y-3">
+                <h2 className="text-3xl md:text-4xl font-serif font-bold text-white drop-shadow-lg">
+                  Karibu Kenya
+                </h2>
+                <div className="h-0.5 w-16 bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto" />
+                <p className="text-lg text-white/90 font-medium leading-relaxed drop-shadow-md px-4">
+                  To provide you with our most exclusive curated rates, please indicate your residency.
+                </p>
+              </div>
 
-              {showResidencyMenu && (
-                <div className="absolute top-full left-0 right-0 mt-3 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden border border-slate-100 dark:border-slate-700 animate-in fade-in zoom-in-95 duration-200">
-                  {residencyOptions.map((opt) => (
-                    <button
-                      key={opt.key}
-                      className="w-full text-left px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-700 last:border-b-0 transition-colors flex items-center justify-between group"
-                      onClick={() => handleSelectResidency(opt.key)}
-                    >
-                      <span className="font-medium">{opt.label}</span>
-                      <Check className="w-4 h-4 text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div ref={residencyMenuRef} className="relative w-full max-w-sm mx-auto pt-2">
+                <Button
+                  className="w-full h-14 text-lg bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-2xl shadow-luxury hover:shadow-glow transition-all duration-500 group overflow-hidden border border-white/10"
+                  onClick={() => setShowResidencyMenu(s => !s)}
+                >
+                  <span className="relative z-10 font-bold tracking-wide uppercase flex items-center gap-3">
+                    <Sparkles className="w-5 h-5 text-amber-200" />
+                    Select Residency
+                  </span>
+                  <ChevronDown className={`ml-2 w-5 h-5 transition-transform duration-500 relative z-10 ${showResidencyMenu ? 'rotate-180' : ''}`} />
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                </Button>
+
+                {showResidencyMenu && (
+                  <div className="absolute top-full left-0 right-0 mt-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-luxury border border-white/20 overflow-hidden z-[100] animate-in slide-in-from-top-4 duration-300">
+                    {residencyOptions.map((opt) => (
+                      <button
+                        key={opt.key}
+                        className="w-full text-left px-6 py-3 hover:bg-amber-500/10 text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 last:border-b-0 transition-all flex items-center justify-between group/item"
+                        onClick={() => handleSelectResidency(opt.key)}
+                      >
+                        <span className="font-bold text-base group-hover/item:translate-x-2 transition-transform duration-300">{opt.label}</span>
+                        <div className="w-6 h-6 rounded-full bg-amber-500/0 group-hover/item:bg-amber-500/20 flex items-center justify-center transition-colors">
+                          <Check className="w-4 h-4 text-amber-500 opacity-0 group-hover/item:opacity-100 transition-all transform scale-50 group-hover/item:scale-100" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </main>
@@ -386,9 +413,10 @@ const Destinations: React.FC = () => {
                   {[
                     { id: 'all', name: 'All' },
                     { id: 'Wildlife', name: 'Wildlife' },
-                    { id: 'Cultural', name: 'Cultural' },
-                    { id: 'Historical', name: 'Historical' },
-                    { id: 'Adventure', name: 'Adventure' },
+                    { id: 'Nature', name: 'Nature & Adventure' },
+                    { id: 'Historical', name: 'History & Culture' },
+                    { id: 'Farming', name: 'Farming' },
+                    { id: 'Signature', name: 'Signature' },
                   ].map(c => (
                     <button
                       key={c.id}
