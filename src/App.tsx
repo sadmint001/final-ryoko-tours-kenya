@@ -21,6 +21,7 @@ const DestinationDetails = lazy(() => import("./pages/DestinationDetails"));
 const WhyUs = lazy(() => import("./pages/WhyUs"));
 const BookingSuccess = lazy(() => import("./pages/BookingSuccess"));
 const Admin = lazy(() => import("./pages/Admin"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading component for Suspense fallback
@@ -52,6 +53,8 @@ const App = () => (
                     <Route path="/WhyUs" element={<Navigate to="/why-us" replace />} />
                     <Route path="/whyus" element={<Navigate to="/why-us" replace />} />
                     <Route path="/contact" element={<Contact />} />
+                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
                     <Route path="/booking-success" element={<BookingSuccess />} />
                     <Route path="/admin" element={<Admin />} />
                     <Route path="/blog" element={<Blog />} />

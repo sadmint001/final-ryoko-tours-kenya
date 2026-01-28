@@ -27,6 +27,7 @@ const Footer = () => {
         { name: "Destinations", href: "/destinations" },
         { name: "About Us", href: "/about" },
         { name: "Contact", href: "/contact" },
+        { name: "Privacy Policy", href: "/privacy-policy" },
         { name: "Admin Portal", href: "/admin" },
       ]
     },
@@ -111,13 +112,23 @@ const Footer = () => {
                         <ArrowUpRight className="w-4 h-4 opacity-0 -translate-y-1 translate-x-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0 transition-all" />
                       </a>
                     ) : (
-                      <a
-                        href={link.href}
-                        className="text-white/70 dark:text-slate-400 hover:text-white transition-all duration-300 flex items-center gap-3 group text-lg"
-                      >
-                        {link.icon && <link.icon className="w-5 h-5 text-amber-500/80" />}
-                        {link.name}
-                      </a>
+                      link.href.startsWith('http') || link.href.startsWith('mailto') ? (
+                        <a
+                          href={link.href}
+                          className="text-white/70 dark:text-slate-400 hover:text-white transition-all duration-300 flex items-center gap-3 group text-lg"
+                        >
+                          {link.icon && <link.icon className="w-5 h-5 text-amber-500/80" />}
+                          {link.name}
+                        </a>
+                      ) : (
+                        <Link
+                          to={link.href}
+                          className="text-white/70 dark:text-slate-400 hover:text-white transition-all duration-300 flex items-center gap-3 group text-lg"
+                        >
+                          {link.icon && <link.icon className="w-5 h-5 text-amber-500/80" />}
+                          {link.name}
+                        </Link>
+                      )
                     )}
                   </li>
                 ))}
@@ -142,7 +153,7 @@ const Footer = () => {
               <Link to="#" className="text-white/50 dark:text-slate-600 hover:text-amber-500 text-xs font-bold uppercase tracking-widest transition-colors">
                 Ethics
               </Link>
-              <Link to="#" className="text-white/50 dark:text-slate-600 hover:text-amber-500 text-xs font-bold uppercase tracking-widest transition-colors">
+              <Link to="/privacy-policy" className="text-white/50 dark:text-slate-600 hover:text-amber-500 text-xs font-bold uppercase tracking-widest transition-colors">
                 Privacy
               </Link>
             </div>
