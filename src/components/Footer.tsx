@@ -28,7 +28,6 @@ const Footer = () => {
         { name: "About Us", href: "/about" },
         { name: "Contact", href: "/contact" },
         { name: "Privacy Policy", href: "/privacy-policy" },
-        { name: "Admin Portal", href: "/admin" },
       ]
     },
     {
@@ -147,14 +146,11 @@ const Footer = () => {
               </p>
             </div>
             <div className="flex gap-10">
-              <Link to="/admin" className="text-white/50 dark:text-slate-600 hover:text-amber-500 text-xs font-bold uppercase tracking-widest transition-colors">
-                Registry
-              </Link>
-              <Link to="#" className="text-white/50 dark:text-slate-600 hover:text-amber-500 text-xs font-bold uppercase tracking-widest transition-colors">
-                Ethics
-              </Link>
               <Link to="/privacy-policy" className="text-white/50 dark:text-slate-600 hover:text-amber-500 text-xs font-bold uppercase tracking-widest transition-colors">
                 Privacy
+              </Link>
+              <Link to="/registry" className="text-white/50 dark:text-slate-600 hover:text-amber-500 text-xs font-bold uppercase tracking-widest transition-colors">
+                Registry
               </Link>
             </div>
           </div>

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Copy, CreditCard, Smartphone, Building } from 'lucide-react';
-import { PAYMENT_CONFIG, STRIPE_TEST_CARDS, MPESA_TEST_PHONES } from '@/lib/payment-config';
+import { PAYMENT_CONFIG, MPESA_TEST_PHONES } from '@/lib/payment-config';
 import { useToast } from '@/hooks/use-toast';
 
 const PaymentTestInfo = () => {
@@ -32,55 +32,15 @@ const PaymentTestInfo = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Stripe Test Cards */}
+        {/* PesaPal Test Info */}
         <div>
           <h4 className="font-semibold text-orange-800 mb-3 flex items-center gap-2">
             <CreditCard className="w-4 h-4" />
-            Stripe Test Cards
+            PesaPal Test Cards
           </h4>
-          <div className="grid gap-2">
-            <div className="flex items-center justify-between p-2 bg-white rounded border">
-              <div>
-                <span className="font-medium">Success:</span>
-                <span className="ml-2 font-mono text-sm">{STRIPE_TEST_CARDS.success}</span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => copyToClipboard(STRIPE_TEST_CARDS.success, 'Success card number')}
-              >
-                <Copy className="w-3 h-3" />
-              </Button>
-            </div>
-            <div className="flex items-center justify-between p-2 bg-white rounded border">
-              <div>
-                <span className="font-medium">Decline:</span>
-                <span className="ml-2 font-mono text-sm">{STRIPE_TEST_CARDS.decline}</span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => copyToClipboard(STRIPE_TEST_CARDS.decline, 'Decline card number')}
-              >
-                <Copy className="w-3 h-3" />
-              </Button>
-            </div>
-            <div className="flex items-center justify-between p-2 bg-white rounded border">
-              <div>
-                <span className="font-medium">Insufficient Funds:</span>
-                <span className="ml-2 font-mono text-sm">{STRIPE_TEST_CARDS.insufficientFunds}</span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => copyToClipboard(STRIPE_TEST_CARDS.insufficientFunds, 'Insufficient funds card number')}
-              >
-                <Copy className="w-3 h-3" />
-              </Button>
-            </div>
-            <div className="text-xs text-orange-600 mt-2">
-              <strong>Test Details:</strong> CVC: 123, Expiry: 12/25
-            </div>
+          <div className="text-sm text-orange-700 space-y-2">
+            <p>Use any valid Visa/Mastercard test card for PesaPal Sandbox.</p>
+            <p className="text-xs italic">Note: PesaPal Sandbox accepts most international test cards.</p>
           </div>
         </div>
 

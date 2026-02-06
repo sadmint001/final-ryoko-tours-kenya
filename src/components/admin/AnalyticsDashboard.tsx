@@ -22,23 +22,47 @@ const AnalyticsDashboard = () => {
     try {
       setLoading(true);
 
-      // 1. Page Views
-      const { data: pageViews } = await supabase.from('page_views').select('*');
+      // Initialize empty results
+      let pageViews: any[] = [];
+      let bookings: any[] = [];
+      let bookingsCount = 0;
+      let messagesCount = 0;
 
-      // 2. Bookings
-      const { data: bookings, count: bookingsCount } = await supabase
-        .from('bookings')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .limit(5);
+      // 1. Fetch Page Views - Wrap in separate try-catch to prevent global failure
+      try {
+        const { data, error } = await supabase.from('page_views').select('*');
+        if (!error) pageViews = data || [];
+      } catch (e) {
+        console.warn('Could not fetch page views:', e);
+      }
 
-      // 3. Messages
-      const { count: messagesCount } = await supabase
-        .from('contact_messages')
-        .select('*', { count: 'exact', head: true });
+      // 2. Fetch Bookings
+      try {
+        const { data, count, error } = await supabase
+          .from('bookings')
+          .select('*', { count: 'exact' })
+          .order('created_at', { ascending: false })
+          .limit(5);
+        if (!error) {
+          bookings = data || [];
+          bookingsCount = count || 0;
+        }
+      } catch (e) {
+        console.warn('Could not fetch bookings:', e);
+      }
 
-      // Process Page Views
-      const pageCounts = (pageViews || []).reduce((acc: any, view: any) => {
+      // 3. Fetch Messages
+      try {
+        const { count, error } = await supabase
+          .from('contact_messages')
+          .select('*', { count: 'exact', head: true });
+        if (!error) messagesCount = count || 0;
+      } catch (e) {
+        console.warn('Could not fetch messages:', e);
+      }
+
+      // Process Page Views data if available
+      const pageCounts = pageViews.reduce((acc: any, view: any) => {
         const page = view.page_path || 'unknown';
         acc[page] = (acc[page] || 0) + 1;
         return acc;
@@ -46,22 +70,22 @@ const AnalyticsDashboard = () => {
 
       const popularPages = Object.entries(pageCounts)
         .map(([page, count]: any) => ({ page, count }))
-        .sort((a, b) => b.count - a.count)
+        .sort((a, b) => (b as any).count - (a as any).count)
         .slice(0, 5);
 
-      const uniqueVisitors = new Set((pageViews || []).map((view: any) => view.user_id || view.session_id)).size;
+      const uniqueVisitors = new Set(pageViews.map((view: any) => view.user_id || view.session_id)).size;
 
       setStats({
-        totalViews: (pageViews || []).length,
+        totalViews: pageViews.length,
         uniqueVisitors,
-        popularPages,
-        totalBookings: bookingsCount || 0,
-        totalMessages: messagesCount || 0,
-        recentBookings: bookings || []
+        popularPages: popularPages as any,
+        totalBookings: bookingsCount,
+        totalMessages: messagesCount,
+        recentBookings: bookings
       });
 
     } catch (error) {
-      console.error('Error fetching analytics:', error);
+      console.error('Core analytics failure:', error);
     } finally {
       setLoading(false);
     }

@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calendar as ShadcnCalendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   MapPin,
   Clock,
@@ -70,6 +71,8 @@ const DestinationDetails = () => {
   const [destination, setDestination] = useState<DestinationDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pesapalUrl, setPesapalUrl] = useState<string | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const { selectedResidency, setResidency } = useResidencyPersistence();
   const { user } = useAuth();
@@ -83,7 +86,7 @@ const DestinationDetails = () => {
     participants: number;
     startDate: Date | undefined;
     specialRequests: string;
-    paymentMethod: 'stripe' | 'bank' | 'mpesa';
+    paymentMethod: 'pesapal' | 'bank' | 'mpesa';
   }
 
   const [form, setForm] = useState<BookingForm>({
@@ -93,7 +96,7 @@ const DestinationDetails = () => {
     participants: 1,
     startDate: undefined,
     specialRequests: '',
-    paymentMethod: 'stripe'
+    paymentMethod: 'pesapal'
   });
 
   // Get residency from URL if provided and sync with hook
@@ -136,7 +139,7 @@ const DestinationDetails = () => {
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleStripePayment = async () => {
+  const handlePesapalPayment = async () => {
     try {
       if (!destination || !selectedResidency) {
         toast({
@@ -147,34 +150,9 @@ const DestinationDetails = () => {
         return;
       }
 
-      const bookingData = {
-        tour_id: destination.id.toString(),
-        user_id: user?.id || '00000000-0000-0000-0000-000000000000',
-        customer_name: form.customerName,
-        customer_email: form.customerEmail,
-        customer_phone: form.customerPhone,
-        participants: form.participants,
-        start_date: form.startDate?.toISOString().split('T')[0],
-        total_amount: calculateTotal(),
-        special_requests: form.specialRequests,
-        payment_status: 'pending',
-        status: 'pending',
-        residency_type: selectedResidency,
-        payment_method: 'stripe',
-      };
-
-      const { data: booking, error: bookingError } = await supabase
-        .from('bookings')
-        .insert(bookingData)
-        .select()
-        .single();
-
-      if (bookingError) throw bookingError;
-
-      const paymentData = {
-        destinationId: destination.id,
+      const paymentData: PaymentRequest = {
+        destinationId: destination.id.toString(),
         destinationTitle: destination.name,
-        bookingId: booking.id,
         participants: form.participants,
         totalAmount: calculateTotal(),
         customerName: form.customerName,
@@ -182,34 +160,26 @@ const DestinationDetails = () => {
         customerPhone: form.customerPhone,
         startDate: form.startDate?.toISOString(),
         specialRequests: form.specialRequests,
-        residency: selectedResidency,
+        residency_type: selectedResidency,
       };
 
-      const result = await PaymentService.processStripePayment(paymentData);
+      const result = await PaymentService.processPesapalPayment(paymentData);
 
       if (result.success && result.url) {
-        await supabase
-          .from('bookings')
-          .update({
-            stripe_session_id: result.sessionId,
-            payment_status: 'processing'
-          })
-          .eq('id', booking.id);
-
-        window.open(result.url, '_blank');
+        setPesapalUrl(result.url);
+        setIsPaymentModalOpen(true);
         toast({
           title: 'Payment Session Created',
-          description: 'Redirecting to Stripe checkout...',
+          description: 'Please complete payment in the secure window.',
         });
-        navigate('/booking-success');
       } else {
         throw new Error(result.error || 'Payment failed');
       }
     } catch (error) {
-      console.error('Stripe payment error:', error);
+      console.error('PesaPal payment error:', error);
       toast({
         title: 'Payment Error',
-        description: error instanceof Error ? error.message : 'Failed to process payment. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to process PesaPal payment. Please try again.',
         variant: 'destructive',
       });
     }
@@ -226,42 +196,38 @@ const DestinationDetails = () => {
         return;
       }
 
-      const bookingData = {
-        tour_id: destination.id.toString(),
-        user_id: user?.id || '00000000-0000-0000-0000-000000000000',
-        customer_name: form.customerName,
-        customer_email: form.customerEmail,
-        customer_phone: form.customerPhone,
+      const paymentData: PaymentRequest = {
+        destinationId: destination.id.toString(),
+        destinationTitle: destination.name,
         participants: form.participants,
-        start_date: form.startDate?.toISOString().split('T')[0],
-        total_amount: calculateTotal(),
-        special_requests: form.specialRequests,
-        payment_status: 'pending',
-        status: 'pending',
+        totalAmount: calculateTotal(),
+        customerName: form.customerName,
+        customerEmail: form.customerEmail,
+        customerPhone: form.customerPhone,
+        startDate: form.startDate?.toISOString(),
+        specialRequests: form.specialRequests,
         residency_type: selectedResidency,
-        payment_method: 'bank_transfer',
       };
 
-      const { error } = await supabase
-        .from('bookings')
-        .insert(bookingData);
+      const result = await PaymentService.processBankTransfer(paymentData);
 
-      if (error) throw error;
+      if (result.success) {
+        toast({
+          title: 'Booking Created',
+          description: 'Your booking has been created. Please complete the bank transfer.',
+        });
 
-      toast({
-        title: 'Booking Created',
-        description: 'Your booking has been created. Please complete the bank transfer.',
-      });
+        const bankDetails = PaymentService.getBankTransferDetails(paymentData.totalAmount, destination.name);
 
-      const currency = getCurrency(selectedResidency);
-      const amount = calculateTotal().toLocaleString();
+        toast({
+          title: 'Bank Transfer Details',
+          description: `Account: ${bankDetails.accountNumber}\nBank: ${bankDetails.bankName}\nAmount: ${PaymentService.formatCurrency(bankDetails.amount, selectedResidency)}\nReference: ${bankDetails.reference}`,
+        });
 
-      toast({
-        title: 'Bank Transfer Details',
-        description: `Account: ${PAYMENT_CONFIG.BANK_ACCOUNT_NUMBER}\nBank: ${PAYMENT_CONFIG.BANK_NAME}\nAmount: ${currency} ${amount}\nReference: ${destination.name}`,
-      });
-
-      navigate('/booking-success');
+        navigate('/booking-success');
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       console.error('Bank payment error:', error);
       toast({
@@ -283,65 +249,35 @@ const DestinationDetails = () => {
         return;
       }
 
-      const bookingData = {
-        tour_id: destination.id.toString(),
-        user_id: user?.id || '00000000-0000-0000-0000-000000000000',
-        customer_name: form.customerName,
-        customer_email: form.customerEmail,
-        customer_phone: form.customerPhone,
+      const paymentData: PaymentRequest = {
+        destinationId: destination.id.toString(),
+        destinationTitle: destination.name,
         participants: form.participants,
-        start_date: form.startDate?.toISOString().split('T')[0],
-        total_amount: calculateTotal(),
-        special_requests: form.specialRequests,
-        payment_status: 'pending',
-        status: 'pending',
+        totalAmount: calculateTotal(),
+        customerName: form.customerName,
+        customerEmail: form.customerEmail,
+        customerPhone: form.customerPhone,
+        startDate: form.startDate?.toISOString(),
+        specialRequests: form.specialRequests,
         residency_type: selectedResidency,
-        payment_method: 'mpesa',
       };
 
-      const { data: booking, error: bookingError } = await supabase
-        .from('bookings')
-        .insert(bookingData)
-        .select()
-        .single();
+      const result = await PaymentService.processMpesaPayment(paymentData);
 
-      if (bookingError) throw bookingError;
-
-      const { data, error } = await supabase.functions.invoke('mpesa-payment', {
-        body: {
-          phoneNumber: form.customerPhone,
-          amount: calculateTotal(),
-          destinationId: destination.id,
-          bookingId: booking.id,
-          customerName: form.customerName,
-          customerEmail: form.customerEmail,
-          participants: form.participants,
-          startDate: form.startDate?.toISOString(),
-          specialRequests: form.specialRequests,
-          residency: selectedResidency,
-        },
-      });
-
-      if (error) throw error;
-
-      await supabase
-        .from('bookings')
-        .update({
-          mpesa_reference: data?.reference,
-          payment_status: 'processing'
-        })
-        .eq('id', booking.id);
-
-      toast({
-        title: 'M-Pesa Payment Initiated',
-        description: 'Please check your phone for the M-Pesa payment prompt.',
-      });
-      navigate('/booking-success');
+      if (result.success) {
+        toast({
+          title: 'Payment Initiated',
+          description: 'Please check your phone for the STK push notification.',
+        });
+        navigate('/booking-success');
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       console.error('M-Pesa payment error:', error);
       toast({
         title: 'Payment Error',
-        description: error instanceof Error ? error.message : 'Failed to initiate payment.',
+        description: error instanceof Error ? error.message : 'Failed to process M-Pesa payment.',
         variant: 'destructive',
       });
     }
@@ -377,8 +313,8 @@ const DestinationDetails = () => {
 
     try {
       switch (form.paymentMethod) {
-        case 'stripe':
-          await handleStripePayment();
+        case 'pesapal':
+          await handlePesapalPayment();
           break;
         case 'bank':
           await handleBankPayment();
@@ -782,13 +718,13 @@ const DestinationDetails = () => {
                         className="grid grid-cols-3 gap-2"
                       >
                         <div>
-                          <RadioGroupItem value="stripe" id="stripe" className="peer sr-only" />
+                          <RadioGroupItem value="pesapal" id="pesapal" className="peer sr-only" />
                           <Label
-                            htmlFor="stripe"
+                            htmlFor="pesapal"
                             className="flex flex-col items-center justify-center rounded-xl border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-amber-500 peer-data-[state=checked]:bg-amber-50 dark:peer-data-[state=checked]:bg-amber-900/20 cursor-pointer h-20 text-xs text-center gap-2 transition-all"
                           >
                             <CreditCard className="mb-1 h-5 w-5" />
-                            Online Card
+                            Online Card/Mobile
                           </Label>
                         </div>
                         <div>
@@ -871,6 +807,28 @@ const DestinationDetails = () => {
         </div>
       </div>
       <Footer />
+
+      {/* PesaPal Payment Modal */}
+      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+        <DialogContent className="max-w-5xl h-[90vh] p-0 overflow-hidden bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+          <DialogHeader className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+            <DialogTitle className="text-lg font-semibold text-slate-800 dark:text-gray-100 flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-emerald-500" />
+              Secure Payment
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 h-full bg-slate-50 dark:bg-slate-950">
+            {pesapalUrl && (
+              <iframe
+                src={pesapalUrl}
+                className="w-full h-full border-0"
+                title="PesaPal Payment"
+                allow="payment"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

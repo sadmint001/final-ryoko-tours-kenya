@@ -8,6 +8,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ResidencyProvider } from "./contexts/ResidencyContext";
 import { I18nProvider } from "./contexts/I18nContext";
 import { Suspense, lazy } from "react";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Lazy load components for better performance
 const Index = lazy(() => import("./pages/Index"));
@@ -19,6 +20,7 @@ const Blog = lazy(() => import("./pages/Blog"));
 const BlogDetails = lazy(() => import("./pages/BlogDetails"));
 const DestinationDetails = lazy(() => import("./pages/DestinationDetails"));
 const WhyUs = lazy(() => import("./pages/WhyUs"));
+const Booking = lazy(() => import("./pages/Booking"));
 const BookingSuccess = lazy(() => import("./pages/BookingSuccess"));
 const Admin = lazy(() => import("./pages/Admin"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
@@ -55,8 +57,23 @@ const App = () => (
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                     <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
+                    <Route
+                      path="/booking"
+                      element={
+                        <ProtectedRoute>
+                          <Booking />
+                        </ProtectedRoute>
+                      }
+                    />
                     <Route path="/booking-success" element={<BookingSuccess />} />
-                    <Route path="/admin" element={<Admin />} />
+                    <Route
+                      path="/admin"
+                      element={
+                        <ProtectedRoute>
+                          <Admin />
+                        </ProtectedRoute>
+                      }
+                    />
                     <Route path="/blog" element={<Blog />} />
                     <Route path="/blog/:slug" element={<BlogDetails />} />
                     <Route path="/destinations/:id" element={<DestinationDetails />} />

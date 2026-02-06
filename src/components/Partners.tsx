@@ -20,16 +20,22 @@ const PartnersSection: React.FC = () => {
   useEffect(() => {
     // Fetch partners from site_settings key 'partners' as JSON array for editability
     const fetchPartners = async () => {
-      const { data } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('key', 'partners')
-        .single();
       try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('value')
+          .eq('key', 'partners')
+          .single();
+
+        if (error) {
+          // Silently fall back to hardcoded partners if query fails
+          return;
+        }
+
         const parsed: Partner[] = data?.value ? JSON.parse(data.value) : [];
         setPartners(parsed);
       } catch {
-        setPartners([]);
+        // Silently fall back to hardcoded partners
       }
     };
     fetchPartners();

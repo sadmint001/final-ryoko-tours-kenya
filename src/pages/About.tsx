@@ -72,7 +72,7 @@ const About = () => {
               <span className="text-sm font-medium text-amber-200">Our Story</span>
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-bold font-serif text-white mb-6 drop-shadow-2xl">
+            <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold font-serif text-white mb-6 drop-shadow-2xl">
               Tapestry of <span className="italic text-amber-400">Experience</span>
             </h1>
 
@@ -83,15 +83,17 @@ const About = () => {
         </div>
 
         {/* Floating Stats Bar */}
-        <div className="absolute bottom-0 left-0 right-0 transform translate-y-1/2 z-20 container mx-auto px-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
+        {/* Floating Stats Bar - Relative on mobile, Absolute on large screens */}
+        {/* Floating Stats Bar - Stacked on mobile, Grid on tablet+ */}
+        <div className="relative lg:absolute lg:bottom-0 lg:left-0 lg:right-0 lg:transform lg:translate-y-1/2 z-20 container mx-auto px-4 mt-12 lg:mt-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
             {stats.map((stat, index) => (
               <div
                 key={index}
-                className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border border-white/20 dark:border-slate-700 shadow-xl rounded-2xl p-6 text-center transform hover:-translate-y-2 transition-transform duration-300"
+                className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border border-slate-200 dark:border-slate-700 shadow-xl rounded-2xl p-6 flex flex-col items-center justify-center transform hover:-translate-y-1 transition-transform duration-300"
               >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mx-auto mb-3 shadow-lg">
-                  {stat.icon}
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-3 shadow-lg shrink-0">
+                  {React.cloneElement(stat.icon as React.ReactElement, { className: "w-6 h-6 text-white" })}
                 </div>
                 <div className="text-3xl font-bold text-slate-800 dark:text-white mb-1">{stat.number}</div>
                 <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.label}</div>
@@ -110,7 +112,7 @@ const About = () => {
         </div>
       </div>
 
-      <main className="container mx-auto px-4 py-20 space-y-32">
+      <main className="container mx-auto px-4 py-16 md:py-24 space-y-20 md:space-y-32">
 
         {/* Introduction */}
         <div className="max-w-4xl mx-auto text-center space-y-8">
@@ -140,7 +142,7 @@ const About = () => {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-r from-amber-100/20 to-orange-100/20 dark:from-amber-900/10 dark:to-orange-900/10 blur-3xl rounded-full -z-10"></div>
 
           <Card className="border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group">
-            <CardContent className="p-10 lg:p-12 relative overflow-hidden">
+            <CardContent className="p-6 md:p-10 lg:p-12 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Target className="w-32 h-32" />
               </div>
@@ -155,7 +157,7 @@ const About = () => {
           </Card>
 
           <Card className="border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group">
-            <CardContent className="p-10 lg:p-12 relative overflow-hidden">
+            <CardContent className="p-6 md:p-10 lg:p-12 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Lightbulb className="w-32 h-32" />
               </div>
@@ -172,35 +174,35 @@ const About = () => {
 
         {/* Values */}
         <section>
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold font-serif text-slate-800 dark:text-white mb-4">
+          <div className="text-center mb-10 md:mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold font-serif text-slate-800 dark:text-white mb-4">
               Our Core Values
             </h2>
             <p className="text-slate-500 dark:text-slate-400">The pillars that guide every journey we curate</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {values.map((value, index) => (
               <div
                 key={index}
-                className="group relative bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+                className="group relative bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
               >
                 <div className={`absolute inset-0 bg-gradient-to-br ${value.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
 
-                <div className="relative z-10 flex gap-6">
+                <div className="relative z-10 flex flex-col sm:flex-row gap-4 md:gap-6 items-start sm:items-center">
                   <div className={`
-                    w-16 h-16 shrink-0 rounded-2xl 
+                    w-12 h-12 md:w-16 md:h-16 shrink-0 rounded-2xl 
                     bg-gradient-to-br ${value.gradient} 
                     flex items-center justify-center text-white shadow-lg
                     transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500
                   `}>
-                    <value.icon className="w-8 h-8" />
+                    <value.icon className="w-6 h-6 md:w-8 md:h-8" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-3 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                    <h3 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-white mb-2 md:mb-3 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                       {value.title}
                     </h3>
-                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                    <p className="text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
                       {value.description}
                     </p>
                   </div>
@@ -211,7 +213,7 @@ const About = () => {
         </section>
 
         {/* CTA */}
-        <div className="relative rounded-[3rem] overflow-hidden">
+        <div className="relative rounded-2xl md:rounded-[3rem] overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-slate-900 to-slate-800 z-0"></div>
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?q=80&w=2671&auto=format&fit=crop')] opacity-20 bg-cover bg-center mix-blend-overlay"></div>
 

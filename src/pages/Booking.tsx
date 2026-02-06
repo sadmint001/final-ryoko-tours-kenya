@@ -50,7 +50,7 @@ interface BookingForm {
   participants: number;
   startDate: Date | undefined;
   specialRequests: string;
-  paymentMethod: 'stripe' | 'bank' | 'mpesa';
+  paymentMethod: 'pesapal' | 'bank' | 'mpesa';
 }
 
 const Booking = () => {
@@ -59,13 +59,13 @@ const Booking = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { selectedResidency, setSelectedResidency } = useResidency();
-  
+
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recommended');
-  
+
   const [form, setForm] = useState<BookingForm>({
     customerName: '',
     customerEmail: user?.email || '',
@@ -73,23 +73,10 @@ const Booking = () => {
     participants: 1,
     startDate: undefined,
     specialRequests: '',
-    paymentMethod: 'stripe'
+    paymentMethod: 'pesapal'
   });
 
   const destinationId = searchParams.get('destination');
-
-  // Check if user is authenticated
-  useEffect(() => {
-    if (!user) {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to access the booking page.',
-        variant: 'destructive',
-      });
-      navigate('/auth', { state: { from: '/booking' } });
-      return;
-    }
-  }, [user, navigate, toast]);
 
   // Load destinations dynamically so booking page reflects admin updates
   const [allDestinations, setAllDestinations] = useState<Destination[]>([]);
@@ -149,8 +136,8 @@ const Booking = () => {
 
   useEffect(() => {
     if (user?.email) {
-      setForm(prev => ({ 
-        ...prev, 
+      setForm(prev => ({
+        ...prev,
         customerEmail: user.email!,
         customerName: user.user_metadata?.full_name || ''
       }));
@@ -167,8 +154,8 @@ const Booking = () => {
   };
 
   // Filter and sort destinations
-  const filteredDestinationsBase = selectedCategory === 'all' 
-    ? allDestinations 
+  const filteredDestinationsBase = selectedCategory === 'all'
+    ? allDestinations
     : allDestinations.filter(dest => dest.category === selectedCategory);
 
   const filteredDestinations = [...filteredDestinationsBase].sort((a, b) => {
@@ -201,7 +188,7 @@ const Booking = () => {
     setForm(prev => ({ ...prev, participants: 1 }));
   };
 
-  const handleStripePayment = async () => {
+  const handlePesapalPayment = async () => {
     try {
       const paymentData = {
         destinationId: selectedDestination!.id,
@@ -213,24 +200,25 @@ const Booking = () => {
         customerPhone: form.customerPhone,
         startDate: form.startDate?.toISOString(),
         specialRequests: form.specialRequests,
+        residency: selectedResidency,
       };
 
-      const result = await PaymentService.processStripePayment(paymentData);
+      const result = await PaymentService.processPesapalPayment(paymentData);
 
       if (result.success && result.url) {
-        window.open(result.url, '_blank');
+        window.location.href = result.url; // Use href for direct redirect
         toast({
           title: 'Payment Session Created',
-          description: 'Redirecting to Stripe checkout...',
+          description: 'Redirecting to PesaPal checkout...',
         });
       } else {
         throw new Error(result.error || 'Payment failed');
       }
     } catch (error) {
-      console.error('Stripe payment error:', error);
+      console.error('PesaPal payment error:', error);
       toast({
         title: 'Payment Error',
-        description: error instanceof Error ? error.message : 'Failed to process Stripe payment. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to process PesaPal payment. Please try again.',
         variant: 'destructive',
       });
     }
@@ -312,7 +300,7 @@ const Booking = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast({
         title: 'Authentication Required',
@@ -354,8 +342,8 @@ const Booking = () => {
 
     try {
       switch (form.paymentMethod) {
-        case 'stripe':
-          await handleStripePayment();
+        case 'pesapal':
+          await handlePesapalPayment();
           break;
         case 'bank':
           await handleBankPayment();
@@ -400,16 +388,16 @@ const Booking = () => {
                   Please sign in to access the booking page and reserve your African adventure.
                 </p>
               </div>
-              
+
               <div className="space-y-4">
-                <Button 
+                <Button
                   onClick={() => navigate('/auth', { state: { from: '/booking' } })}
                   className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 transition-all text-black font-medium"
                 >
                   Sign In to Continue
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => navigate('/destinations')}
                   className="w-full"
                 >
@@ -427,7 +415,7 @@ const Booking = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/10">
       <Navbar />
-      
+
       <main className="container mx-auto px-4 py-16">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
@@ -441,7 +429,7 @@ const Booking = () => {
 
           {/* Residency Selection */}
           <div className="mb-8">
-            <ResidencySelector 
+            <ResidencySelector
               selectedResidency={selectedResidency}
               onResidencyChange={setSelectedResidency}
             />
@@ -490,8 +478,8 @@ const Booking = () => {
             <div className="lg:col-span-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {filteredDestinations.map((destination) => (
-                  <Card 
-                    key={destination.id} 
+                  <Card
+                    key={destination.id}
                     className={cn(
                       "group hover:shadow-elegant transition-all duration-300 overflow-hidden cursor-pointer",
                       selectedDestination?.id === destination.id && "ring-2 ring-primary shadow-lg"
@@ -499,8 +487,8 @@ const Booking = () => {
                     onClick={() => handleDestinationSelect(destination)}
                   >
                     <div className="aspect-video overflow-hidden relative">
-                      <img 
-                        src={destination.image} 
+                      <img
+                        src={destination.image}
                         alt={destination.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -518,7 +506,7 @@ const Booking = () => {
                         </div>
                       )}
                     </div>
-                    
+
                     <CardHeader className="pb-3">
                       <div className="flex justify-between items-start mb-2">
                         <CardTitle className="text-lg font-display group-hover:text-primary transition-colors">
@@ -534,7 +522,7 @@ const Booking = () => {
                         {destination.description}
                       </CardDescription>
                     </CardHeader>
-                    
+
                     <CardContent className="space-y-3">
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
@@ -590,7 +578,7 @@ const Booking = () => {
                             <div className="text-lg text-black dark:text-black italic">
                               per person
                             </div>
-                            <Button 
+                            <Button
                               className="mt-2 bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 transition-all text-sm text-white font-medium"
                               onClick={() => setSelectedResidency('citizen')}
                             >
@@ -607,8 +595,8 @@ const Booking = () => {
               {filteredDestinations.length === 0 && (
                 <div className="text-center py-12">
                   <p className="text-xl text-muted-foreground">No destinations found for the selected category.</p>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="mt-4"
                     onClick={() => setSelectedCategory('all')}
                   >
@@ -630,7 +618,7 @@ const Booking = () => {
                     </div>
                   </div>
                   <CardDescription>
-                    {selectedDestination 
+                    {selectedDestination
                       ? `Book your ${selectedDestination.name} experience`
                       : 'Select a destination to start booking'
                     }
@@ -731,10 +719,10 @@ const Booking = () => {
                           onValueChange={(value) => handleInputChange('paymentMethod', value)}
                         >
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="stripe" id="stripe" />
-                            <Label htmlFor="stripe" className="flex items-center gap-2">
+                            <RadioGroupItem value="pesapal" id="pesapal" />
+                            <Label htmlFor="pesapal" className="flex items-center gap-2">
                               <CreditCard className="w-4 h-4" />
-                              Credit/Debit Card (Stripe)
+                              Credit/Debit Card & Mobile Money (PesaPal)
                             </Label>
                           </div>
                           <div className="flex items-center space-x-2">
@@ -769,8 +757,8 @@ const Booking = () => {
                         )}
                       </div>
 
-                      <Button 
-                        type="submit" 
+                      <Button
+                        type="submit"
                         className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 transition-all text-black font-medium"
                         disabled={submitting || !selectedResidency}
                       >
@@ -791,7 +779,7 @@ const Booking = () => {
           </div>
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );

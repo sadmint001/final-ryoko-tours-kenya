@@ -1,9 +1,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import { PAYMENT_CONFIG, PAYMENT_STATUS, BOOKING_STATUS } from '@/lib/payment-config';
-import { useAuth } from '@/contexts/AuthContext';
 
 export interface PaymentRequest {
-  destinationId: number;
+  destinationId: string;
   destinationTitle: string;
   participants: number;
   totalAmount: number;
@@ -12,6 +11,7 @@ export interface PaymentRequest {
   customerPhone: string;
   startDate?: string;
   specialRequests?: string;
+  residency_type: string;
 }
 
 export interface PaymentResponse {
@@ -21,89 +21,130 @@ export interface PaymentResponse {
   error?: string;
   checkoutRequestId?: string;
   bookingId?: string;
+  orderTrackingId?: string;
+  reference?: string;
 }
 
 export class PaymentService {
-  private static async getAuthHeaders() {
-    const { data: { session } } = await supabase.auth.getSession();
-    return {
-      Authorization: `Bearer ${session?.access_token}`,
-      'Content-Type': 'application/json',
-    };
+  /**
+   * Helper to create a booking record in the database
+   */
+  private static async createBookingRecord(paymentData: PaymentRequest, paymentMethod: string, status: any = BOOKING_STATUS.PENDING) {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Check if we already have a user for this email or use a null UUID for guests
+    const userId = user?.id || '00000000-0000-0000-0000-000000000000';
+
+    const { data: booking, error } = await supabase
+      .from('bookings')
+      .insert({
+        tour_id: paymentData.destinationId,
+        user_id: userId,
+        customer_name: paymentData.customerName,
+        customer_email: paymentData.customerEmail,
+        customer_phone: paymentData.customerPhone,
+        participants: paymentData.participants,
+        start_date: paymentData.startDate?.split('T')[0],
+        total_amount: paymentData.totalAmount,
+        special_requests: paymentData.specialRequests,
+        payment_status: PAYMENT_STATUS.PENDING,
+        status: status,
+        payment_method: paymentMethod,
+        residency_type: paymentData.residency_type
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`Error creating booking for ${paymentMethod}:`, error);
+      throw new Error('Failed to create booking record');
+    }
+
+    return booking;
   }
 
-  // Stripe Payment
-  static async processStripePayment(paymentData: PaymentRequest): Promise<PaymentResponse> {
+  /**
+   * PesaPal Payment - Processes payment via PesaPal v3 integration
+   */
+  static async processPesapalPayment(paymentData: PaymentRequest): Promise<PaymentResponse> {
     try {
-      const headers = await this.getAuthHeaders();
-      
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/create-booking-payment`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          tourId: paymentData.destinationId,
-          tourTitle: paymentData.destinationTitle,
-          participants: paymentData.participants,
-          totalAmount: paymentData.totalAmount,
-          customerName: paymentData.customerName,
-          customerEmail: paymentData.customerEmail,
-          customerPhone: paymentData.customerPhone,
-          startDate: paymentData.startDate,
-          specialRequests: paymentData.specialRequests,
-        }),
+      console.log('Initiating PesaPal payment invocation...', paymentData);
+
+      const { data, error } = await supabase.functions.invoke('pesapal-payment', {
+        body: {
+          ...paymentData,
+          tourId: paymentData.destinationId // Ensure tourId is passed as expected by function
+        },
       });
 
-      const result = await response.json();
+      if (error) {
+        console.error('Pesapal invocation error:', error);
+        return { success: false, error: error.message || 'Failed to initiate PesaPal payment' };
+      }
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Payment failed');
+      if (!data || !data.url) {
+        console.error('Invalid PesaPal response data:', data);
+        return { success: false, error: data?.error || 'Invalid response from payment service' };
       }
 
       return {
         success: true,
-        url: result.url,
-        message: 'Payment session created successfully',
+        url: data.url,
+        orderTrackingId: data.orderTrackingId,
+        bookingId: data.bookingId,
+        message: 'PesaPal payment session created successfully',
       };
     } catch (error) {
-      console.error('Stripe payment error:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Payment failed',
-      };
+      console.error('Pesapal payment service error:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to process PesaPal payment' };
     }
   }
 
-  // M-Pesa Payment
+  /**
+   * M-Pesa Payment - Initiates STK Push
+   */
   static async processMpesaPayment(paymentData: PaymentRequest): Promise<PaymentResponse> {
     try {
-      const headers = await this.getAuthHeaders();
-      
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/mpesa-payment`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
+      console.log('Initiating M-Pesa payment flow...', paymentData);
+
+      // 1. Create booking first
+      const booking = await this.createBookingRecord(paymentData, 'mpesa');
+
+      // 2. Invoke M-Pesa STK Push
+      const { data, error } = await supabase.functions.invoke('mpesa-payment', {
+        body: {
           phoneNumber: paymentData.customerPhone,
           amount: paymentData.totalAmount,
-          tourId: paymentData.destinationId,
+          destinationId: paymentData.destinationId,
+          bookingId: booking.id,
           customerName: paymentData.customerName,
           customerEmail: paymentData.customerEmail,
           participants: paymentData.participants,
           startDate: paymentData.startDate,
           specialRequests: paymentData.specialRequests,
-        }),
+          residency: paymentData.residency_type
+        },
       });
 
-      const result = await response.json();
+      if (error) {
+        console.error('M-Pesa invocation error:', error);
+        return { success: false, bookingId: booking.id, error: error.message || 'M-Pesa payment failed' };
+      }
 
-      if (!response.ok) {
-        throw new Error(result.error || 'M-Pesa payment failed');
+      // 3. Update booking with M-Pesa reference if available
+      if (data?.reference) {
+        await supabase
+          .from('bookings')
+          .update({ mpesa_reference: data.reference })
+          .eq('id', booking.id);
       }
 
       return {
         success: true,
         message: 'M-Pesa payment initiated successfully',
-        checkoutRequestId: result.checkoutRequestId,
-        bookingId: result.bookingId,
+        checkoutRequestId: data?.checkoutRequestId,
+        bookingId: booking.id,
+        reference: data?.reference
       };
     } catch (error) {
       console.error('M-Pesa payment error:', error);
@@ -114,38 +155,12 @@ export class PaymentService {
     }
   }
 
-  // Bank Transfer Payment
+  /**
+   * Bank Transfer - Creates a pending booking
+   */
   static async processBankTransfer(paymentData: PaymentRequest): Promise<PaymentResponse> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-
-      // Create booking record
-      const { data: booking, error } = await supabase
-        .from('bookings')
-        .insert({
-          tour_id: paymentData.destinationId.toString(),
-          user_id: user.id,
-          customer_name: paymentData.customerName,
-          customer_email: paymentData.customerEmail,
-          customer_phone: paymentData.customerPhone,
-          participants: paymentData.participants,
-          start_date: paymentData.startDate?.split('T')[0],
-          total_amount: paymentData.totalAmount,
-          special_requests: paymentData.specialRequests,
-          payment_status: PAYMENT_STATUS.PENDING,
-          status: BOOKING_STATUS.PENDING,
-          payment_method: 'bank_transfer',
-        })
-        .select()
-        .single();
-
-      if (error) {
-        throw new Error('Failed to create booking');
-      }
+      const booking = await this.createBookingRecord(paymentData, 'bank_transfer');
 
       return {
         success: true,
@@ -161,25 +176,25 @@ export class PaymentService {
     }
   }
 
-  // Get Bank Transfer Details
+  /**
+   * Utility to get Bank Details for display
+   */
   static getBankTransferDetails(amount: number, reference: string) {
     return {
-      accountNumber: PAYMENT_CONFIG.bankTransfer.accountNumber,
-      bankName: PAYMENT_CONFIG.bankTransfer.bankName,
-      accountName: PAYMENT_CONFIG.bankTransfer.accountName,
-      swiftCode: PAYMENT_CONFIG.bankTransfer.swiftCode,
-      branchCode: PAYMENT_CONFIG.bankTransfer.branchCode,
+      accountNumber: PAYMENT_CONFIG.bankTransfer?.accountNumber || '',
+      bankName: PAYMENT_CONFIG.bankTransfer?.bankName || '',
+      accountName: PAYMENT_CONFIG.bankTransfer?.accountName || '',
+      swiftCode: PAYMENT_CONFIG.bankTransfer?.swiftCode || '',
+      branchCode: PAYMENT_CONFIG.bankTransfer?.branchCode || '',
       amount: amount,
       reference: reference,
     };
   }
 
-  // Check Payment Status
-  static async checkPaymentStatus(bookingId: string): Promise<{
-    paymentStatus: string;
-    bookingStatus: string;
-    updatedAt: string;
-  } | null> {
+  /**
+   * Checks payment status from DB
+   */
+  static async checkPaymentStatus(bookingId: string) {
     try {
       const { data, error } = await supabase
         .from('bookings')
@@ -202,106 +217,16 @@ export class PaymentService {
     }
   }
 
-  // Get Payment History
-  static async getPaymentHistory(userId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('bookings')
-        .select(`
-          id,
-          tour_id,
-          customer_name,
-          customer_email,
-          participants,
-          total_amount,
-          payment_status,
-          status,
-          created_at,
-          updated_at,
-          tours (
-            title,
-            image_url
-          )
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+  /**
+   * Formats currency based on locale
+   */
+  static formatCurrency(amount: number, residency: string = 'citizen'): string {
+    const currency = residency === 'citizen' ? 'KES' : 'USD';
+    const locale = residency === 'citizen' ? 'en-KE' : 'en-US';
 
-      if (error) {
-        throw error;
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error fetching payment history:', error);
-      return [];
-    }
-  }
-
-  // Validate Payment Data
-  static validatePaymentData(paymentData: PaymentRequest): { isValid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    if (!paymentData.destinationId) {
-      errors.push('Destination is required');
-    }
-
-    if (!paymentData.customerName?.trim()) {
-      errors.push('Customer name is required');
-    }
-
-    if (!paymentData.customerEmail?.trim()) {
-      errors.push('Customer email is required');
-    }
-
-    if (!paymentData.customerPhone?.trim()) {
-      errors.push('Customer phone is required');
-    }
-
-    if (paymentData.participants < 1) {
-      errors.push('At least one participant is required');
-    }
-
-    if (paymentData.totalAmount <= 0) {
-      errors.push('Total amount must be greater than 0');
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-    };
-  }
-
-  // Format Currency
-  static formatCurrency(amount: number, currency: string = 'KES'): string {
-    return new Intl.NumberFormat('en-KE', {
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: currency,
     }).format(amount);
-  }
-
-  // Get Test Mode Info
-  static getTestModeInfo() {
-    if (!PAYMENT_CONFIG.isTestMode) {
-      return null;
-    }
-
-    return {
-      stripe: {
-        testCards: {
-          success: '4242424242424242',
-          decline: '4000000000000002',
-          insufficientFunds: '4000000000009995',
-        },
-        testCvc: '123',
-        testExpiry: '12/25',
-      },
-      mpesa: {
-        testPhones: [
-          '254708374149',
-          '254708374150',
-          '254708374151',
-        ],
-      },
-    };
   }
 }

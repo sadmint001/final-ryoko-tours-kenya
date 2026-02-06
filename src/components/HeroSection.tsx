@@ -45,13 +45,13 @@ const HeroSection = () => {
           </div>
 
           {/* Main Headline */}
-          <h1 className="text-6xl md:text-8xl font-bold font-playfair mb-8 animate-fade-up leading-tight">
+          <h1 className="text-4xl md:text-6xl lg:text-8xl font-bold font-playfair mb-8 animate-fade-up leading-tight">
             <span className="block text-safari-cream">Experience</span>
             <span className="block bg-gradient-luxury bg-clip-text text-transparent">Africa Beyond Safari</span>
           </h1>
 
           {/* Description */}
-          <p className="text-xl md:text-2xl font-opensans mb-10 opacity-95 max-w-4xl mx-auto animate-fade-up leading-relaxed text-safari-cream/90">
+          <p className="text-lg md:text-2xl font-opensans mb-10 opacity-95 max-w-4xl mx-auto animate-fade-up leading-relaxed text-safari-cream/90">
             Immerse yourself in curated journeys that blend luxury with authenticity. From intimate wildlife encounters to profound cultural connections — every moment crafted with sophistication.
           </p>
 
@@ -70,8 +70,8 @@ const HeroSection = () => {
             </Link>
           </div>
 
-          {/* Luxury Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-3xl mx-auto animate-scale-up">
+          {/* Luxury Stats - Hidden on Mobile to prevent overcrowding */}
+          <div className="hidden md:grid grid-cols-3 gap-12 max-w-3xl mx-auto animate-scale-up">
             <div className="text-center group">
               <div className="flex items-center justify-center gap-3 mb-3">
                 <div className="p-2 rounded-full bg-gradient-luxury/20 backdrop-blur-sm">
