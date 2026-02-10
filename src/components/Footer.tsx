@@ -149,7 +149,7 @@ const Footer = () => {
               <Link to="/privacy-policy" className="text-white/50 dark:text-slate-600 hover:text-amber-500 text-xs font-bold uppercase tracking-widest transition-colors">
                 Privacy
               </Link>
-              <Link to="/registry" className="text-white/50 dark:text-slate-600 hover:text-amber-500 text-xs font-bold uppercase tracking-widest transition-colors">
+              <Link to="/admin" className="text-white/50 dark:text-slate-600 hover:text-amber-500 text-xs font-bold uppercase tracking-widest transition-colors">
                 Registry
               </Link>
             </div>

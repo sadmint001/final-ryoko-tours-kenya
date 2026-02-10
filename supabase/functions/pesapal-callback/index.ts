@@ -115,13 +115,16 @@ serve(async (req) => {
             );
         } else {
             // Callback: Redirect to frontend success page
-            console.log("Redirecting user to success page...");
-            const frontendUrl = Deno.env.get("PUBLIC_SITE_URL") || "https://ryokotoursafrica.com";
+            const frontendUrl = Deno.env.get("PUBLIC_SITE_URL") || Deno.env.get("APP_URL") || "https://ryokotoursafrica.com";
+            const redirectUrl = `${frontendUrl}/booking-success?id=${bookingId}&trackingId=${orderTrackingId}`;
+
+            console.log("Redirecting user to success page:", redirectUrl);
+
             return new Response(null, {
                 status: 302,
                 headers: {
                     ...corsHeaders,
-                    Location: `${frontendUrl}/booking-success?id=${bookingId}&trackingId=${orderTrackingId}`,
+                    "Location": redirectUrl,
                 },
             });
         }
