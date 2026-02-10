@@ -194,7 +194,7 @@ const AnalyticsDashboard = () => {
                 {stats.recentBookings.map((booking: any) => (
                   <div key={booking.id} className="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
                     <div>
-                      <p className="font-medium text-slate-800 dark:text-white">{booking.guest_name || 'Guest'}</p>
+                      <p className="font-medium text-slate-800 dark:text-white">{booking.customer_name || 'Anonymous Guest'}</p>
                       <p className="text-xs text-slate-500">{new Date(booking.created_at).toLocaleDateString()}</p>
                     </div>
                     <span className="text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-1 rounded-md">

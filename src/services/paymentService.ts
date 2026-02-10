@@ -79,6 +79,12 @@ export class PaymentService {
 
       if (error) {
         console.error('Pesapal invocation error:', error);
+
+        // Try to get more details if available in the context or error object
+        if (error instanceof Error && 'details' in error) {
+          console.error('Error details:', (error as any).details);
+        }
+
         return { success: false, error: error.message || 'Failed to initiate PesaPal payment' };
       }
 

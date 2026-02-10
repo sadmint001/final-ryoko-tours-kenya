@@ -27,7 +27,7 @@ serve(async (req) => {
     // Get user from auth header
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
-    
+
     if (userError || !user) {
       throw new Error("Invalid user token");
     }
@@ -56,7 +56,7 @@ serve(async (req) => {
 
     // Generate timestamp
     const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
-    
+
     // Generate password
     const password = btoa(`${businessShortCode}${passkey}${timestamp}`);
 
@@ -79,11 +79,11 @@ serve(async (req) => {
     const accessToken = tokenData.access_token;
 
     // Format phone number (remove +254 and add 254)
-    const formattedPhone = phoneNumber.startsWith('+254') 
+    const formattedPhone = phoneNumber.startsWith('+254')
       ? phoneNumber.replace('+254', '254')
       : phoneNumber.startsWith('0')
-      ? phoneNumber.replace('0', '254')
-      : phoneNumber;
+        ? phoneNumber.replace('0', '254')
+        : phoneNumber;
 
     // STK Push request
     const stkPushResponse = await fetch(
@@ -161,7 +161,10 @@ serve(async (req) => {
   } catch (error) {
     console.error("M-Pesa Error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({
+        error: (error as Error).message,
+        details: (error as Error).stack
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,

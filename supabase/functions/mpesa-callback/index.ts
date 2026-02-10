@@ -29,7 +29,7 @@ serve(async (req) => {
       // Payment successful
       const callbackMetadata = stkCallback.CallbackMetadata;
       const items = callbackMetadata.Item;
-      
+
       const amount = items.find((item: any) => item.Name === "Amount")?.Value;
       const mpesaReceiptNumber = items.find((item: any) => item.Name === "MpesaReceiptNumber")?.Value;
       const transactionDate = items.find((item: any) => item.Name === "TransactionDate")?.Value;
@@ -54,7 +54,7 @@ serve(async (req) => {
     } else {
       // Payment failed
       console.log("M-Pesa payment failed:", stkCallback.ResultDesc);
-      
+
       // Optionally update booking status to failed
       // Note: We'd need a better way to match the booking, perhaps storing the CheckoutRequestID
     }
@@ -69,7 +69,10 @@ serve(async (req) => {
   } catch (error) {
     console.error("M-Pesa Callback Error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({
+        error: (error as Error).message,
+        details: (error as Error).stack
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,

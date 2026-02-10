@@ -76,9 +76,12 @@ serve(async (req) => {
         const isLive = Deno.env.get("PESAPAL_IS_LIVE") === "true";
         const pesapalUrl = isLive
             ? "https://pay.pesapal.com/v3"
-            : "https://cyb3r.pesapal.com/pesapalv3";
+            : "https://cybqa.pesapal.com/pesapalv3";
 
         if (!consumerKey || !consumerSecret) throw new Error("PesaPal configuration missing");
+
+        console.log(`PesaPal Environment: ${isLive ? 'LIVE' : 'SANDBOX'}`);
+        console.log(`PesaPal Base URL: ${pesapalUrl}`);
 
         // 1. Authenticate to get Bearer Token
         console.log("Authenticating with PesaPal...");
@@ -103,7 +106,7 @@ serve(async (req) => {
 
         if (!ipnId) {
             const callbackUrl = `${supabaseUrl}/functions/v1/pesapal-callback`;
-            console.log("Registering IPN URL:", callbackUrl);
+            console.log("No IPN ID found in secrets. Registering a new one with PesaPal...:", callbackUrl);
 
             try {
                 const ipnResponse = await fetch(`${pesapalUrl}/api/URLSetup/RegisterIPN`, {
@@ -111,6 +114,7 @@ serve(async (req) => {
                     headers: {
                         Authorization: `Bearer ${bearerToken}`,
                         "Content-Type": "application/json",
+                        "Accept": "application/json",
                     },
                     body: JSON.stringify({
                         url: callbackUrl,
@@ -120,16 +124,18 @@ serve(async (req) => {
                 if (ipnResponse.ok) {
                     const ipnData = await ipnResponse.json();
                     ipnId = ipnData.ipn_id;
-                    console.log("IPN registered successfully:", ipnId);
+                    console.log("Fresh IPN registered successfully:", ipnId);
                 } else {
                     const ipnErrorData = await ipnResponse.text();
-                    console.warn("IPN Registration failed (continuing without IPN):", ipnErrorData);
-                    // Don't throw - IPN is optional, we can proceed without it
+                    console.error("IPN Registration failed:", ipnErrorData);
+                    throw new Error(`Mandatory IPN registration failed: ${ipnErrorData}`);
                 }
             } catch (error) {
-                console.warn("IPN Registration error (continuing without IPN):", error);
-                // Don't throw - IPN is optional, we can proceed without it
+                console.error("IPN Registration error:", error);
+                throw error;
             }
+        } else {
+            console.log("Using EXISTING IPN ID from Supabase Secrets:", ipnId);
         }
 
 
@@ -171,7 +177,7 @@ serve(async (req) => {
             currency: currency,
             amount: expectedTotal,
             description: `Payment for ${tourTitle}`,
-            callback_url: `${Deno.env.get("APP_URL") || 'http://localhost:8080'}/booking-success?bookingId=${booking.id}`,
+            callback_url: `${supabaseUrl}/functions/v1/pesapal-callback`,
             billing_address: {
                 email_address: customerEmail,
                 phone_number: customerPhone,
@@ -191,6 +197,7 @@ serve(async (req) => {
             headers: {
                 Authorization: `Bearer ${bearerToken}`,
                 "Content-Type": "application/json",
+                "Accept": "application/json",
             },
             body: JSON.stringify(orderRequest),
         });
@@ -241,7 +248,10 @@ serve(async (req) => {
     } catch (error) {
         console.error("PesaPal Error:", error);
         return new Response(
-            JSON.stringify({ error: error.message }),
+            JSON.stringify({
+                error: (error as Error).message,
+                details: (error as Error).stack
+            }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
         );
     }

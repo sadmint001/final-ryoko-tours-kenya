@@ -16,6 +16,7 @@ serve(async (req) => {
         const url = new URL(req.url);
         const orderTrackingId = url.searchParams.get("OrderTrackingId");
         const merchantReference = url.searchParams.get("OrderMerchantReference");
+        const orderNotificationType = url.searchParams.get("OrderNotificationType");
 
         if (!orderTrackingId) throw new Error("Missing OrderTrackingId");
 
@@ -24,7 +25,7 @@ serve(async (req) => {
         const isLive = Deno.env.get("PESAPAL_IS_LIVE") === "true";
         const pesapalUrl = isLive
             ? "https://pay.pesapal.com/v3"
-            : "https://cyb3r.pesapal.com/pesapalv3";
+            : "https://cybqa.pesapal.com/pesapalv3";
 
         // 1. Authenticate to get Bearer Token
         const authResponse = await fetch(`${pesapalUrl}/api/Auth/RequestToken`, {
@@ -42,6 +43,7 @@ serve(async (req) => {
             headers: {
                 Authorization: `Bearer ${bearerToken}`,
                 "Content-Type": "application/json",
+                "Accept": "application/json",
             },
         });
 
@@ -98,14 +100,38 @@ serve(async (req) => {
             console.error("Transaction Update Error:", txError);
         }
 
-        return new Response(
-            JSON.stringify({ success: true, status: statusData.payment_status_description }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-        );
+        // 4. Respond according to Notification Type
+        if (orderNotificationType === "IPNCHANGE") {
+            // PesaPal expects a specific JSON response for IPN notifications
+            console.log("Responding to IPN notification...");
+            return new Response(
+                JSON.stringify({
+                    orderNotificationType: "IPNCHANGE",
+                    orderTrackingId: orderTrackingId,
+                    orderMerchantReference: bookingId,
+                    status: 200
+                }),
+                { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+            );
+        } else {
+            // Callback: Redirect to frontend success page
+            console.log("Redirecting user to success page...");
+            const frontendUrl = Deno.env.get("PUBLIC_SITE_URL") || "https://ryokotoursafrica.com";
+            return new Response(null, {
+                status: 302,
+                headers: {
+                    ...corsHeaders,
+                    Location: `${frontendUrl}/booking-success?id=${bookingId}&trackingId=${orderTrackingId}`,
+                },
+            });
+        }
     } catch (error) {
         console.error("PesaPal Callback Error:", error);
         return new Response(
-            JSON.stringify({ error: error.message }),
+            JSON.stringify({
+                error: (error as Error).message,
+                details: (error as Error).stack
+            }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
         );
     }
