@@ -28,30 +28,6 @@ const GoogleTranslateProvider: React.FC = () => {
         'google-translate-silent-holder'
       );
     };
-
-    // Aggressive cleanup interval
-    const cleanupInterval = setInterval(() => {
-      // Hide banner frames
-      const banners = document.querySelectorAll('.goog-te-banner-frame');
-      banners.forEach(b => (b as HTMLElement).style.display = 'none');
-
-      // Reset body position which Google often shifts
-      if (document.body.style.top !== '0px') {
-        document.body.style.top = '0px';
-      }
-
-      // Remove Google's injected <iframe> that causes the top bar
-      const skipIframe = document.querySelector('.skiptranslate iframe');
-      if (skipIframe) {
-        (skipIframe.parentElement as HTMLElement).style.display = 'none';
-      }
-
-      // Hide tooltips
-      const tooltips = document.querySelectorAll('#goog-gt-tt');
-      tooltips.forEach(t => (t as HTMLElement).style.display = 'none');
-    }, 500);
-
-    return () => clearInterval(cleanupInterval);
   }, []);
 
   return <div id="google-translate-silent-holder" className="hidden invisible h-0 w-0 overflow-hidden" />;
@@ -98,17 +74,19 @@ const CustomLanguageSwitcher = () => {
     if (saved) {
       const lang = languages.find(l => l.code === saved);
       if (lang) {
+        let attempts = 0;
         const checkReady = setInterval(() => {
+          attempts++;
           const googleCombo = document.querySelector('.goog-te-combo') as HTMLSelectElement;
           if (googleCombo) {
-            // Silently update without the full transition on initial load
             googleCombo.value = lang.code;
             googleCombo.dispatchEvent(new Event('change'));
             setCurrentLang(lang.name);
             clearInterval(checkReady);
           }
-        }, 300);
-        setTimeout(() => clearInterval(checkReady), 10000);
+          if (attempts > 50) clearInterval(checkReady); // Safety timeout
+        }, 200);
+        return () => clearInterval(checkReady);
       }
     }
   }, []);

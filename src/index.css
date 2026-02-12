@@ -179,15 +179,21 @@ All colors MUST be HSL.
   iframe.goog-te-banner-frame,
   #goog-gt-tt,
   .goog-te-balloon-frame,
+  .skiptranslate,
   .skiptranslate>iframe,
   .goog-tooltip,
-  .goog-tooltip:hover {
+  .goog-tooltip:hover,
+  .goog-te-spinner-pos,
+  #google_translate_element {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
     width: 0 !important;
     opacity: 0 !important;
     pointer-events: none !important;
+    position: absolute !important;
+    top: -9999px !important;
+    left: -9999px !important;
     z-index: -9999 !important;
   }
 
@@ -197,15 +203,14 @@ All colors MUST be HSL.
     box-sizing: border-box !important;
   }
 
-  /* Hide Google's automatic tooltip on hover */
+  /* Hide Google's automatic tooltip on hover and other artifacts */
   #goog-gt-tt,
   .goog-te-balloon-frame,
-  .goog-te-balloon-frame-active {
+  .goog-te-balloon-frame-active,
+  .goog-te-spinner-pos,
+  .goog-te-spinner {
     display: none !important;
-  }
-
-  .goog-te-spinner-pos {
-    display: none !important;
+    opacity: 0 !important;
   }
 
   /* Fallback overrides for common light-mode utility classes that may be hardcoded */

@@ -115,8 +115,8 @@ serve(async (req) => {
             );
         } else {
             // Callback: Redirect to frontend success page
-            const frontendUrl = Deno.env.get("PUBLIC_SITE_URL") || Deno.env.get("APP_URL") || "https://ryokotoursafrica.com";
-            const redirectUrl = `${frontendUrl}/booking-success?id=${bookingId}&trackingId=${orderTrackingId}`;
+            const frontendUrl = Deno.env.get("PUBLIC_SITE_URL") || Deno.env.get("APP_URL") || "http://localhost:8080";
+            const redirectUrl = `${frontendUrl}/booking-success?bookingId=${bookingId}&trackingId=${orderTrackingId}`;
 
             console.log("Redirecting user to success page:", redirectUrl);
 
