@@ -114,8 +114,9 @@ serve(async (req) => {
                 { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
             );
         } else {
-            // Callback: Redirect to frontend success page
-            const frontendUrl = Deno.env.get("PUBLIC_SITE_URL") || Deno.env.get("APP_URL") || "http://localhost:8080";
+            // 6. Redirect to Frontend (Updated with dynamic origin support)
+            const originParam = url.searchParams.get("origin");
+            const frontendUrl = originParam || Deno.env.get("PUBLIC_SITE_URL") || Deno.env.get("APP_URL") || "https://ryokofinalrepo.netlify.app";
             const redirectUrl = `${frontendUrl}/booking-success?bookingId=${bookingId}&trackingId=${orderTrackingId}`;
 
             console.log("Redirecting user to success page:", redirectUrl);

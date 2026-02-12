@@ -172,12 +172,13 @@ serve(async (req) => {
         }
 
         // 4. Submit Order
+        const origin = body.origin || "";
         const orderRequest: any = {
             id: booking.id, // MerchantReference
             currency: currency,
             amount: expectedTotal,
             description: `Payment for ${tourTitle}`,
-            callback_url: `${supabaseUrl}/functions/v1/pesapal-callback`,
+            callback_url: `${supabaseUrl}/functions/v1/pesapal-callback${origin ? `?origin=${encodeURIComponent(origin)}` : ''}`,
             billing_address: {
                 email_address: customerEmail,
                 phone_number: customerPhone,

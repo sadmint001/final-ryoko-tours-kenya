@@ -73,7 +73,8 @@ export class PaymentService {
       const { data, error } = await supabase.functions.invoke('pesapal-payment', {
         body: {
           ...paymentData,
-          tourId: paymentData.destinationId // Ensure tourId is passed as expected by function
+          tourId: paymentData.destinationId, // Ensure tourId is passed as expected by function
+          origin: window.location.origin
         },
       });
 
