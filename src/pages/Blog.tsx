@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import BlogSection from '@/components/BlogSection';
+import blogHeroImage from '@/assets/whyus1.jpg';
 
 const Blog = () => {
   useEffect(() => {
@@ -57,23 +58,23 @@ const Blog = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/10">
       <Navbar />
-      
+
       {/* Hero Image Section */}
       <section className="relative h-96 w-full overflow-hidden">
         <img
-          src="/src/assets/whyus1.jpg"
+          src={blogHeroImage}
           alt="Kenyan Safari Landscape"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
           <div className="text-center px-4">
-            <h1 
+            <h1
               className="text-4xl md:text-5xl font-display font-bold mb-4"
               style={{ color: 'white' }}
             >
               Blog: Safari Travel Tips & Stories
             </h1>
-            <p 
+            <p
               className="text-xl max-w-2xl mx-auto"
               style={{ color: 'white' }}
             >

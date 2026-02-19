@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Compass, Camera, Mountain, Leaf, ArrowRight, Award } from 'lucide-react';
+import featuredBg from '@/assets/featured-bg.jpg';
 
 interface Tour {
     key: string;
@@ -94,7 +95,7 @@ const FeaturedToursSection = () => {
             {/* Background Image - 75% Opacity */}
             <div className="absolute inset-0 z-0">
                 <img
-                    src="/src/assets/featured-bg.jpg"
+                    src={featuredBg}
                     alt="Section Background"
                     className="w-full h-full object-cover"
                     onError={(e) => {
