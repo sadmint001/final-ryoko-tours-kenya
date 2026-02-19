@@ -7,7 +7,10 @@ export type AdminAction =
   | 'destination_duplicate'
   | 'destination_toggle_active'
   | 'destination_bulk_delete'
-  | 'destination_bulk_toggle_active';
+  | 'destination_bulk_toggle_active'
+  | 'destination_update_image'
+  | 'destination_activate'
+  | 'destination_deactivate';
 
 export interface LogPayload {
   user_id: string;

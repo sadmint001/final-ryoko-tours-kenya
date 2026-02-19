@@ -27,9 +27,11 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import CommentSection from '@/components/blog/CommentSection';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Tables } from '@/integrations/supabase/types';
+import { logBlogView } from '@/lib/analytics';
 
 type BlogDetail = Tables<'blog_posts'>;
 
@@ -100,11 +102,8 @@ const BlogDetail = () => {
 
       setBlog(blogData);
 
-      // Increment views
-      await supabase
-        .from('blog_posts')
-        .update({ views: (blogData.views || 0) + 1 })
-        .eq('id', blogData.id);
+      // Professional cookie-based tracking
+      await logBlogView(blogData.id, blogData.views || 0);
 
     } catch (error) {
       console.error('Error fetching blog:', error);
@@ -452,17 +451,11 @@ const BlogDetail = () => {
                 </div>
               </div>
             )}
-            
+
             <section id="comments" className="mb-12">
-              <div className="flex items-center gap-2 mb-6">
-                <MessageCircle className="h-5 w-5" />
-                <h2 className="text-2xl font-bold">Comments</h2>
-              </div>
-              <div className="text-center py-8 text-muted-foreground bg-muted/30 rounded-lg">
-                <p>Comments are temporarily disabled.</p>
-              </div>
+              <CommentSection postId={blog.id} />
             </section>
-            
+
 
           </article>
 

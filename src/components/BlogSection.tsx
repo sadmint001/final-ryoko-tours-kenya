@@ -126,9 +126,10 @@ const BlogSection = () => {
       <div className="relative z-10 container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20 border border-amber-500/20 dark:border-amber-500/30 mb-6">
-            <BookOpen className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Travel Journals</span>
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="w-8 h-px bg-amber-500"></div>
+            <span className="text-xs font-bold uppercase tracking-[0.3em] text-amber-600 dark:text-amber-400">Travel Journals</span>
+            <div className="w-8 h-px bg-amber-500"></div>
           </div>
 
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 dark:text-white mb-4 font-serif">

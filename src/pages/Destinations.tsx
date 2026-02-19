@@ -3,10 +3,11 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Clock, Users, ExternalLink, Filter, ArrowLeft, Search, Sparkles, Globe, ChevronDown, Check } from 'lucide-react';
+import { MapPin, Clock, Users, ExternalLink, Filter, ArrowLeft, Search, Globe, ChevronDown, Check, Award } from 'lucide-react';
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import WhatsAppButton from '@/components/WhatsAppButton';
 import Loader from '@/components/ui/loader';
 import { getPriceByResidency } from '@/lib/pricing';
 import { supabase } from '@/integrations/supabase/client';
@@ -269,7 +270,7 @@ const Destinations: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                <h2 className="text-3xl md:text-4xl font-serif font-bold text-white drop-shadow-lg">
+                <h2 className="text-3xl md:text-4xl font-serif font-bold text-white drop-shadow-lg !text-white">
                   Karibu Kenya
                 </h2>
                 <div className="h-0.5 w-16 bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto" />
@@ -284,7 +285,7 @@ const Destinations: React.FC = () => {
                   onClick={() => setShowResidencyMenu(s => !s)}
                 >
                   <span className="relative z-10 font-bold tracking-wide uppercase flex items-center gap-3">
-                    <Sparkles className="w-5 h-5 text-amber-200" />
+                    <Globe className="w-5 h-5 text-amber-200" />
                     Select Residency
                   </span>
                   <ChevronDown className={`ml-2 w-5 h-5 transition-transform duration-500 relative z-10 ${showResidencyMenu ? 'rotate-180' : ''}`} />
@@ -359,19 +360,15 @@ const Destinations: React.FC = () => {
             </Button>
 
             {/* Status Pill */}
-            <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-sm text-white">
-              <Globe className="w-4 h-4 text-amber-400" />
-              <span className="text-sm font-medium">
-                Viewing as: <span className="font-bold">{getResidencyDisplay(selectedResidency)}</span>
+            <div className="hidden sm:flex items-center gap-3 text-white">
+              <div className="w-6 h-px bg-amber-400"></div>
+              <span className="text-xs font-bold uppercase tracking-[0.2em]">
+                Viewing as: <span className="text-amber-400">{getResidencyDisplay(selectedResidency)}</span>
               </span>
             </div>
           </div>
 
           <div className="max-w-4xl mx-auto mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/30 backdrop-blur-md border border-white/10 mb-6 shadow-lg">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span className="text-sm font-medium text-amber-200">Curated Experiences</span>
-            </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold font-serif text-white mb-6 drop-shadow-xl">
               Discover
@@ -384,11 +381,12 @@ const Destinations: React.FC = () => {
 
           {/* Mobile Status Pill (Visible only on small screens) */}
           <div className="sm:hidden mb-8 flex justify-center">
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-sm text-white">
-              <Globe className="w-4 h-4 text-amber-400" />
-              <span className="text-sm font-medium">
-                <span className="font-bold">{getResidencyDisplay(selectedResidency)}</span>
+            <div className="flex items-center gap-3 text-white">
+              <div className="w-4 h-px bg-amber-400"></div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em]">
+                <span className="text-amber-400">{getResidencyDisplay(selectedResidency)}</span>
               </span>
+              <div className="w-4 h-px bg-amber-400"></div>
             </div>
           </div>
 
@@ -415,8 +413,8 @@ const Destinations: React.FC = () => {
                     { id: 'Wildlife', name: 'Wildlife' },
                     { id: 'Nature', name: 'Nature & Adventure' },
                     { id: 'Historical', name: 'History & Culture' },
-                    { id: 'Farming', name: 'Farming' },
-                    { id: 'Signature', name: 'Signature' },
+                    { id: 'Farming', name: 'Farming, Coffee & Tea' },
+                    { id: 'Signature', name: 'Signature Experience' },
                   ].map(c => (
                     <button
                       key={c.id}
@@ -585,6 +583,7 @@ const Destinations: React.FC = () => {
         )}
       </div>
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 };

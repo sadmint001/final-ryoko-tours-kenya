@@ -9,18 +9,11 @@ import { Mail, Phone, MapPin, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import WhatsAppButton from '@/components/WhatsAppButton';
 import { motion } from 'framer-motion';
 import heroImage from '../assets/hero-safari.jpg';
 
-// Custom WhatsApp Icon
-const WhatsAppIcon = () => (
-  <svg viewBox="0 0 32 32" className="w-6 h-6 text-white">
-    <path
-      fill="currentColor"
-      d="M16.016 3C9.68 3 4.031 8.648 4.031 15c0 2.643.828 5.102 2.238 7.13L4 29l6.999-2.314c2.016 1.102 4.386 1.724 6.999 1.724 6.336 0 11.985-5.648 11.985-12S22.352 3 16.016 3zm0 21c-1.98 0-3.914-.524-5.575-1.514l-.4-.228-4.147 1.372 1.388-4.049-.263-.422C5.051 17.305 4.531 16.173 4.531 15c0-6.063 4.95-11 11.485-11S27.5 8.938 27.5 15 22.016 24 16.016 24zm5.8-7.3c-.08-.14-.29-.228-.615-.4-.328-.174-1.95-.964-2.254-1.072-.303-.108-.525-.174-.746.174-.222.348-.86 1.071-1.055 1.29-.194.218-.39.244-.717.086-.328-.156-1.38-.507-2.62-1.616-.968-.86-1.618-1.918-1.807-2.246-.19-.326-.02-.5.144-.654.148-.146.328-.39.492-.585.16-.194.214-.326.32-.543.108-.218.054-.407-.027-.573-.08-.165-.746-1.8-1.02-2.473-.27-.645-.546-.557-.746-.568-.194-.01-.42-.012-.645-.012s-.57.083-.87.397c-.296.313-1.128 1.104-1.128 2.695 0 1.591 1.157 3.126 1.318 3.343.162.218 2.274 3.465 5.52 4.861.772.334 1.373.533 1.841.683.773.24 1.478.206 2.036.125.62-.09 1.95-.797 2.228-1.566.27-.767.27-1.42.19-1.566z"
-    />
-  </svg>
-);
+
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -46,16 +39,14 @@ const Contact = () => {
       // 1. Send data to Supabase
       const { error } = await supabase
         .from('contact_messages')
-        .insert([
-          {
-            name: formData.name,
-            email: formData.email,
-            subject: formData.subject,
-            message: formData.message,
-            created_at: new Date().toISOString(),
-            status: 'unread' // assuming a status column exists or default
-          }
-        ]);
+        .insert({
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+          created_at: new Date().toISOString(),
+          status: 'unread'
+        });
 
       if (error) {
         console.error('Error saving message:', error);
@@ -165,14 +156,7 @@ const Contact = () => {
       </section>
 
       {/* Floating WhatsApp Button */}
-      <a
-        href="https://wa.me/254797758216"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 bg-green-500 p-4 rounded-full shadow-lg hover:scale-105 transition-transform z-50"
-      >
-        <WhatsAppIcon />
-      </a>
+      <WhatsAppButton />
 
       <main className="container mx-auto px-4 py-16 space-y-16">
         {/* Contact Grid */}

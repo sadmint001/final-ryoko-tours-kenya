@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Star, Users, MapPin } from 'lucide-react';
+import { ChevronRight, Award, Users, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
@@ -39,9 +39,10 @@ const HeroSection = () => {
       <div className="relative z-10 container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto text-center text-white">
           {/* Premium Badge */}
-          <div className="inline-flex items-center gap-2 bg-gradient-luxury/20 backdrop-blur-md rounded-full px-8 py-4 mb-8 animate-fade-up border border-sunset-gold/30 shadow-luxury">
-            <Star className="h-5 w-5 text-sunset-gold" />
-            <span className="font-opensans font-medium text-safari-cream">Tapestry of Experience</span>
+          <div className="flex items-center justify-center gap-3 mb-8 animate-fade-up">
+            <div className="w-8 h-px bg-sunset-gold"></div>
+            <span className="text-xs font-bold uppercase tracking-[0.3em] text-sunset-gold">Tapestry of Experience</span>
+            <div className="w-8 h-px bg-sunset-gold"></div>
           </div>
 
           {/* Main Headline */}
@@ -52,7 +53,7 @@ const HeroSection = () => {
 
           {/* Description */}
           <p className="text-lg md:text-2xl font-opensans mb-10 opacity-95 max-w-4xl mx-auto animate-fade-up leading-relaxed text-safari-cream/90">
-            Immerse yourself in curated journeys that blend luxury with authenticity. From intimate wildlife encounters to profound cultural connections — every moment crafted with sophistication.
+            Immerse yourself in curated journeys that blend luxury with authenticity. From intimate wildlife encounters to profound cultural connections every moment crafted with sophistication.
           </p>
 
           {/* CTA Buttons */}
@@ -93,7 +94,7 @@ const HeroSection = () => {
             <div className="text-center group">
               <div className="flex items-center justify-center gap-3 mb-3">
                 <div className="p-2 rounded-full bg-gradient-luxury/20 backdrop-blur-sm">
-                  <Star className="h-6 w-6 text-sunset-gold" />
+                  <Award className="h-6 w-6 text-sunset-gold" />
                 </div>
                 <span className="text-4xl font-bold font-playfair text-safari-cream">4.9</span>
               </div>

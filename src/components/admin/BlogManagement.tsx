@@ -59,6 +59,22 @@ const BlogManagement = () => {
 
   useEffect(() => {
     fetchBlogs();
+
+    // Real-time listener for blog updates (live views)
+    const channel = supabase
+      .channel('blog-updates')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'blog_posts' },
+        () => {
+          fetchBlogs();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchBlogs = async () => {
@@ -133,7 +149,7 @@ const BlogManagement = () => {
 
       setUploadProgress(100);
       setUploadSuccess(true);
-      
+
       toast({
         title: 'Success',
         description: 'Image uploaded successfully',
@@ -145,13 +161,13 @@ const BlogManagement = () => {
       console.error('Error in handleImageUpload:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to upload image';
       setUploadError(errorMessage);
-      
+
       toast({
         title: 'Upload Failed',
         description: errorMessage,
         variant: 'destructive'
       });
-      
+
       throw error;
     } finally {
       setUploading(false);
@@ -174,7 +190,7 @@ const BlogManagement = () => {
     } catch (error) {
       // Error already handled in handleImageUpload
     }
-    
+
     // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -183,7 +199,7 @@ const BlogManagement = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (uploading) {
       toast({
         title: 'Please wait',
@@ -209,7 +225,7 @@ const BlogManagement = () => {
           .eq('id', editingBlog.id);
 
         if (error) throw error;
-        
+
         toast({
           title: 'Success',
           description: 'Blog updated successfully'
@@ -274,12 +290,12 @@ const BlogManagement = () => {
         .eq('id', blogToDelete);
 
       if (error) throw error;
-      
+
       toast({
         title: 'Success',
         description: 'Blog deleted successfully'
       });
-      
+
       fetchBlogs();
     } catch (error) {
       console.error('Error deleting blog:', error);
@@ -298,19 +314,19 @@ const BlogManagement = () => {
     try {
       const { error } = await supabase
         .from('blog_posts')
-        .update({ 
+        .update({
           published: !blog.published,
           published_at: !blog.published ? new Date().toISOString() : null
         })
         .eq('id', blog.id);
 
       if (error) throw error;
-      
+
       toast({
         title: 'Success',
         description: `Blog ${!blog.published ? 'published' : 'unpublished'} successfully`
       });
-      
+
       fetchBlogs();
     } catch (error) {
       console.error('Error updating blog:', error);
@@ -330,12 +346,12 @@ const BlogManagement = () => {
         .eq('id', blog.id);
 
       if (error) throw error;
-      
+
       toast({
         title: 'Success',
         description: `Blog ${!blog.featured ? 'featured' : 'unfeatured'} successfully`
       });
-      
+
       fetchBlogs();
     } catch (error) {
       console.error('Error updating blog:', error);
@@ -399,12 +415,12 @@ const BlogManagement = () => {
         .eq('id', blogId);
 
       if (error) throw error;
-      
+
       toast({
         title: 'Success',
         description: 'Blog updated successfully'
       });
-      
+
       fetchBlogs();
     } catch (error) {
       console.error('Error updating blog:', error);
@@ -413,6 +429,36 @@ const BlogManagement = () => {
         description: 'Failed to update blog',
         variant: 'destructive'
       });
+    }
+  };
+
+  const handleResetAllViews = async () => {
+    if (!window.confirm('Are you sure you want to reset views for ALL blog posts? This cannot be undone.')) return;
+
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('blog_posts')
+        .update({ views: 0 })
+        .gt('id', 0); // Update all where ID > 0
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'All blog views have been reset'
+      });
+
+      fetchBlogs();
+    } catch (error) {
+      console.error('Error resetting all views:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to reset all views',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -431,241 +477,248 @@ const BlogManagement = () => {
           <h2 className="text-2xl font-bold">Blog Management</h2>
           <p className="text-muted-foreground">Manage your existing blog posts ({blogs.length} total)</p>
         </div>
-        
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Blog Post
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingBlog ? 'Edit Blog Post' : 'Create New Blog Post'}</DialogTitle>
-              <DialogDescription>
-                {editingBlog ? 'Update your existing blog post' : 'Create a new blog post'}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title *</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="author">Author *</Label>
-                  <Input
-                    id="author"
-                    value={formData.author}
-                    onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category *</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) => setFormData({ ...formData, category: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="read_time">Read Time *</Label>
-                  <Input
-                    id="read_time"
-                    value={formData.read_time}
-                    onChange={(e) => setFormData({ ...formData, read_time: e.target.value })}
-                    placeholder="e.g., 12 min read"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="excerpt">Excerpt *</Label>
-                <Textarea
-                  id="excerpt"
-                  value={formData.excerpt}
-                  onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                  placeholder="Brief description of the blog post"
-                  rows={3}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="cover_image">Cover Image *</Label>
-                <div className="space-y-3">
-                  <div className="flex gap-2">
+
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleResetAllViews} disabled={blogs.length === 0}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Reset All Views
+          </Button>
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Blog Post
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingBlog ? 'Edit Blog Post' : 'Create New Blog Post'}</DialogTitle>
+                <DialogDescription>
+                  {editingBlog ? 'Update your existing blog post' : 'Create a new blog post'}
+                </DialogDescription>
+              </DialogHeader>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Title *</Label>
                     <Input
-                      id="cover_image"
-                      type="url"
-                      value={formData.cover_image}
-                      onChange={(e) => setFormData({ ...formData, cover_image: e.target.value })}
-                      placeholder="Image URL"
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                       required
                     />
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                      className="hidden"
-                      onChange={handleFileSelect}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="author">Author *</Label>
+                    <Input
+                      id="author"
+                      value={formData.author}
+                      onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                      required
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category *</Label>
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value) => setFormData({ ...formData, category: value })}
                     >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="read_time">Read Time *</Label>
+                    <Input
+                      id="read_time"
+                      value={formData.read_time}
+                      onChange={(e) => setFormData({ ...formData, read_time: e.target.value })}
+                      placeholder="e.g., 12 min read"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="excerpt">Excerpt *</Label>
+                  <Textarea
+                    id="excerpt"
+                    value={formData.excerpt}
+                    onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                    placeholder="Brief description of the blog post"
+                    rows={3}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cover_image">Cover Image *</Label>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <Input
+                        id="cover_image"
+                        type="url"
+                        value={formData.cover_image}
+                        onChange={(e) => setFormData({ ...formData, cover_image: e.target.value })}
+                        placeholder="Image URL"
+                        required
+                      />
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                        className="hidden"
+                        onChange={handleFileSelect}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                      >
+                        {uploading ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Upload className="h-4 w-4 mr-2" />
+                        )}
+                        {uploading ? 'Uploading...' : 'Upload'}
+                      </Button>
+                    </div>
+
+                    {uploading && (
+                      <div className="space-y-2">
+                        <Progress value={uploadProgress} className="h-2" />
+                        <p className="text-xs text-muted-foreground">
+                          Uploading... {uploadProgress}%
+                        </p>
+                      </div>
+                    )}
+
+                    {uploadError && (
+                      <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-2 rounded">
+                        <AlertCircle className="h-4 w-4" />
+                        <span>{uploadError}</span>
+                      </div>
+                    )}
+
+                    {uploadSuccess && (
+                      <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded">
+                        <CheckCircle className="h-4 w-4" />
+                        <span>Image uploaded successfully!</span>
+                      </div>
+                    )}
+
+                    {formData.cover_image && (
+                      <div className="mt-2 border rounded-lg overflow-hidden">
+                        <img
+                          src={formData.cover_image}
+                          alt="Cover preview"
+                          className="w-full h-48 object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjOTk5Ij5Db3ZlciBJbWFnZTwvdGV4dD48L3N2Zz4=';
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    <div className="text-xs text-muted-foreground">
+                      <p>• Supported formats: JPEG, PNG, GIF, WebP</p>
+                      <p>• Maximum file size: 5MB</p>
+                      <p>• Recommended dimensions: 1200×630 pixels</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="content">Content *</Label>
+                  <Textarea
+                    id="content"
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    required
+                    className="min-h-[200px] font-mono text-sm"
+                    placeholder="Write your blog content here..."
+                    rows={10}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tags">Tags</Label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {formData.tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => removeTag(tag)}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <Input
+                    id="tags"
+                    value={formData.tagInput}
+                    onChange={(e) => setFormData({ ...formData, tagInput: e.target.value })}
+                    onKeyDown={handleTagInput}
+                    placeholder="Type a tag and press Enter"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="featured"
+                        checked={formData.featured}
+                        onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
+                      />
+                      <Label htmlFor="featured">Featured</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="published"
+                        checked={formData.published}
+                        onCheckedChange={(checked) => setFormData({ ...formData, published: checked })}
+                      />
+                      <Label htmlFor="published">Published</Label>
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <Button type="button" variant="outline" onClick={handleDialogClose}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={uploading}>
                       {uploading ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       ) : (
-                        <Upload className="h-4 w-4 mr-2" />
+                        <Save className="mr-2 h-4 w-4" />
                       )}
-                      {uploading ? 'Uploading...' : 'Upload'}
+                      {editingBlog ? 'Update' : 'Create'} Blog
                     </Button>
                   </div>
-
-                  {uploading && (
-                    <div className="space-y-2">
-                      <Progress value={uploadProgress} className="h-2" />
-                      <p className="text-xs text-muted-foreground">
-                        Uploading... {uploadProgress}%
-                      </p>
-                    </div>
-                  )}
-
-                  {uploadError && (
-                    <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-2 rounded">
-                      <AlertCircle className="h-4 w-4" />
-                      <span>{uploadError}</span>
-                    </div>
-                  )}
-
-                  {uploadSuccess && (
-                    <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded">
-                      <CheckCircle className="h-4 w-4" />
-                      <span>Image uploaded successfully!</span>
-                    </div>
-                  )}
-
-                  {formData.cover_image && (
-                    <div className="mt-2 border rounded-lg overflow-hidden">
-                      <img
-                        src={formData.cover_image}
-                        alt="Cover preview"
-                        className="w-full h-48 object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjOTk5Ij5Db3ZlciBJbWFnZTwvdGV4dD48L3N2Zz4=';
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  <div className="text-xs text-muted-foreground">
-                    <p>• Supported formats: JPEG, PNG, GIF, WebP</p>
-                    <p>• Maximum file size: 5MB</p>
-                    <p>• Recommended dimensions: 1200×630 pixels</p>
-                  </div>
                 </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="content">Content *</Label>
-                <Textarea
-                  id="content"
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  required
-                  className="min-h-[200px] font-mono text-sm"
-                  placeholder="Write your blog content here..."
-                  rows={10}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="tags">Tags</Label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {formData.tags.map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => removeTag(tag)}
-                        className="ml-1 hover:text-destructive"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-                <Input
-                  id="tags"
-                  value={formData.tagInput}
-                  onChange={(e) => setFormData({ ...formData, tagInput: e.target.value })}
-                  onKeyDown={handleTagInput}
-                  placeholder="Type a tag and press Enter"
-                />
-              </div>
-              
-              <div className="flex items-center justify-between pt-4 border-t">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="featured"
-                      checked={formData.featured}
-                      onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
-                    />
-                    <Label htmlFor="featured">Featured</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="published"
-                      checked={formData.published}
-                      onCheckedChange={(checked) => setFormData({ ...formData, published: checked })}
-                    />
-                    <Label htmlFor="published">Published</Label>
-                  </div>
-                </div>
-                
-                <div className="flex space-x-2">
-                  <Button type="button" variant="outline" onClick={handleDialogClose}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={uploading}>
-                    {uploading ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Save className="mr-2 h-4 w-4" />
-                    )}
-                    {editingBlog ? 'Update' : 'Create'} Blog
-                  </Button>
-                </div>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Stats Summary */}
@@ -734,13 +787,13 @@ const BlogManagement = () => {
                         View
                       </Link>
                     </div>
-                    
+
                     <CardTitle className="text-lg">{blog.title}</CardTitle>
-                    
+
                     <CardDescription className="line-clamp-2">
                       {blog.excerpt}
                     </CardDescription>
-                    
+
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <span>By {blog.author}</span>
@@ -763,7 +816,7 @@ const BlogManagement = () => {
                       ))}
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col gap-2 ml-4">
                     <div className="flex gap-2">
                       <Button
@@ -781,7 +834,7 @@ const BlogManagement = () => {
                         <Badge className={`h-4 w-4 ${blog.featured ? 'bg-primary' : 'bg-transparent'}`} />
                       </Button>
                     </div>
-                    
+
                     <div className="flex gap-2">
                       <Button
                         size="sm"
@@ -801,7 +854,7 @@ const BlogManagement = () => {
                   </div>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="border-t pt-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -829,7 +882,7 @@ const BlogManagement = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"

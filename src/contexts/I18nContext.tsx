@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
-type Locale = 'en' | 'zh' | 'ja';
+type Locale = 'en' | 'zh' | 'ja' | 'zh-CN';
 
 type Messages = Record<string, string>;
 
@@ -18,7 +18,7 @@ import en from '@/locales/en.json';
 import zh from '@/locales/zh.json';
 import ja from '@/locales/ja.json';
 
-const messages: Record<Locale, Messages> = { en, zh, ja };
+const messages: Record<Locale, Messages> = { en, zh, ja, 'zh-CN': zh };
 
 export const I18nProvider = ({ children }: { children: React.ReactNode }) => {
   const [locale, setLocaleState] = useState<Locale>('en');

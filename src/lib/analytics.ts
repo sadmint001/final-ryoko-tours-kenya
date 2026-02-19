@@ -1,6 +1,9 @@
 import { supabase } from '@/integrations/supabase/client';
+import Cookies from 'js-cookie';
 
-const ANON_ID_KEY = 'analytics_anon_id';
+const ANON_ID_KEY = 'ryoko_anon_id';
+const SESSION_ID_KEY = 'ryoko_session_id';
+const CONSENT_KEY = 'ryoko_cookie_consent';
 
 function generateId(): string {
   return (crypto && 'randomUUID' in crypto)
@@ -8,33 +11,80 @@ function generateId(): string {
     : Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+export function getCookieConsent(): boolean {
+  return Cookies.get(CONSENT_KEY) === 'true';
+}
+
+export function setCookieConsent(consent: boolean) {
+  Cookies.set(CONSENT_KEY, consent.toString(), { expires: 365, sameSite: 'lax' });
+}
+
 export function getAnonId(): string {
-  let id = localStorage.getItem(ANON_ID_KEY);
+  let id = Cookies.get(ANON_ID_KEY);
   if (!id) {
     id = generateId();
-    localStorage.setItem(ANON_ID_KEY, id);
+    Cookies.set(ANON_ID_KEY, id, { expires: 365, sameSite: 'lax' });
+  }
+  return id;
+}
+
+export function getSessionId(): string {
+  let id = Cookies.get(SESSION_ID_KEY);
+  if (!id) {
+    id = generateId();
+    // Session cookie (no expires attribute)
+    Cookies.set(SESSION_ID_KEY, id, { sameSite: 'lax' });
   }
   return id;
 }
 
 export async function logPageView(pathname: string) {
+  if (!getCookieConsent()) return;
+
   try {
     const anonId = getAnonId();
-    const ref = document.referrer || null;
-    const ua = navigator.userAgent;
+    const sessionId = getSessionId();
+    const referrer = document.referrer || 'direct';
+    const userAgent = navigator.userAgent;
+    const screenRes = `${window.screen.width}x${window.screen.height}`;
+    const language = navigator.language;
+
     await supabase.from('page_views').insert({
       anon_id: anonId,
-      path: pathname,
-      referrer: ref,
-      user_agent: ua,
+      session_id: sessionId,
+      page_path: pathname,
+      referrer: referrer,
+      user_agent: userAgent,
+      screen_resolution: screenRes,
+      language: language,
     });
   } catch (e) {
-    // fail silently in production; avoid breaking UX
     console.warn('Analytics log error', e);
   }
 }
 
-// Presence using Realtime (broadcast/presence API)
+export async function logEvent(category: string, action: string, label?: string, value?: number) {
+  if (!getCookieConsent()) return;
+
+  try {
+    const anonId = getAnonId();
+    const sessionId = getSessionId();
+
+    await supabase.from('analytics_events').insert({
+      anon_id: anonId,
+      session_id: sessionId,
+      category,
+      action,
+      label,
+      value,
+      page_path: window.location.pathname,
+    });
+  } catch (e) {
+    console.warn('Event log error', e);
+  }
+}
+
+// Presence using Realtime
 export function subscribePresence(onChange: (count: number) => void) {
   const channel = (supabase as any).channel('online-users', {
     config: { presence: { key: getAnonId() } },
@@ -56,8 +106,43 @@ export function subscribePresence(onChange: (count: number) => void) {
   });
 
   return () => {
-    try { channel.unsubscribe(); } catch {}
+    try { channel.unsubscribe(); } catch { }
   };
+}
+
+/**
+ * Professional Blog View tracking:
+ * - Only counts once per session per blog post
+ * - Respects cookie consent
+ * - Uses session-based cookies (ryoko_viewed_blog_{id})
+ */
+export async function logBlogView(postId: string | number, currentViews: number) {
+  if (!getCookieConsent()) return;
+
+  const cookieName = `ryoko_viewed_blog_${postId}`;
+
+  // Check if already viewed in this session
+  if (Cookies.get(cookieName)) {
+    return;
+  }
+
+  try {
+    // Increment in Supabase
+    const { error } = await supabase
+      .from('blog_posts')
+      .update({ views: (currentViews || 0) + 1 })
+      .eq('id', postId);
+
+    if (error) throw error;
+
+    // Set session cookie to prevent duplicate counts
+    Cookies.set(cookieName, 'true', { sameSite: 'lax' });
+
+    // Also log as a general event for aggregate analytics
+    await logEvent('blog', 'view', postId.toString());
+  } catch (e) {
+    console.warn('Blog view log error', e);
+  }
 }
 
 

@@ -76,7 +76,7 @@ const TopDestinations = () => {
         </div>
 
         {/* Residency Selection */}
-        <ResidencySelector 
+        <ResidencySelector
           selectedResidency={selectedResidency}
           onResidencyChange={setSelectedResidency}
         />
@@ -84,13 +84,13 @@ const TopDestinations = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {destinations.map((destination) => (
             <Card key={destination.id} className="group hover:shadow-elevated transition-all duration-300 overflow-hidden">
-              <div 
+              <div
                 className="aspect-video bg-cover bg-center relative overflow-hidden group-hover:scale-105 transition-transform duration-300"
                 style={{ backgroundImage: `url(${destination.updatedAt ? `${destination.image}?v=${new Date(destination.updatedAt).getTime()}` : destination.image})` }}
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
-              
+
               <CardContent className="p-6">
                 <h3 className="text-2xl font-bold font-playfair text-primary mb-3 group-hover:text-primary/80 transition-colors">
                   {destination.name}
@@ -98,12 +98,12 @@ const TopDestinations = () => {
                 <p className="text-muted-foreground mb-4 leading-relaxed">
                   {destination.description}
                 </p>
-                
+
                 <div className="mb-6">
                   <h4 className="font-semibold text-foreground mb-2">Highlights:</h4>
                   <div className="flex flex-wrap gap-2">
                     {destination.highlights.map((highlight, index) => (
-                      <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                      <span key={index} className="px-2 py-0.5 border border-primary/20 text-[10px] font-bold uppercase tracking-widest text-primary/80 dark:text-primary/60 bg-transparent">
                         {highlight}
                       </span>
                     ))}
@@ -129,7 +129,7 @@ const TopDestinations = () => {
                         <div className="text-lg text-black dark:text-black italic">
                           per person
                         </div>
-                        <Button 
+                        <Button
                           className="mt-2 bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 transition-all text-sm text-white font-medium"
                           onClick={() => setSelectedResidency('citizen')}
                         >

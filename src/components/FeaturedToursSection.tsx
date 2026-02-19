@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Compass, Camera, Mountain, Leaf, ArrowRight, Sparkles } from 'lucide-react';
+import { Compass, Camera, Mountain, Leaf, ArrowRight, Award } from 'lucide-react';
 
 interface Tour {
     key: string;
@@ -62,7 +62,7 @@ const tours: Tour[] = [
     {
         key: 'Signature',
         title: 'Signature Experience',
-        icon: <Sparkles className="w-6 h-6" />,
+        icon: <Award className="w-6 h-6" />,
         emoji: '✨',
         desc: "Exclusively crafted journeys for the discerning traveler, featuring our most premium offerings",
         tags: ['Private Safari', 'Luxury Stay', 'Unique Moments'],
@@ -91,19 +91,27 @@ const FeaturedToursSection = () => {
                 <div className="absolute inset-0 opacity-[0.015]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23000000\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }}></div>
             </div>
 
-            {/* Decorative Background Elements - Dark Mode */}
-            <div className="absolute inset-0 overflow-hidden hidden dark:block">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-amber-500/10 to-orange-600/5 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-emerald-500/10 to-teal-600/5 rounded-full blur-3xl"></div>
-                <div className="absolute top-1/2 right-0 w-64 h-64 bg-gradient-to-br from-blue-500/10 to-indigo-600/5 rounded-full blur-3xl"></div>
+            {/* Background Image - 75% Opacity */}
+            <div className="absolute inset-0 z-0">
+                <img
+                    src="/src/assets/featured-bg.jpg"
+                    alt="Section Background"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                />
+                {/* Overlay for better readability */}
+                <div className="absolute inset-0 bg-slate-50/20 dark:bg-slate-900/40 backdrop-blur-[1px]"></div>
             </div>
 
             <div className="relative z-10 max-w-7xl mx-auto px-4">
                 {/* Section Header */}
                 <div className="text-center mb-16">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20 border border-amber-500/30 dark:border-amber-500/30 mb-6 font-medium">
-                        <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                        <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Curated Experiences</span>
+                    <div className="flex items-center justify-center gap-3 mb-6 animate-fade-in">
+                        <div className="w-8 h-px bg-amber-500"></div>
+                        <span className="text-xs font-bold uppercase tracking-[0.3em] text-amber-600 dark:text-amber-400">Curated Experiences</span>
+                        <div className="w-8 h-px bg-amber-500"></div>
                     </div>
 
                     <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 dark:text-white mb-4 font-serif">
@@ -226,13 +234,7 @@ const FeaturedToursSection = () => {
                                     ))}
                                 </div>
 
-                                {/* Floating particles on hover */}
-                                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-                                    <Sparkles className="w-4 h-4 text-white animate-pulse" />
-                                </div>
-                                <div className="absolute bottom-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100">
-                                    <Sparkles className="w-3 h-3 text-white/80 animate-pulse" />
-                                </div>
+
                             </div>
                         </article>
                     ))}

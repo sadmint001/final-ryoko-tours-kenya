@@ -189,9 +189,10 @@ const PrivacyPolicy = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                     >
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-6">
-                            <Shield className="w-4 h-4 text-amber-400" />
-                            <span className="text-sm font-medium text-amber-200 uppercase tracking-wider">Privacy & Security</span>
+                        <div className="flex items-center justify-center gap-3 mb-6">
+                            <div className="w-8 h-px bg-amber-500"></div>
+                            <span className="text-xs font-bold uppercase tracking-[0.3em] text-amber-200">Privacy & Security</span>
+                            <div className="w-8 h-px bg-amber-500"></div>
                         </div>
                         <h1 className="text-4xl md:text-6xl font-bold font-serif text-white mb-6">
                             Privacy <span className="text-amber-400 italic">Policy</span>

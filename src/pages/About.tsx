@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Heart, Globe, Shield, Users, ChevronRight, Gem, Compass, Sparkles, Target, Lightbulb } from 'lucide-react';
+import { Heart, Globe, Shield, Users, ChevronRight, Gem, Compass, Target, Lightbulb } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -13,7 +13,7 @@ const About = () => {
     {
       icon: Heart,
       title: "Passion for Africa",
-      description: "We're deeply passionate about showcasing Africa's incredible diversity — its landscapes, traditions, wildlife, and cultures.",
+      description: "We're deeply passionate about showcasing Africa's incredible diversity its landscapes, traditions, wildlife, and cultures.",
       gradient: "from-rose-500 to-pink-600",
       bgGradient: "from-rose-500/10 to-pink-600/10"
     },
@@ -40,12 +40,7 @@ const About = () => {
     }
   ];
 
-  const stats = [
-    { number: "15+", label: "Years Experience", icon: <Compass className="w-5 h-5 mx-auto mb-1 text-white/80" /> },
-    { number: "50+", label: "Destinations", icon: <Globe className="w-5 h-5 mx-auto mb-1 text-white/80" /> },
-    { number: "10k+", label: "Happy Travelers", icon: <Users className="w-5 h-5 mx-auto mb-1 text-white/80" /> },
-    { number: "98%", label: "Satisfaction Rate", icon: <Heart className="w-5 h-5 mx-auto mb-1 text-white/80" /> }
-  ];
+
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-500">
@@ -67,40 +62,23 @@ const About = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1 }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-6">
-              <Gem className="w-4 h-4 text-amber-400" />
-              <span className="text-sm font-medium text-amber-200">Our Story</span>
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="w-8 h-px bg-amber-500"></div>
+              <span className="text-xs font-bold uppercase tracking-[0.3em] text-amber-200">Our Story</span>
+              <div className="w-8 h-px bg-amber-500"></div>
             </div>
 
-            <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold font-serif text-white mb-6 drop-shadow-2xl">
+            <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold font-serif text-white mb-6 drop-shadow-2xl !text-white">
               Tapestry of <span className="italic text-amber-400">Experience</span>
             </h1>
 
-            <p className="text-xl md:text-2xl text-slate-200 max-w-3xl mx-auto leading-relaxed drop-shadow-lg">
-              Every journey we create is a masterpiece — a blend of Kenya's rhythm, soul, and the stories waiting to be lived.
+            <p className="text-xl md:text-2xl text-slate-200 max-w-3xl mx-auto leading-relaxed drop-shadow-lg !text-slate-200">
+              Every journey we create is a masterpiece  a blend of Kenya's rhythm, soul, and the stories waiting to be lived.
             </p>
           </motion.div>
         </div>
 
-        {/* Floating Stats Bar */}
-        {/* Floating Stats Bar - Relative on mobile, Absolute on large screens */}
-        {/* Floating Stats Bar - Stacked on mobile, Grid on tablet+ */}
-        <div className="relative lg:absolute lg:bottom-0 lg:left-0 lg:right-0 lg:transform lg:translate-y-1/2 z-20 container mx-auto px-4 mt-12 lg:mt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
-            {stats.map((stat, index) => (
-              <div
-                key={index}
-                className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border border-slate-200 dark:border-slate-700 shadow-xl rounded-2xl p-6 flex flex-col items-center justify-center transform hover:-translate-y-1 transition-transform duration-300"
-              >
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-3 shadow-lg shrink-0">
-                  {React.cloneElement(stat.icon as React.ReactElement, { className: "w-6 h-6 text-white" })}
-                </div>
-                <div className="text-3xl font-bold text-slate-800 dark:text-white mb-1">{stat.number}</div>
-                <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+
       </section>
 
       {/* Breadcrumb - Styling updated */}
@@ -125,10 +103,10 @@ const About = () => {
 
           <div className="space-y-6 text-xl text-slate-600 dark:text-slate-300 leading-relaxed font-light">
             <p>
-              Ryoko Tours Africa isn't just a travel company — we're <span className="font-semibold text-amber-600 dark:text-amber-400">curators of wonder</span>, weaving stories of discovery, culture, and adventure into each journey.
+              Ryoko Tours Africa isn't just a travel company we're curators of wonder weaving stories of discovery, culture, and adventure into each journey.
             </p>
             <p>
-              Inspired by the name "Ryoko," meaning "journey," we aim to reveal the heart of Kenya and Africa — from the golden savannahs to the vibrant city streets.
+              Inspired by the name "Ryoko," meaning "journey," we aim to reveal the heart of Kenya and Africa from the golden savannahs to the vibrant city streets.
             </p>
             <p>
               Our commitment goes beyond destinations. We celebrate people, heritage, and authentic moments that connect travelers to the true spirit of Africa.
@@ -218,9 +196,9 @@ const About = () => {
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?q=80&w=2671&auto=format&fit=crop')] opacity-20 bg-cover bg-center mix-blend-overlay"></div>
 
           <div className="relative z-10 py-24 px-6 text-center max-w-4xl mx-auto">
-            <Sparkles className="w-12 h-12 text-amber-400 mx-auto mb-6 animate-pulse" />
+            <Compass className="w-12 h-12 text-amber-400 mx-auto mb-6 animate-pulse" />
             <h2 className="text-4xl md:text-6xl font-bold font-serif text-white mb-8 leading-tight">
-              Begin your journey with us — together, let's create a story worth telling.
+              Begin your journey with us together, let's create a story worth telling.
             </h2>
 
             <Link to="/destinations">

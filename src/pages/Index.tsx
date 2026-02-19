@@ -7,6 +7,7 @@ import PartnersSection from '@/components/Partners';
 import TestimonialsSection from '@/components/TestimonialsSection';
 import FeaturedToursSection from '@/components/FeaturedToursSection';
 import WhyChooseUsSection from '@/components/WhyChooseUsSection';
+import WhatsAppButton from '@/components/WhatsAppButton';
 import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
@@ -32,6 +33,7 @@ const Index = () => {
       <PartnersSection />
 
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 };

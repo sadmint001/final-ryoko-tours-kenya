@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   Shield, Users, FileText, MessageSquare, Mail,
   MapPin, Image, LayoutDashboard, LogOut, Menu, X,
-  Moon, Sun
+  Moon, Sun, CreditCard
 } from 'lucide-react';
 import Loader from '@/components/ui/loader';
 import BlogManagement from '@/components/admin/BlogManagement';
@@ -16,7 +16,9 @@ import TestimonialManagement from '@/components/admin/TestimonialManagement';
 import DestinationManagement from '@/components/admin/DestinationManagement';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 import UsersDashboard from '@/components/admin/UsersDashboard';
-import ContactMessages from '@/components/admin/ContactMessages'; // New Import
+import ContactMessages from '@/components/admin/ContactMessages';
+import TransactionManagement from '@/components/admin/TransactionManagement';
+import SupportDashboard from '@/components/admin/SupportDashboard';
 
 const Admin = () => {
   const { user, signOut } = useAuth();
@@ -25,6 +27,29 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [newMessagesCount, setNewMessagesCount] = useState(0);
+
+  useEffect(() => {
+    const fetchNewMessages = async () => {
+      const { count } = await supabase
+        .from('chat_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active');
+      setNewMessagesCount(count || 0);
+    };
+    fetchNewMessages();
+
+    const channel = supabase
+      .channel('chat-notifications')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_sessions' }, () => {
+        fetchNewMessages();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   // Theme Toggle State (Mock global theme state if not using a context, 
   // but assuming generic support via document class)
@@ -103,9 +128,11 @@ const Admin = () => {
   const tabs = [
     { value: 'overview', label: 'Overview', icon: LayoutDashboard },
     { value: 'destinations', label: 'Destinations', icon: MapPin },
+    { value: 'transactions', label: 'Transactions', icon: CreditCard },
     { value: 'bookings', label: 'Messages', icon: Mail }, // Replaced Newsletter with Messages
     { value: 'blogs', label: 'Blogs', icon: FileText },
     { value: 'testimonials', label: 'Testimonials', icon: MessageSquare },
+    { value: 'support', label: 'Support', icon: MessageSquare, badge: newMessagesCount },
     { value: 'analytics', label: 'Analytics', icon: Image },
     { value: 'users', label: 'Users', icon: Users },
   ];
@@ -157,7 +184,12 @@ const Admin = () => {
                 `}
               >
                 <tab.icon className={`h-5 w-5 ${activeTab === tab.value ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />
-                {tab.label}
+                <span className="flex-1 text-left">{tab.label}</span>
+                {tab.badge !== undefined && tab.badge > 0 && (
+                  <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full ring-2 ring-white dark:ring-[#0a0a0a]">
+                    {tab.badge}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -285,9 +317,20 @@ const Admin = () => {
                 </div>
               )}
 
+              {activeTab === 'transactions' && (
+                <div className="animate-fade-in">
+                  <TransactionManagement />
+                </div>
+              )}
               {activeTab === 'users' && (
                 <div className="animate-fade-in">
                   <UsersDashboard />
+                </div>
+              )}
+
+              {activeTab === 'support' && (
+                <div className="animate-fade-in">
+                  <SupportDashboard />
                 </div>
               )}
             </div>

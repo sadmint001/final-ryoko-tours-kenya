@@ -135,8 +135,7 @@ All colors MUST be HSL.
   /* Make common helper classes use black in light mode (override theme utilities) */
   html:not(.dark) .text-muted-foreground,
   html:not(.dark) .text-foreground,
-  html:not(.dark) .text-primary,
-  html:not(.dark) .text-black {
+  html:not(.dark) .text-primary {
     color: #000 !important;
   }
 
@@ -208,18 +207,21 @@ All colors MUST be HSL.
   .goog-te-balloon-frame,
   .goog-te-balloon-frame-active,
   .goog-te-spinner-pos,
-  .goog-te-spinner {
+  .goog-te-spinner,
+  .goog-te-menu-frame,
+  .goog-te-menu2,
+  .goog-te-menu2-item,
+  .goog-te-menu2-item-selected {
     display: none !important;
     opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
   }
 
   /* Fallback overrides for common light-mode utility classes that may be hardcoded */
   html:not(.dark) .text-muted-foreground,
   html:not(.dark) .text-foreground,
-  html:not(.dark) .text-primary,
-  html:not(.dark) .text-white,
-  html:not(.dark) .text-slate-300,
-  html:not(.dark) .text-slate-400 {
+  html:not(.dark) .text-primary {
     color: #000 !important;
     opacity: 1 !important;
   }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Award, Heart, ShieldCheck, Users, Star, CheckCircle, ArrowRight } from 'lucide-react';
+import { Award, Heart, ShieldCheck, Users, CheckCircle, ArrowRight } from 'lucide-react';
 
 interface Feature {
     key: string;
@@ -78,9 +78,10 @@ const WhyChooseUsSection = () => {
             <div className="relative z-10 max-w-7xl mx-auto px-4">
                 {/* Section Header */}
                 <div className="text-center mb-16">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20 border border-amber-500/20 dark:border-amber-500/30 mb-6">
-                        <Star className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                        <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Why Trust Us</span>
+                    <div className="flex items-center justify-center gap-3 mb-6">
+                        <div className="w-8 h-px bg-amber-500"></div>
+                        <span className="text-xs font-bold uppercase tracking-[0.3em] text-amber-600 dark:text-amber-400">Why Trust Us</span>
+                        <div className="w-8 h-px bg-amber-500"></div>
                     </div>
 
                     <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 dark:text-white mb-4 font-serif">
@@ -182,28 +183,7 @@ const WhyChooseUsSection = () => {
                     ))}
                 </div>
 
-                {/* Bottom Stats Bar */}
-                <div className="mt-16">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        {[
-                            { value: '1000+', label: 'Happy Travelers', icon: <Users className="w-5 h-5" /> },
-                            { value: '98%', label: 'Satisfaction Rate', icon: <Star className="w-5 h-5" /> },
-                            { value: '50+', label: 'Tour Packages', icon: <Award className="w-5 h-5" /> },
-                            { value: '10+', label: 'Years Experience', icon: <ShieldCheck className="w-5 h-5" /> }
-                        ].map((stat, index) => (
-                            <div
-                                key={stat.label}
-                                className="text-center p-6 rounded-2xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
-                            >
-                                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white mb-3">
-                                    {stat.icon}
-                                </div>
-                                <div className="text-3xl font-bold text-slate-800 dark:text-white mb-1">{stat.value}</div>
-                                <div className="text-sm text-slate-500 dark:text-slate-400">{stat.label}</div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+
             </div>
         </section>
     );

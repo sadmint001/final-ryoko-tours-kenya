@@ -9,6 +9,9 @@ import { ResidencyProvider } from "./contexts/ResidencyContext";
 import { I18nProvider } from "./contexts/I18nContext";
 import { Suspense, lazy } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { AnalyticsProvider } from "./components/analytics/AnalyticsProvider";
+import ChatWidget from "./components/ChatWidget";
+import WhatsAppButton from "./components/WhatsAppButton";
 
 // Lazy load components for better performance
 const Index = lazy(() => import("./pages/Index"));
@@ -45,42 +48,46 @@ const App = () => (
             <Sonner />
             <I18nProvider>
               <BrowserRouter>
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/destinations" element={<Destinations />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/why-us" element={<WhyUs />} />
-                    <Route path="/WhyUs" element={<Navigate to="/why-us" replace />} />
-                    <Route path="/whyus" element={<Navigate to="/why-us" replace />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                    <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
-                    <Route
-                      path="/booking"
-                      element={
-                        <ProtectedRoute>
-                          <Booking />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route path="/booking-success" element={<BookingSuccess />} />
-                    <Route
-                      path="/admin"
-                      element={
-                        <ProtectedRoute>
-                          <Admin />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route path="/blog" element={<Blog />} />
-                    <Route path="/blog/:slug" element={<BlogDetails />} />
-                    <Route path="/destinations/:id" element={<DestinationDetails />} />
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
+                <AnalyticsProvider>
+                  <ChatWidget />
+                  <WhatsAppButton />
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/destinations" element={<Destinations />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/why-us" element={<WhyUs />} />
+                      <Route path="/WhyUs" element={<Navigate to="/why-us" replace />} />
+                      <Route path="/whyus" element={<Navigate to="/why-us" replace />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                      <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
+                      <Route
+                        path="/booking"
+                        element={
+                          <ProtectedRoute>
+                            <Booking />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route path="/booking-success" element={<BookingSuccess />} />
+                      <Route
+                        path="/admin"
+                        element={
+                          <ProtectedRoute>
+                            <Admin />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route path="/blog" element={<Blog />} />
+                      <Route path="/blog/:slug" element={<BlogDetails />} />
+                      <Route path="/destinations/:id" element={<DestinationDetails />} />
+                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                </AnalyticsProvider>
               </BrowserRouter>
             </I18nProvider>
           </TooltipProvider>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Mail, Phone, MapPin, Instagram, Sparkles, MessageCircle, ArrowUpRight } from 'lucide-react';
+import { Mail, Phone, MapPin, Instagram, Compass, MessageCircle, ArrowUpRight } from 'lucide-react';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -16,6 +16,16 @@ const Footer = () => {
       }
     } else {
       navigate('/?scroll=featured-tours');
+    }
+  };
+
+  const handleHomeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (location.pathname === '/') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      navigate('/');
+      window.scrollTo(0, 0);
     }
   };
 
@@ -100,35 +110,53 @@ const Footer = () => {
               <ul className="space-y-4">
                 {section.links.map((link, linkIndex) => (
                   <li key={linkIndex}>
-                    {section.title === "Tour Experiences" ? (
-                      <a
-                        href={link.href}
-                        onClick={(e) => link.category && handleTourLinkClick(e, link.category)}
-                        className="text-white/70 dark:text-slate-400 hover:text-white transition-all duration-300 flex items-center gap-2 group text-lg"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 opacity-0 group-hover:opacity-100 transition-all" />
-                        {link.name}
-                        <ArrowUpRight className="w-4 h-4 opacity-0 -translate-y-1 translate-x-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0 transition-all" />
-                      </a>
-                    ) : (
-                      link.href.startsWith('http') || link.href.startsWith('mailto') ? (
-                        <a
-                          href={link.href}
-                          className="text-white/70 dark:text-slate-400 hover:text-white transition-all duration-300 flex items-center gap-3 group text-lg"
-                        >
-                          {link.icon && <link.icon className="w-5 h-5 text-amber-500/80" />}
-                          {link.name}
-                        </a>
-                      ) : (
+                    {(() => {
+                      const isExternal = link.href.startsWith('http') || link.href.startsWith('mailto');
+                      const commonClasses = "text-white/70 dark:text-slate-400 hover:text-white transition-all duration-300 flex items-center gap-2 group text-lg";
+                      const content = (
+                        <>
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 opacity-0 group-hover:opacity-100 transition-all shrink-0" />
+                          {link.icon && <link.icon className="w-5 h-5 text-amber-500/80 shrink-0" />}
+                          <span className="flex-grow">{link.name}</span>
+                          <ArrowUpRight className="w-4 h-4 opacity-0 -translate-y-1 translate-x-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0 transition-all shrink-0 text-amber-500" />
+                        </>
+                      );
+
+                      if (section.title === "Tour Experiences") {
+                        return (
+                          <a
+                            href={link.href}
+                            onClick={(e) => link.category && handleTourLinkClick(e, link.category)}
+                            className={commonClasses}
+                          >
+                            {content}
+                          </a>
+                        );
+                      }
+
+                      if (isExternal) {
+                        return (
+                          <a
+                            href={link.href}
+                            target={link.href.startsWith('http') ? "_blank" : undefined}
+                            rel={link.href.startsWith('http') ? "noopener noreferrer" : undefined}
+                            className={commonClasses}
+                          >
+                            {content}
+                          </a>
+                        );
+                      }
+
+                      return (
                         <Link
                           to={link.href}
-                          className="text-white/70 dark:text-slate-400 hover:text-white transition-all duration-300 flex items-center gap-3 group text-lg"
+                          onClick={(e) => link.name === "Home" && handleHomeClick(e)}
+                          className={commonClasses}
                         >
-                          {link.icon && <link.icon className="w-5 h-5 text-amber-500/80" />}
-                          {link.name}
+                          {content}
                         </Link>
-                      )
-                    )}
+                      );
+                    })()}
                   </li>
                 ))}
               </ul>
@@ -140,7 +168,7 @@ const Footer = () => {
         <div className="pt-12 border-t border-white/10 dark:border-white/5">
           <div className="flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="flex items-center gap-3">
-              <Sparkles className="w-5 h-5 text-amber-500" />
+              <Compass className="w-5 h-5 text-amber-500" />
               <p className="text-white/60 dark:text-slate-500 text-sm font-medium tracking-wide">
                 © {currentYear} RYOKO TOURS AFRICA. BEYOND IMAGINATION.
               </p>

@@ -24,7 +24,7 @@ import {
   Building,
   Smartphone,
   Globe,
-  Sparkles,
+  Compass,
   Sun,
   Mountain,
   Camera,
@@ -449,15 +449,15 @@ const DestinationDetails = () => {
           <div className="container mx-auto px-4">
             <div className="animate-fade-in-up">
               <Badge className="mb-6 bg-amber-500/90 hover:bg-amber-600 text-white border-none shadow-lg px-4 py-1.5 text-sm font-medium backdrop-blur-md">
-                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                <Compass className="w-3.5 h-3.5 mr-1.5" />
                 {destination.category}
               </Badge>
 
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-serif text-white mb-6 leading-tight drop-shadow-2xl">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-serif text-white mb-6 leading-tight drop-shadow-2xl !text-white">
                 {destination.name}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-4 text-white/90 text-sm md:text-base font-medium">
+              <div className="flex flex-wrap items-center gap-4 text-white/90 text-sm md:text-base font-medium !text-white/90">
                 {destination.location && (
                   <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
                     <MapPin className="h-4 w-4 text-amber-400" />
