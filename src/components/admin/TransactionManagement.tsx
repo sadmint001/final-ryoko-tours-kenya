@@ -126,14 +126,35 @@ const TransactionManagement = () => {
                         className="pl-10 h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl"
                     />
                 </div>
-                <Button
-                    onClick={fetchTransactions}
-                    variant="outline"
-                    className="rounded-xl gap-2 border-slate-200 dark:border-slate-800"
-                >
-                    <RefreshCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                    Refresh
-                </Button>
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <Button
+                        onClick={() => window.print()}
+                        variant="outline"
+                        className="rounded-xl gap-2 border-slate-200 dark:border-slate-800 hidden md:flex"
+                    >
+                        <ExternalLink className="h-4 w-4" />
+                        Export Report (PDF)
+                    </Button>
+                    <Button
+                        onClick={fetchTransactions}
+                        variant="outline"
+                        className="rounded-xl gap-2 border-slate-200 dark:border-slate-800"
+                    >
+                        <RefreshCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </Button>
+                </div>
+            </div>
+
+            {/* Print Only Header */}
+            <div className="hidden print:block mb-8 border-b pb-6">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h1 className="text-2xl font-black uppercase tracking-tighter">Ryoko Tours Kenya</h1>
+                        <p className="text-slate-500 text-sm">Financial Transactions Report</p>
+                        <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">Generated: {new Date().toLocaleString()}</p>
+                    </div>
+                </div>
             </div>
 
             <Card className="border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden rounded-2xl bg-white dark:bg-slate-900">

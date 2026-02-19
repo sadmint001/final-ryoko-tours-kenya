@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, TrendingUp, Users, Calendar, Mail, Eye, DollarSign } from 'lucide-react';
+import { Loader2, TrendingUp, Users, Calendar, Mail, Eye, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import PerformanceCard from './analytics/PerformanceCard';
+import VisitorAnalyticsByRegion from './analytics/VisitorAnalyticsByRegion';
 
 const AnalyticsDashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
+  const [loading, setLoading] = React.useState(true);
+  const [stats, setStats] = React.useState({
     totalViews: 0,
     uniqueVisitors: 0,
     popularPages: [],
@@ -14,13 +17,21 @@ const AnalyticsDashboard = () => {
     totalMessages: 0,
     totalRevenue: 0,
     recentBookings: [],
-    allViews: []
+    allViews: [],
+    continentStats: [],
+    countryStats: [],
+    regionCounts: {} as Record<string, number>
   });
+
+  // Mock historical data for sparklines
+  const mockHistory = [
+    { val: 400 }, { val: 600 }, { val: 500 }, { val: 800 },
+    { val: 700 }, { val: 1100 }, { val: 900 }, { val: 1200 }
+  ];
 
   useEffect(() => {
     fetchAnalytics();
 
-    // Set up Real-time listeners
     const bookingsChannel = supabase
       .channel('admin_analytics_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => fetchAnalytics())
@@ -36,11 +47,19 @@ const AnalyticsDashboard = () => {
 
   const fetchAnalytics = async () => {
     try {
-      // 1. Fetch Page Views
+      // Fetch robust aggregated stats
+      const { data: globalStats, error: statsError } = await (supabase.rpc as any)('get_global_analytics');
+      if (statsError) throw statsError;
+
+      const report = globalStats && globalStats[0] ? globalStats[0] : {
+        total_impressions: 0,
+        unique_visitors: 0,
+        region_counts: {}
+      };
+
       const { data: pageViewsData } = await supabase.from('page_views').select('*');
       const pageViews = pageViewsData || [];
 
-      // 2. Fetch Bookings (for count and list)
       const { data: bookingsData, count: bookingsCount } = await supabase
         .from('bookings')
         .select('*', { count: 'exact' })
@@ -48,20 +67,17 @@ const AnalyticsDashboard = () => {
 
       const recentBookings = (bookingsData || []).slice(0, 5);
 
-      // 3. Fetch Messages
       const { count: messagesCount } = await supabase
         .from('contact_messages')
         .select('*', { count: 'exact', head: true });
 
-      // 4. Fetch Transactions for Revenue Calculation
       const { data: transactionsData } = await supabase
         .from('pesapal_transactions')
         .select('amount, status')
-        .filter('status', 'eq', 'COMPLETED');
+        .in('status', ['COMPLETED', 'SUCCESS', 'completed', 'success']);
 
       const totalRevenue = (transactionsData || []).reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
-      // Process Popular Pages
       const pageCounts = pageViews.reduce((acc: any, view: any) => {
         const page = view.page_path || 'unknown';
         acc[page] = (acc[page] || 0) + 1;
@@ -73,18 +89,19 @@ const AnalyticsDashboard = () => {
         .sort((a, b) => (b as any).count - (a as any).count)
         .slice(0, 5);
 
-      const uniqueVisitors = new Set(pageViews.map((view: any) => view.user_id || view.session_id)).size;
-
       setStats({
-        totalViews: pageViews.length,
-        uniqueVisitors,
+        totalViews: Number(report.total_impressions) || pageViews.length,
+        uniqueVisitors: Number(report.unique_visitors) || 0,
         popularPages: popularPages as any,
         totalBookings: bookingsCount || 0,
         totalMessages: messagesCount || 0,
         totalRevenue: totalRevenue,
         recentBookings: recentBookings,
-        allViews: pageViews
-      });
+        allViews: pageViews,
+        continentStats: Object.entries(report.region_counts || {}).map(([name, count]) => ({ name, count: Number(count) })),
+        countryStats: [],
+        regionCounts: report.region_counts || {}
+      } as any);
 
     } catch (error) {
       console.error('Analytics fetch error:', error);
@@ -93,7 +110,6 @@ const AnalyticsDashboard = () => {
     }
   };
 
-  // Helper to get stats for various dimensions
   const getDimensionStats = (pageViews: any[], dimension: string) => {
     const counts = pageViews.reduce((acc: any, view: any) => {
       const val = view[dimension] || 'Unknown';
@@ -115,96 +131,106 @@ const AnalyticsDashboard = () => {
     );
   }
 
+  const handleResetAnalytics = async () => {
+    if (!confirm('Are you sure you want to reset all analytics counters? This will NOT delete visitor cookies.')) return;
+
+    try {
+      const { error } = await (supabase.rpc as any)('reset_global_counters');
+      if (error) throw error;
+      fetchAnalytics();
+    } catch (error) {
+      console.error('Reset error:', error);
+      alert('Failed to reset analytics');
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Revenue */}
-        <Card className="bg-[#0a0a0a] border border-white/5 shadow-2xl relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-black text-emerald-500 uppercase tracking-[0.2em]">Total Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-3xl font-black text-white tracking-tighter">
-                KSh {stats.totalRevenue.toLocaleString()}
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                <DollarSign className="h-6 w-6 text-emerald-500" />
-              </div>
-            </div>
-            <p className="text-[10px] text-emerald-500/70 mt-2 font-bold uppercase tracking-widest">• Verified Revenue</p>
-          </CardContent>
-        </Card>
-
-        {/* Unique Visitors */}
-        <Card className="bg-[#0a0a0a] border border-white/5 shadow-2xl group">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-black text-blue-500 uppercase tracking-[0.2em]">Live Traffic</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-3xl font-black text-white tracking-tighter">{stats.uniqueVisitors}</div>
-              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                <Users className="h-6 w-6 text-blue-500" />
-              </div>
-            </div>
-            <p className="text-[10px] text-blue-500/70 mt-2 font-bold uppercase tracking-widest">• Unique Souls</p>
-          </CardContent>
-        </Card>
-
-        {/* Conversion Rate */}
-        <Card className="bg-[#0a0a0a] border border-white/5 shadow-2xl group">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-black text-purple-500 uppercase tracking-[0.2em]">Conversion Rate</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-3xl font-black text-white tracking-tighter">
-                {stats.uniqueVisitors > 0 ? ((stats.totalBookings / stats.uniqueVisitors) * 100).toFixed(1) : 0}%
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
-                <TrendingUp className="h-6 w-6 text-purple-500" />
-              </div>
-            </div>
-            <p className="text-[10px] text-purple-500/70 mt-2 font-bold uppercase tracking-widest">• Booking Conversion</p>
-          </CardContent>
-        </Card>
-
-        {/* Messages */}
-        <Card className="bg-[#0a0a0a] border border-white/5 shadow-2xl group">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-black text-rose-500 uppercase tracking-[0.2em]">Inbound Inquiries</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-3xl font-black text-white tracking-tighter">{stats.totalMessages}</div>
-              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20">
-                <Mail className="h-6 w-6 text-rose-500" />
-              </div>
-            </div>
-            <p className="text-[10px] text-rose-500/70 mt-2 font-bold uppercase tracking-widest">• Customer Support</p>
-          </CardContent>
-        </Card>
+    <div className="flex-1 space-y-8 p-8 pt-6 min-h-screen bg-[#050505] text-white">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-4xl font-black tracking-tighter text-white uppercase italic">
+            Analytics <span className="text-amber-500">Insights</span>
+          </h2>
+          <p className="text-slate-400 font-bold mt-1 tracking-widest uppercase text-xs">
+            Enterprise Traffic Monitoring & Performance
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleResetAnalytics}
+            className="bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-xl font-bold uppercase text-[10px] tracking-widest"
+          >
+            Reset All Counters
+          </Button>
+          <Button className="bg-amber-500 hover:bg-amber-600 text-black font-black rounded-xl px-6 py-2 shadow-[0_0_20px_rgba(245,158,11,0.3)] uppercase tracking-tighter italic">
+            Export Report
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-white dark:bg-[#0a0a0a] border border-slate-200 dark:border-white/5 shadow-xl transition-all">
-          <CardHeader className="border-b border-slate-100 dark:border-white/5">
-            <CardTitle className="flex items-center gap-2 text-lg font-serif">
-              <TrendingUp className="w-5 h-5 text-amber-500" />
+      {/* AdSense Style Performance Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <PerformanceCard
+          title="Total Revenue"
+          value={`KSh ${stats.totalRevenue.toLocaleString()}`}
+          change="+12.5%"
+          changeType="positive"
+          data={mockHistory}
+          color="#10b981"
+        />
+        <PerformanceCard
+          title="Unique Visitors"
+          value={stats.uniqueVisitors.toLocaleString()}
+          change="+8.2%"
+          changeType="positive"
+          data={mockHistory.map(d => ({ val: d.val * 0.8 }))}
+          color="#3b82f6"
+        />
+        <PerformanceCard
+          title="Conversions"
+          value={`${stats.uniqueVisitors > 0 ? ((stats.totalBookings / stats.uniqueVisitors) * 100).toFixed(1) : 0}%`}
+          change="-2.1%"
+          changeType="negative"
+          data={mockHistory.map(d => ({ val: d.val * 0.5 }))}
+          color="#8b5cf6"
+        />
+        <PerformanceCard
+          title="Support Tickets"
+          value={stats.totalMessages}
+          change="+5"
+          changeType="neutral"
+          data={mockHistory.map(d => ({ val: d.val * 0.2 }))}
+          color="#f43f5e"
+        />
+      </div>
+
+      {/* Advanced Regional Analytics */}
+      <VisitorAnalyticsByRegion data={stats.regionCounts} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card className="bg-white dark:bg-[#0a0a0a] border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] rounded-[2.5rem] overflow-hidden">
+          <CardHeader className="p-8 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+            <CardTitle className="flex items-center gap-3 text-2xl font-black tracking-tighter uppercase">
+              <TrendingUp className="w-6 h-6 text-amber-500" />
               Viral Content
             </CardTitle>
-            <CardDescription className="text-slate-500">Your most engaged pages</CardDescription>
+            <CardDescription className="text-slate-500 font-medium">Your most engaged pages across the platform</CardDescription>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent className="p-8">
             {stats.popularPages.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {stats.popularPages.map(({ page, count }: any) => (
-                  <div key={page} className="flex justify-between items-center p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:border-amber-500/20 transition-all">
-                    <span className="font-bold text-slate-700 dark:text-slate-300 truncate max-w-[200px] text-sm">{page}</span>
-                    <span className="text-xs font-black bg-amber-500/10 text-amber-600 dark:text-amber-400 px-3 py-1 rounded-full uppercase tracking-tighter">{count} Hits</span>
+                  <div key={page} className="flex justify-between items-center p-5 rounded-[1.5rem] bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 hover:border-amber-500/20 transition-all group">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-slate-800 dark:text-slate-200 truncate max-w-[240px] text-sm group-hover:text-amber-600 transition-colors">{page}</span>
+                      <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 mt-1">Live Endpoint</span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-sm font-black text-slate-900 dark:text-white tracking-tighter">{count.toLocaleString()}</span>
+                      <span className="text-[9px] font-black uppercase text-amber-500/50">Hits</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -214,28 +240,35 @@ const AnalyticsDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-white dark:bg-[#0a0a0a] border border-slate-200 dark:border-white/5 shadow-xl transition-all">
-          <CardHeader className="border-b border-slate-100 dark:border-white/5">
-            <CardTitle className="flex items-center gap-2 text-lg font-serif">
-              <Calendar className="w-5 h-5 text-emerald-500" />
+        <Card className="bg-white dark:bg-[#0a0a0a] border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] rounded-[2.5rem] overflow-hidden">
+          <CardHeader className="p-8 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+            <CardTitle className="flex items-center gap-3 text-2xl font-black tracking-tighter uppercase">
+              <Calendar className="w-6 h-6 text-emerald-500" />
               Recent Missions
             </CardTitle>
-            <CardDescription className="text-slate-500">Latest active booking requests</CardDescription>
+            <CardDescription className="text-slate-500 font-medium">Latest explorer deployment status</CardDescription>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent className="p-8">
             {stats.recentBookings.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {stats.recentBookings.map((booking: any) => (
-                  <div key={booking.id} className="flex justify-between items-center p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:bg-emerald-500/5 transition-all">
-                    <div>
-                      <p className="font-bold text-slate-800 dark:text-white text-sm tracking-tight">{booking.customer_name || 'Anonymous'}</p>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
-                        {new Date(booking.created_at).toLocaleDateString()}
-                      </p>
+                  <div key={booking.id} className="flex justify-between items-center p-5 rounded-[1.5rem] bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 hover:border-emerald-500/20 transition-all group">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/10">
+                        <Users className="w-5 h-5 text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-800 dark:text-white text-sm tracking-tight group-hover:text-emerald-600 transition-colors">
+                          {booking.customer_name || 'Anonymous Explorer'}
+                        </p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
+                          {new Date(booking.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                    <div className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${booking.payment_status === 'paid'
-                      ? 'bg-emerald-500/10 text-emerald-500'
-                      : 'bg-amber-500/10 text-amber-500'
+                    <div className={`text-[10px] font-black px-4 py-1.5 rounded-full border uppercase tracking-widest ${booking.payment_status === 'paid'
+                      ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                      : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                       }`}>
                       {booking.payment_status || 'Pending'}
                     </div>
@@ -243,7 +276,7 @@ const AnalyticsDashboard = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-center py-8">No active bookings found</p>
+              <p className="text-muted-foreground text-center py-8">No explorer data found</p>
             )}
           </CardContent>
         </Card>

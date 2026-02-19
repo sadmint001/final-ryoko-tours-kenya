@@ -151,6 +151,52 @@ const SupportDashboard = () => {
                                     <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black">Live Support Chat</p>
                                 </div>
                             </div>
+
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 text-[10px] uppercase font-bold tracking-widest"
+                                    onClick={async () => {
+                                        if (confirm('Reset this session? This will delete all messages but keep the session alive.')) {
+                                            const { error } = await supabase
+                                                .from('chat_messages')
+                                                .delete()
+                                                .eq('session_id', selectedSessionId);
+                                            if (error) {
+                                                toast({ title: 'Error', description: 'Failed to reset session', variant: 'destructive' });
+                                            } else {
+                                                setMessages([]);
+                                                toast({ title: 'Success', description: 'Session reset successfully' });
+                                            }
+                                        }
+                                    }}
+                                >
+                                    Reset
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="h-8 text-[10px] uppercase font-bold tracking-widest bg-red-500 hover:bg-red-600"
+                                    onClick={async () => {
+                                        if (confirm('Delete this chat session permanently?')) {
+                                            const { error } = await supabase
+                                                .from('chat_sessions')
+                                                .delete()
+                                                .eq('id', selectedSessionId);
+                                            if (error) {
+                                                toast({ title: 'Error', description: 'Failed to delete session', variant: 'destructive' });
+                                            } else {
+                                                setSelectedSessionId(null);
+                                                fetchSessions();
+                                                toast({ title: 'Success', description: 'Session deleted' });
+                                            }
+                                        }
+                                    }}
+                                >
+                                    Delete
+                                </Button>
+                            </div>
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50 dark:bg-[#0a0a0a]">
