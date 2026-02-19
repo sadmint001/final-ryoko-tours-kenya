@@ -17,7 +17,7 @@ const Auth = () => {
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
-  
+
   const { user, signIn, signUp, resetPassword } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
@@ -105,7 +105,7 @@ const Auth = () => {
                 Click the link in the email to reset your password. The link will expire in 1 hour.
               </p>
             </div>
-            <Button 
+            <Button
               onClick={() => {
                 setResetEmailSent(false);
                 setShowForgotPassword(false);
@@ -150,15 +150,15 @@ const Auth = () => {
                   required
                 />
               </div>
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type="submit"
+                className="w-full"
                 disabled={loading}
               >
                 {loading ? <Loader size="sm" /> : 'Send Reset Link'}
               </Button>
             </form>
-            
+
             <div className="mt-4 text-center">
               <button
                 type="button"
@@ -183,7 +183,7 @@ const Auth = () => {
       <Card className="w-full max-w-md bg-background/95 backdrop-blur">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-display text-primary">
-            {isLogin ? 'Welcome Back' : 'Join Ryoko Africa Tours'}
+            {isLogin ? 'Welcome Back' : 'Join Ryoko Tours Africa'}
           </CardTitle>
           <CardDescription>
             {isLogin ? 'Sign in to your account' : 'Create your account to start exploring'}
@@ -226,15 +226,15 @@ const Auth = () => {
                 required
               />
             </div>
-            <Button 
-              type="submit" 
-              className="w-full" 
+            <Button
+              type="submit"
+              className="w-full"
               disabled={loading}
             >
               {loading ? <Loader size="sm" /> : (isLogin ? 'Sign In' : 'Sign Up')}
             </Button>
           </form>
-          
+
           <div className="mt-4 space-y-3 text-center">
             {isLogin && (
               <button
@@ -251,8 +251,8 @@ const Auth = () => {
                 onClick={() => setIsLogin(!isLogin)}
                 className="text-primary hover:text-primary-variant transition-colors"
               >
-                {isLogin 
-                  ? "Don't have an account? Sign up" 
+                {isLogin
+                  ? "Don't have an account? Sign up"
                   : "Already have an account? Sign in"
                 }
               </button>

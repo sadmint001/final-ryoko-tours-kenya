@@ -172,7 +172,7 @@ const Navbar = () => {
             <Link to="/" className="group">
               <img
                 src="/lovable-uploads/7fb62c94-7164-4789-bdf7-04075cd81dc5.jpg"
-                alt="Ryoko Africa Tours Logo"
+                alt="Ryoko Tours Africa Logo"
                 className="h-14 w-14 md:h-16 md:w-16 object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-sm"
               />
             </Link>

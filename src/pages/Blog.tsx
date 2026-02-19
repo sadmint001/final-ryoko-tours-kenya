@@ -7,7 +7,7 @@ import blogHeroImage from '@/assets/whyus1.jpg';
 const Blog = () => {
   useEffect(() => {
     // Title tag
-    document.title = 'Blog | Ryoko Africa Tours';
+    document.title = 'Blog | Ryoko Tours Africa';
 
     // Meta description
     const ensureMeta = (name: string, content: string) => {
@@ -42,7 +42,7 @@ const Blog = () => {
     const jsonLd = {
       '@context': 'https://schema.org',
       '@type': 'Blog',
-      name: 'Ryoko Africa Tours Blog',
+      name: 'Ryoko Tours Africa Blog',
       url: `${window.location.origin}/blog`,
       description: 'Safari stories, travel tips, and photography advice for Kenya.'
     };

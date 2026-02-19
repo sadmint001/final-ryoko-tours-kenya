@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 
 interface Booking {
   id: string;
+  tour_id: string;
   customer_name: string;
   participants: number;
   start_date: string;
@@ -43,8 +44,7 @@ const BookingSuccess = () => {
         setLoading(true);
         console.log('Fetching booking with:', { bookingId: bookingIdParam, trackingId: trackingIdParam });
 
-        let data: any = null;
-        let error: any = null;
+        let data: Booking | null = null;
 
         // 1. Try fetching from pesapal_transactions first
         if (trackingIdParam) {
@@ -61,7 +61,7 @@ const BookingSuccess = () => {
 
           if (txData && txData.booking) {
             console.log('Found booking via transaction data');
-            const b = txData.booking as any;
+            const b = txData.booking as Booking;
             data = {
               ...b,
               total_amount: txData.amount || b.total_amount,
@@ -153,7 +153,7 @@ const BookingSuccess = () => {
                 <div className="bg-primary/5 p-8 border-b border-primary/10 flex justify-between items-start">
                   <div>
                     <h2 className="text-3xl font-display font-bold text-primary mb-1">BOOKING RECEIPT</h2>
-                    <p className="text-sm text-muted-foreground uppercase tracking-widest">Ryoko Africa Tours</p>
+                    <p className="text-sm text-muted-foreground uppercase tracking-widest">Ryoko Tours Africa</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-primary">Reference</p>
