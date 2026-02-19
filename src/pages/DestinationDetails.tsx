@@ -43,6 +43,12 @@ import { PaymentService } from '@/services/paymentService';
 import { PAYMENT_CONFIG } from '@/lib/payment-config';
 import { useResidencyPersistence } from '@/hooks/useResidencyPersistence';
 import { getResidencyDisplay, getCurrency, formatPriceByResidency } from '@/lib/residencyUtils';
+import * as LucideIcons from 'lucide-react';
+
+const DynamicIcon = ({ name, className }: { name: string; className?: string }) => {
+  const IconComponent = (LucideIcons as any)[name] || LucideIcons.Star;
+  return <IconComponent className={className} />;
+};
 
 interface DestinationDetail {
   id: number;
@@ -62,6 +68,9 @@ interface DestinationDetail {
   rating?: number;
   location?: string;
   updatedAt?: string;
+  activities?: { title: string; icon?: string; desc: string }[];
+  gallery?: { id: number; url: string; caption?: string }[];
+  best_time_to_visit?: { season: string; description: string }[];
 }
 
 const DestinationDetails = () => {
@@ -341,21 +350,7 @@ const DestinationDetails = () => {
 
       const { data, error: fetchError } = await supabase
         .from('destinations')
-        .select(`
-          id,
-          name,
-          description,
-          highlights,
-          image,
-          citizen_price,
-          resident_price,
-          non_resident_price,
-          category,
-          duration,
-          max_participants,
-          location,
-          updated_at
-        `)
+        .select('*')
         .eq('id', id)
         .single();
 
@@ -379,7 +374,24 @@ const DestinationDetails = () => {
         maxParticipants: data.max_participants,
         location: data.location,
         updatedAt: data.updated_at,
+        activities: data.activities || [],
+        best_time_to_visit: data.best_time_to_visit || [],
       };
+
+      // Fetch gallery
+      const { data: galleryData } = await supabase
+        .from('destination_media')
+        .select('*')
+        .eq('destination_id', id)
+        .order('sort_order', { ascending: true });
+
+      if (galleryData) {
+        mappedData.gallery = galleryData.map((m: any) => ({
+          id: m.id,
+          url: m.url,
+          caption: m.caption
+        }));
+      }
 
       setDestination(mappedData);
     } catch (error) {
@@ -526,13 +538,13 @@ const DestinationDetails = () => {
 
             <Tabs defaultValue="overview" className="w-full">
               <TabsList className="w-full justify-start p-1 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 mb-8 overflow-x-auto">
-                {['overview', 'highlights', 'activities'].map((tab) => (
+                {['overview', 'highlights', 'activities', 'photos'].map((tab) => (
                   <TabsTrigger
                     key={tab}
                     value={tab}
                     className="flex-1 min-w-[100px] rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium capitalize"
                   >
-                    {tab}
+                    {tab === 'photos' ? 'Photos' : tab}
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -557,20 +569,28 @@ const DestinationDetails = () => {
                     Best Time to Visit
                   </h3>
                   <div className="space-y-4">
-                    <div className="flex gap-4 items-start p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50">
-                      <div className="w-3 h-3 rounded-full bg-emerald-500 mt-2 shrink-0 shadow-lg shadow-emerald-500/50"></div>
-                      <div>
-                        <h4 className="font-bold text-slate-800 dark:text-white">Green Season</h4>
-                        <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">Lush landscapes, baby animals, excellent bird watching, and fewer crowds.</p>
+                    {destination.best_time_to_visit && destination.best_time_to_visit.length > 0 ? (
+                      destination.best_time_to_visit.map((item, idx) => (
+                        <div key={idx} className="flex gap-4 items-start p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50">
+                          <div className={cn(
+                            "w-3 h-3 rounded-full mt-2 shrink-0 shadow-lg",
+                            idx % 2 === 0 ? "bg-emerald-500 shadow-emerald-500/50" : "bg-amber-500 shadow-amber-500/50"
+                          )}></div>
+                          <div>
+                            <h4 className="font-bold text-slate-800 dark:text-white">{item.season}</h4>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">{item.description}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex gap-4 items-start p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50">
+                        <div className="w-3 h-3 rounded-full bg-emerald-500 mt-2 shrink-0 shadow-lg shadow-emerald-500/50"></div>
+                        <div>
+                          <h4 className="font-bold text-slate-800 dark:text-white">All Year Round</h4>
+                          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">This destination offers unique experiences throughout the year, each season bringing its own magic.</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex gap-4 items-start p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50">
-                      <div className="w-3 h-3 rounded-full bg-amber-500 mt-2 shrink-0 shadow-lg shadow-amber-500/50"></div>
-                      <div>
-                        <h4 className="font-bold text-slate-800 dark:text-white">Dry Season</h4>
-                        <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">Prime wildlife viewing as animals congregate around water sources.</p>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </TabsContent>
@@ -578,37 +598,76 @@ const DestinationDetails = () => {
               {/* Highlights Tab */}
               <TabsContent value="highlights" className="space-y-6 animate-fade-in">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {destination.highlights?.map((highlight, index) => (
-                    <div
-                      key={index}
-                      className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-start gap-4 hover:shadow-md transition-shadow"
-                    >
-                      <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl text-amber-600 dark:text-amber-400 shrink-0">
-                        <Check className="w-5 h-5" />
+                  {destination.highlights && destination.highlights.length > 0 ? (
+                    destination.highlights.map((highlight, index) => (
+                      <div
+                        key={index}
+                        className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-start gap-4 hover:shadow-md transition-shadow"
+                      >
+                        <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl text-amber-600 dark:text-amber-400 shrink-0">
+                          <Check className="w-5 h-5" />
+                        </div>
+                        <span className="text-slate-700 dark:text-slate-300 font-medium pt-1">{highlight}</span>
                       </div>
-                      <span className="text-slate-700 dark:text-slate-300 font-medium pt-1">{highlight}</span>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-slate-500 italic col-span-2">No highlights available for this destination.</p>
+                  )}
                 </div>
               </TabsContent>
 
               {/* Activities Tab */}
               <TabsContent value="activities" className="space-y-6 animate-fade-in">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {[
-                    { title: "Game Drives", icon: ShieldCheck, desc: "Classic safari experience in 4x4 land cruisers." },
-                    { title: "Photography", icon: Camera, desc: "Capture wildlife and stunning landscapes." },
-                    { title: "Nature Walks", icon: TreePine, desc: "Guided walking safaris with expert rangers." },
-                    { title: "Sundowners", icon: Sun, desc: "Enjoy drinks while watching the sunset over the savannah." },
-                  ].map((activity, i) => (
-                    <div key={i} className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
-                      <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg">
-                        <activity.icon className="w-6 h-6" />
+                  {destination.activities && destination.activities.length > 0 ? (
+                    destination.activities.map((activity, i) => (
+                      <div key={i} className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
+                        <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg">
+                          <DynamicIcon name={activity.icon || 'Star'} className="w-6 h-6" />
+                        </div>
+                        <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-2">{activity.title}</h4>
+                        <p className="text-slate-600 dark:text-slate-300 text-sm">{activity.desc}</p>
                       </div>
-                      <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-2">{activity.title}</h4>
-                      <p className="text-slate-600 dark:text-slate-300 text-sm">{activity.desc}</p>
+                    ))
+                  ) : (
+                    <p className="text-slate-500 italic col-span-2">No specific activities listed.</p>
+                  )}
+                </div>
+              </TabsContent>
+
+              {/* Photos Tab */}
+              <TabsContent value="photos" className="space-y-6 animate-fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {destination.gallery && destination.gallery.length > 0 ? (
+                    destination.gallery.map((item) => (
+                      <div
+                        key={item.id}
+                        className="group relative aspect-[4/3] overflow-hidden rounded-3xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-500"
+                      >
+                        <img
+                          src={item.url}
+                          alt={item.caption || destination.name}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6">
+                          {item.caption && (
+                            <p className="text-white font-medium text-lg transform translateY(20px) group-hover:translateY(0) transition-transform duration-500">
+                              {item.caption}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 mt-2 transform translateY(20px) group-active:translateY(0) transition-transform duration-500 delay-75">
+                            <span className="w-8 h-0.5 bg-amber-500"></span>
+                            <span className="text-white/80 text-xs uppercase tracking-widest font-bold">View Discovery</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-2 py-12 text-center bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-600">
+                      <Camera className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                      <p className="text-slate-500 font-medium">No photography items added to this gallery yet.</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </TabsContent>
             </Tabs>

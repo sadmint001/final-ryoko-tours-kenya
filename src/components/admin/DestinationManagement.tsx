@@ -66,11 +66,13 @@ interface Destination {
   isActive?: boolean;
   isFeatured?: boolean;
   featuredOrder?: number;
+  activities?: { title: string; icon?: string; desc: string }[];
   pricing: {
     citizenPrice: number;
     residentPrice: number;
     nonResidentPrice: number;
   };
+  best_time_to_visit?: { season: string; description: string }[];
 }
 
 const categories = [
@@ -114,6 +116,8 @@ const DestinationManagement: React.FC = () => {
     isActive: true,
     isFeatured: false,
     featuredOrder: 0,
+    activities: [{ title: '', icon: 'Star', desc: '' }],
+    best_time_to_visit: [{ season: '', description: '' }],
   };
   const [formData, setFormData] = useState(initialForm);
 
@@ -133,11 +137,13 @@ const DestinationManagement: React.FC = () => {
     isActive: d.is_active ?? false,
     isFeatured: d.is_featured ?? false,
     featuredOrder: d.featured_order ?? 0,
+    activities: d.activities || [],
     pricing: {
       citizenPrice: d.citizen_price ?? 0,
       residentPrice: d.resident_price ?? 0,
       nonResidentPrice: d.non_resident_price ?? 0,
     },
+    best_time_to_visit: d.best_time_to_visit || [],
   });
 
   // Helper function to handle RLS errors
@@ -259,6 +265,8 @@ const DestinationManagement: React.FC = () => {
       isActive: dest.isActive ?? true,
       isFeatured: dest.isFeatured ?? false,
       featuredOrder: dest.featuredOrder ?? 0,
+      activities: dest.activities && dest.activities.length > 0 ? dest.activities : [{ title: '', icon: 'Star', desc: '' }],
+      best_time_to_visit: dest.best_time_to_visit && dest.best_time_to_visit.length > 0 ? dest.best_time_to_visit : [{ season: '', description: '' }],
     });
     setIsDialogOpen(true);
   };
@@ -350,6 +358,8 @@ const DestinationManagement: React.FC = () => {
         citizen_price: formData.citizenPrice,
         resident_price: formData.residentPrice,
         non_resident_price: formData.nonResidentPrice,
+        activities: formData.activities,
+        best_time_to_visit: formData.best_time_to_visit,
       };
 
       let result;
@@ -542,6 +552,7 @@ const DestinationManagement: React.FC = () => {
         citizen_price: dest.pricing.citizenPrice,
         resident_price: dest.pricing.residentPrice,
         non_resident_price: dest.pricing.nonResidentPrice,
+        best_time_to_visit: dest.best_time_to_visit,
       };
 
       const { data, error } = await sb
@@ -657,7 +668,7 @@ const DestinationManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description">About the Destination (Overview)</Label>
                     <Textarea
                       id="description"
                       value={formData.description}
@@ -818,7 +829,137 @@ const DestinationManagement: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 items-center">
+                  <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <Label className="text-base font-bold">Activities</Label>
+                    <div className="space-y-4">
+                      {formData.activities?.map((activity, idx) => (
+                        <Card key={idx} className="p-4 bg-slate-50/50 dark:bg-slate-900/50 border-dashed">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-xs">Title</Label>
+                              <Input
+                                value={activity.title}
+                                onChange={(e) => setFormData((p) => ({
+                                  ...p,
+                                  activities: p.activities?.map((a, i) => i === idx ? { ...a, title: e.target.value } : a)
+                                }))}
+                                placeholder="e.g., Game Drive"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Icon (Lucide name)</Label>
+                              <Input
+                                value={activity.icon}
+                                onChange={(e) => setFormData((p) => ({
+                                  ...p,
+                                  activities: p.activities?.map((a, i) => i === idx ? { ...a, icon: e.target.value } : a)
+                                }))}
+                                placeholder="e.g., Camera, Sun, Tree"
+                              />
+                            </div>
+                            <div className="md:col-span-2">
+                              <Label className="text-xs">Description</Label>
+                              <Textarea
+                                value={activity.desc}
+                                onChange={(e) => setFormData((p) => ({
+                                  ...p,
+                                  activities: p.activities?.map((a, i) => i === idx ? { ...a, desc: e.target.value } : a)
+                                }))}
+                                placeholder="Brief description of the activity"
+                                rows={2}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex justify-end mt-2">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-500 h-8"
+                              onClick={() => setFormData((p) => ({
+                                ...p,
+                                activities: p.activities?.filter((_, i) => i !== idx)
+                              }))}
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" /> Remove Activity
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setFormData((p) => ({
+                          ...p,
+                          activities: [...(p.activities || []), { title: '', icon: 'Star', desc: '' }]
+                        }))}
+                      >
+                        <Plus className="mr-2 h-4 w-4" /> Add Activity
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <Label className="text-base font-bold">Best Time to Visit</Label>
+                    <div className="space-y-4">
+                      {formData.best_time_to_visit?.map((item, idx) => (
+                        <Card key={idx} className="p-4 bg-slate-50/50 dark:bg-slate-900/50 border-dashed">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-xs">Season</Label>
+                              <Input
+                                value={item.season}
+                                onChange={(e) => setFormData((p) => ({
+                                  ...p,
+                                  best_time_to_visit: p.best_time_to_visit?.map((b, i) => i === idx ? { ...b, season: e.target.value } : b)
+                                }))}
+                                placeholder="e.g., Green Season (Nov-May)"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Description</Label>
+                              <Input
+                                value={item.description}
+                                onChange={(e) => setFormData((p) => ({
+                                  ...p,
+                                  best_time_to_visit: p.best_time_to_visit?.map((b, i) => i === idx ? { ...b, description: e.target.value } : b)
+                                }))}
+                                placeholder="Brief description of this season"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex justify-end mt-2">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-500 h-8"
+                              onClick={() => setFormData((p) => ({
+                                ...p,
+                                best_time_to_visit: p.best_time_to_visit?.filter((_, i) => i !== idx)
+                              }))}
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" /> Remove Season
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setFormData((p) => ({
+                          ...p,
+                          best_time_to_visit: [...(p.best_time_to_visit || []), { season: '', description: '' }]
+                        }))}
+                      >
+                        <Plus className="mr-2 h-4 w-4" /> Add Season
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 items-center pt-4 border-t border-slate-100 dark:border-slate-800">
                     <div className="flex items-center space-x-2">
                       <Switch
                         id="isFeatured"
@@ -1008,18 +1149,20 @@ const DestinationManagement: React.FC = () => {
         ))}
       </div>
 
-      {destinations.length === 0 && (
-        <div className="text-center py-12">
-          <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-2">No destinations yet</h3>
-          <p className="text-muted-foreground mb-4">
-            Get started by adding your first destination
-          </p>
-          <Button onClick={openCreateDialog}>
-            <Plus className="mr-2 h-4 w-4" /> Add Destination
-          </Button>
-        </div>
-      )}
+      {
+        destinations.length === 0 && (
+          <div className="text-center py-12">
+            <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">No destinations yet</h3>
+            <p className="text-muted-foreground mb-4">
+              Get started by adding your first destination
+            </p>
+            <Button onClick={openCreateDialog}>
+              <Plus className="mr-2 h-4 w-4" /> Add Destination
+            </Button>
+          </div>
+        )
+      }
     </div>
   );
 };
