@@ -14,6 +14,12 @@ import {
   TableRow
 } from '@/components/ui/table';
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from '@/components/ui/tabs';
+import {
   Loader2,
   User,
   Mail,
@@ -129,6 +135,96 @@ const UsersDashboard = () => {
     u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  const adminUsers = filteredUsers.filter(u => u.role === 'admin');
+  const standardUsers = filteredUsers.filter(u => u.role === 'user');
+
+  const UserTable = ({ data }: { data: ManagedUser[] }) => (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-slate-50/30 dark:bg-white/5 border-b border-slate-200 dark:border-white/5">
+            <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 pl-6">Explorer</TableHead>
+            <TableHead className="font-black text-[10px] uppercase tracking-widest py-4">Security Clearance</TableHead>
+            <TableHead className="font-black text-[10px] uppercase tracking-widest py-4">Joined Date</TableHead>
+            <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 text-right pr-6">Admin Access</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data.map((u) => (
+            <TableRow
+              key={u.id}
+              className={`border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors ${u.id === currentUser?.id ? 'bg-amber-500/[0.02]' : ''}`}
+            >
+              <TableCell className="py-5 pl-6">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${u.role === 'admin' ? 'bg-amber-500/10 text-amber-600' : 'bg-blue-500/10 text-blue-600'}`}>
+                    {u.role === 'admin' ? <ShieldCheck className="h-5 w-5" /> : <User className="h-5 w-5" />}
+                  </div>
+                  <div>
+                    <div className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                      {u.full_name || 'Anonymous Explorer'}
+                      {u.id === currentUser?.id && (
+                        <Badge className="bg-amber-500 text-[8px] font-black uppercase h-4 px-1 leading-none border-0">Me</Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                      <Mail className="h-3 w-3" />
+                      {u.email}
+                    </p>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell className="py-5">
+                {u.role === 'admin' ? (
+                  <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-[10px] uppercase tracking-widest font-black py-0.5">
+                    Tier 1 Admin
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20 text-[10px] uppercase tracking-widest font-black py-0.5">
+                    Standard User
+                  </Badge>
+                )}
+              </TableCell>
+              <TableCell className="py-5">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span className="text-xs font-bold">
+                    {new Date(u.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell className="py-5 text-right pr-6">
+                <div className="flex flex-col items-end gap-1">
+                  <div className="flex items-center gap-3">
+                    {updatingId === u.id && (
+                      <Loader2 className="h-3 w-3 animate-spin text-amber-500" />
+                    )}
+                    <Switch
+                      id={`admin-toggle-${u.id}`}
+                      checked={u.role === 'admin'}
+                      onCheckedChange={() => toggleAdminStatus(u.id, u.role === 'admin')}
+                      disabled={updatingId === u.id || u.id === currentUser?.id}
+                      className="data-[state=checked]:bg-amber-500"
+                    />
+                  </div>
+                  {u.id === currentUser?.id && (
+                    <span className="text-[9px] text-amber-600 font-bold uppercase tracking-tighter italic mr-1">Protected</span>
+                  )}
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      {data.length === 0 && (
+        <div className="flex flex-col items-center justify-center p-20 text-center">
+          <ShieldAlert className="h-12 w-12 text-slate-200 mb-4" />
+          <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">No personnel discovered in this sector</p>
+        </div>
+      )}
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
@@ -157,110 +253,47 @@ const UsersDashboard = () => {
         </div>
       </div>
 
-      <Card className="border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden rounded-[2rem] bg-white dark:bg-slate-900">
-        <CardHeader className="bg-slate-50/50 dark:bg-white/5 border-b border-slate-100 dark:border-white/5 pb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
-                <Shield className="h-5 w-5 text-amber-500" />
+      <Card className="border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden rounded-[2rem] bg-white dark:bg-slate-900 border-none">
+        <Tabs defaultValue="all" className="w-full">
+          <CardHeader className="bg-slate-50/50 dark:bg-white/5 border-b border-slate-100 dark:border-white/5 pb-2">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                  <Shield className="h-5 w-5 text-amber-500" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Personnel Registry</CardTitle>
+                  <CardDescription>
+                    Manage project access and clearance levels
+                  </CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-lg">Personnel List</CardTitle>
-                <CardDescription>
-                  {filteredUsers.length} verified explorers in the database
-                </CardDescription>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50/30 dark:bg-white/5 border-b border-slate-200 dark:border-white/5">
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 pl-6">Explorer</TableHead>
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest py-4">Security Clearance</TableHead>
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest py-4">Joined Date</TableHead>
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 text-right pr-6">Admin Access</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((u) => (
-                  <TableRow
-                    key={u.id}
-                    className={`border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors ${u.id === currentUser?.id ? 'bg-amber-500/[0.02]' : ''}`}
-                  >
-                    <TableCell className="py-5 pl-6">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${u.role === 'admin' ? 'bg-amber-500/10 text-amber-600' : 'bg-blue-500/10 text-blue-600'}`}>
-                          {u.role === 'admin' ? <ShieldCheck className="h-5 w-5" /> : <User className="h-5 w-5" />}
-                        </div>
-                        <div>
-                          <div className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                            {u.full_name || 'Anonymous Explorer'}
-                            {u.id === currentUser?.id && (
-                              <Badge className="bg-amber-500 text-[8px] font-black uppercase h-4 px-1 leading-none border-0">Me</Badge>
-                            )}
-                          </div>
-                          <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                            <Mail className="h-3 w-3" />
-                            {u.email}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-5">
-                      {u.role === 'admin' ? (
-                        <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-[10px] uppercase tracking-widest font-black py-0.5">
-                          Tier 1 Admin
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20 text-[10px] uppercase tracking-widest font-black py-0.5">
-                          Standard User
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-5">
-                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                        <Calendar className="h-3.5 w-3.5" />
-                        <span className="text-xs font-bold">
-                          {new Date(u.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-5 text-right pr-6">
-                      <div className="flex flex-col items-end gap-1">
-                        <div className="flex items-center gap-3">
-                          {updatingId === u.id && (
-                            <Loader2 className="h-3 w-3 animate-spin text-amber-500" />
-                          )}
-                          <Switch
-                            id={`admin-toggle-${u.id}`}
-                            checked={u.role === 'admin'}
-                            onCheckedChange={() => toggleAdminStatus(u.id, u.role === 'admin')}
-                            disabled={updatingId === u.id || u.id === currentUser?.id}
-                            className="data-[state=checked]:bg-amber-500"
-                          />
-                        </div>
-                        {u.id === currentUser?.id && (
-                          <span className="text-[9px] text-amber-600 font-bold uppercase tracking-tighter italic mr-1">Protected</span>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
 
-          {filteredUsers.length === 0 && (
-            <div className="flex flex-col items-center justify-center p-20 text-center">
-              <ShieldAlert className="h-12 w-12 text-slate-200 mb-4" />
-              <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">No personnel matched your filter</p>
-              <Button variant="link" onClick={() => setSearchQuery('')} className="mt-2 text-amber-500">Reset Search</Button>
+              <TabsList className="bg-slate-100 dark:bg-white/5 p-1 rounded-xl h-12">
+                <TabsTrigger value="all" className="rounded-lg px-4 h-10 font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-sm">
+                  All <Badge variant="secondary" className="ml-2 bg-slate-200 dark:bg-white/10 text-[9px] px-1">{filteredUsers.length}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="admins" className="rounded-lg px-4 h-10 font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-amber-500 data-[state=active]:text-white">
+                  Admins <Badge variant="secondary" className="ml-2 bg-amber-600/20 dark:bg-white/10 text-[9px] px-1">{adminUsers.length}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="users" className="rounded-lg px-4 h-10 font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+                  Standard <Badge variant="secondary" className="ml-2 bg-blue-600/20 dark:bg-white/10 text-[9px] px-1">{standardUsers.length}</Badge>
+                </TabsTrigger>
+              </TabsList>
             </div>
-          )}
-        </CardContent>
+          </CardHeader>
+          <CardContent className="p-0">
+            <TabsContent value="all" className="m-0 border-none outline-none">
+              <UserTable data={filteredUsers} />
+            </TabsContent>
+            <TabsContent value="admins" className="m-0 border-none outline-none">
+              <UserTable data={adminUsers} />
+            </TabsContent>
+            <TabsContent value="users" className="m-0 border-none outline-none">
+              <UserTable data={standardUsers} />
+            </TabsContent>
+          </CardContent>
+        </Tabs>
       </Card>
 
       <div className="flex items-center gap-3 p-5 bg-amber-500/5 border border-amber-500/10 rounded-2xl">
