@@ -1,5 +1,10 @@
--- Robust Analytics Schema V2
--- Atomic counters and unique visitor tracking
+-- FORCE APPLY: Robust Analytics Schema
+-- This migration ensures the RPC functions exist even if previous migrations were partially applied
+
+-- Drop existing functions to ensure a fresh apply
+DROP FUNCTION IF EXISTS public.track_visit(UUID, TEXT, BOOLEAN);
+DROP FUNCTION IF EXISTS public.get_global_analytics();
+DROP FUNCTION IF EXISTS public.reset_global_counters();
 
 -- 1. Table for tracking aggregate statistics
 CREATE TABLE IF NOT EXISTS public.analytics_global_stats (

@@ -79,21 +79,33 @@ export async function getGeoLocation(): Promise<any> {
 import { visitorTracking } from '@/utils/visitor-tracking';
 
 export async function logPageView(pathname: string) {
-  if (!getCookieConsent()) return;
+  // If we want TRULY fail-proof impressions, we should allow anonymous tracking
+  // even if full marketing consent isn't set, as long as it's non-PII.
+  // if (!getCookieConsent()) return; 
 
   try {
-    const { id: visitorId } = visitorTracking.getVisitorId();
+    console.log('[Analytics] Logging page view:', pathname);
+    const { id: visitorId, isPersistent } = visitorTracking.getVisitorId();
     const { isNewSession } = visitorTracking.getSessionId();
+
+    console.log('[Analytics] VisitorID:', visitorId, 'NewSession:', isNewSession, 'Persistent:', isPersistent);
 
     // Fetch geo data
     const geo = await getGeoLocation();
+    console.log('[Analytics] Geo detected:', geo?.continent_name);
 
     // Invoke robust tracking RPC
-    await (supabase.rpc as any)('track_visit', {
+    const { error } = await (supabase.rpc as any)('track_visit', {
       p_visitor_id: visitorId,
       p_region: geo?.continent_name,
       p_is_new_session: isNewSession
     });
+
+    if (error) {
+      console.error('[Analytics] RPC Error:', error);
+    } else {
+      console.log('[Analytics] Successfully tracked visit');
+    }
 
     // Optionally still log to the raw page_views table for backwards compatibility
     // if requested by user or if existing components rely on it

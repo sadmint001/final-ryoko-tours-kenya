@@ -34,13 +34,14 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }, []);
 
     useEffect(() => {
-        if (consentGiven) {
-            logPageView(location.pathname);
-        }
-    }, [location.pathname, consentGiven]);
+        // Always attempt to log page view; internal logic in logPageView
+        // handles consent/anonymization for "fail-proof" tracking.
+        logPageView(location.pathname);
+    }, [location.pathname]);
 
     const handleSetConsent = (consent: boolean) => {
         setConsentGiven(consent);
+        import('@/lib/analytics').then(m => m.setCookieConsent(consent));
         localStorage.setItem('ryoko_cookie_consent_set', 'true');
         setShowBanner(false);
     };
