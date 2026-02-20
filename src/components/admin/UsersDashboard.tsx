@@ -196,12 +196,12 @@ const UsersDashboard = () => {
                           {u.role === 'admin' ? <ShieldCheck className="h-5 w-5" /> : <User className="h-5 w-5" />}
                         </div>
                         <div>
-                          <p className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                          <div className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
                             {u.full_name || 'Anonymous Explorer'}
                             {u.id === currentUser?.id && (
                               <Badge className="bg-amber-500 text-[8px] font-black uppercase h-4 px-1 leading-none border-0">Me</Badge>
                             )}
-                          </p>
+                          </div>
                           <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                             <Mail className="h-3 w-3" />
                             {u.email}
