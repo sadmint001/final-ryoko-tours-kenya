@@ -165,170 +165,173 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md shadow-warm">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <Link to="/" className="group">
-              <img
-                src="/lovable-uploads/7fb62c94-7164-4789-bdf7-04075cd81dc5.jpg"
-                alt="Ryoko Tours Africa Logo"
-                className="h-14 w-14 md:h-16 md:w-16 object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-sm"
-              />
-            </Link>
-          </div>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            <div className="flex items-baseline space-x-8">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.href}
-                  className={`text-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium font-opensans transition-colors duration-300 hover:bg-accent/50 ${location.pathname === link.href ? 'text-primary bg-accent/30' : ''
-                    }`}
-                >
-                  {link.name}
-                </Link>
-              ))}
+    <>
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md shadow-warm">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-20">
+            {/* Logo */}
+            <div className="flex-shrink-0">
+              <Link to="/" className="group">
+                <img
+                  src="/lovable-uploads/7fb62c94-7164-4789-bdf7-04075cd81dc5.jpg"
+                  alt="Ryoko Tours Africa Logo"
+                  className="h-14 w-14 md:h-16 md:w-16 object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-sm"
+                />
+              </Link>
             </div>
 
-            <div className="flex items-center space-x-4">
-              <ThemeToggle />
-              <GoogleTranslateProvider />
-              <CustomLanguageSwitcher />
-              {user ? (
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2 text-muted-foreground">
-                    <User className="w-4 h-4" />
-                    <span className="text-sm">{user.email}</span>
-                  </div>
-                  <Button
-                    onClick={handleSignOut}
-                    variant="outline"
-                    size="sm"
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-8">
+              <div className="flex items-baseline space-x-8">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.name}
+                    to={link.href}
+                    className={`text-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium font-opensans transition-colors duration-300 hover:bg-accent/50 ${location.pathname === link.href ? 'text-primary bg-accent/30' : ''
+                      }`}
                   >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-4">
-                  <Link to="/destinations">
-                    <Button variant="safari" size="default">
-                      Book Now
-                    </Button>
+                    {link.name}
                   </Link>
-                  <Link to="/auth">
-                    <Button variant="outline" size="default">
-                      Sign In
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-foreground hover:text-primary hover:bg-accent focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
-            >
-              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile menu */}
-        <div
-          className={cn(
-            "fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden transition-opacity duration-300",
-            isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-          )}
-          onClick={() => setIsOpen(false)}
-        />
-        <div className={cn(
-          "fixed inset-y-0 right-0 z-50 w-[80%] max-w-sm bg-background shadow-2xl md:hidden transition-transform duration-500 ease-in-out transform",
-          isOpen ? "translate-x-0" : "translate-x-full"
-        )}>
-          <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between p-6 border-b border-border">
-              <span className="font-bold text-lg">Menu</span>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-2 rounded-full hover:bg-accent transition-colors"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.href}
-                  className={`text-foreground hover:text-primary block px-4 py-3 rounded-2xl text-lg font-medium font-opensans transition-all duration-300 ${location.pathname === link.href ? 'text-primary bg-primary/10 shadow-sm' : 'hover:bg-accent/50'
-                    }`}
-                  onClick={() => setIsOpen(false)}
-                >
-                  {link.name}
-                </Link>
-              ))}
-
-              <div className="pt-6 mt-6 border-t border-border space-y-6">
-                <div className="flex items-center justify-between px-4">
-                  <span className="text-sm font-medium text-muted-foreground">Dark Mode</span>
-                  <ThemeToggle />
-                </div>
-                <div className="px-2">
-                  <CustomLanguageSwitcher />
-                </div>
+                ))}
               </div>
 
-              {user ? (
-                <div className="pt-6 mt-6 border-t border-border space-y-4">
-                  <div className="flex items-center space-x-3 px-4 py-2 bg-accent/30 rounded-2xl">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                      <User className="w-5 h-5 text-primary" />
+              <div className="flex items-center space-x-4">
+                <ThemeToggle />
+                <GoogleTranslateProvider />
+                <CustomLanguageSwitcher />
+                {user ? (
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2 text-muted-foreground">
+                      <User className="w-4 h-4" />
+                      <span className="text-sm">{user.email}</span>
                     </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-bold truncate">{user.user_metadata?.full_name || 'User'}</span>
-                      <span className="text-xs text-muted-foreground truncate">{user.email}</span>
-                    </div>
+                    <Button
+                      onClick={handleSignOut}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </Button>
                   </div>
-                  <Button
-                    onClick={handleSignOut}
-                    variant="outline"
-                    className="w-full h-12 rounded-2xl border-destructive/20 text-destructive hover:bg-destructive/5"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
+                ) : (
+                  <div className="flex items-center space-x-4">
+                    <Link to="/destinations">
+                      <Button variant="safari" size="default">
+                        Book Now
+                      </Button>
+                    </Link>
+                    <Link to="/auth">
+                      <Button variant="outline" size="default">
+                        Sign In
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="inline-flex items-center justify-center p-2 rounded-md text-foreground hover:text-primary hover:bg-accent focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+              >
+                {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </nav>
+
+      {/* Mobile menu - Moved outside nav to prevent backdrop-filter clipping */}
+      <div
+        className={cn(
+          "fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm md:hidden transition-opacity duration-300",
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onClick={() => setIsOpen(false)}
+      />
+      <div className={cn(
+        "fixed inset-y-0 right-0 z-[70] w-[80%] max-w-sm bg-background shadow-2xl md:hidden transition-transform duration-500 ease-in-out transform",
+        isOpen ? "translate-x-0" : "translate-x-full"
+      )}>
+        <div className="flex flex-col h-full">
+          <div className="flex items-center justify-between p-6 border-b border-border">
+            <span className="font-bold text-lg">Menu</span>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="p-2 rounded-full hover:bg-accent transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                to={link.href}
+                className={`text-foreground hover:text-primary block px-4 py-3 rounded-2xl text-lg font-medium font-opensans transition-all duration-300 ${location.pathname === link.href ? 'text-primary bg-primary/10 shadow-sm' : 'hover:bg-accent/50'
+                  }`}
+                onClick={() => setIsOpen(false)}
+              >
+                {link.name}
+              </Link>
+            ))}
+
+            <div className="pt-6 mt-6 border-t border-border space-y-6">
+              <div className="flex items-center justify-between px-4">
+                <span className="text-sm font-medium text-muted-foreground">Dark Mode</span>
+                <ThemeToggle />
+              </div>
+              <div className="px-2">
+                <CustomLanguageSwitcher />
+              </div>
+            </div>
+
+            {user ? (
+              <div className="pt-6 mt-6 border-t border-border space-y-4">
+                <div className="flex items-center space-x-3 px-4 py-2 bg-accent/30 rounded-2xl">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <User className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-bold truncate">{user.user_metadata?.full_name || 'User'}</span>
+                    <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleSignOut}
+                  variant="outline"
+                  className="w-full h-12 rounded-2xl border-destructive/20 text-destructive hover:bg-destructive/5"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <div className="pt-6 mt-6 border-t border-border space-y-3">
+                <Link to="/destinations" onClick={() => setIsOpen(false)}>
+                  <Button variant="safari" size="lg" className="w-full rounded-2xl shadow-lg">
+                    Book Now
                   </Button>
-                </div>
-              ) : (
-                <div className="pt-6 mt-6 border-t border-border space-y-3">
-                  <Link to="/destinations" onClick={() => setIsOpen(false)}>
-                    <Button variant="safari" size="lg" className="w-full rounded-2xl shadow-lg">
-                      Book Now
-                    </Button>
-                  </Link>
-                  <Link to="/auth" onClick={() => setIsOpen(false)}>
-                    <Button variant="outline" size="lg" className="w-full rounded-2xl">
-                      Sign In
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </div>
-            <div className="p-6 border-t border-border text-center">
-              <p className="text-xs text-muted-foreground">© 2024 Ryoko Tours Africa</p>
-            </div>
+                </Link>
+                <Link to="/auth" onClick={() => setIsOpen(false)}>
+                  <Button variant="outline" size="lg" className="w-full rounded-2xl">
+                    Sign In
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+          <div className="p-6 border-t border-border text-center">
+            <p className="text-xs text-muted-foreground">© 2024 Ryoko Tours Africa</p>
           </div>
         </div>
       </div>
-    </nav>
+    </>
   );
 };
 
