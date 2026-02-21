@@ -97,6 +97,7 @@ const FeaturedToursSection = () => {
                 <img
                     src={featuredBg}
                     alt="Section Background"
+                    loading="lazy"
                     className="w-full h-full object-cover"
                     onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
@@ -115,7 +116,7 @@ const FeaturedToursSection = () => {
                         <div className="w-8 h-px bg-amber-500"></div>
                     </div>
 
-                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 dark:text-white mb-4 font-serif">
+                    <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-slate-800 dark:text-white mb-4 font-serif leading-tight">
                         Featured
                         <span className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 bg-clip-text text-transparent"> Tours</span>
                     </h2>

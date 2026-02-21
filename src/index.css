@@ -407,3 +407,15 @@ All colors MUST be HSL.
 .animate-ken-burns {
   animation: ken-burns 15s ease-out-expo infinite alternate;
 }
+
+/* Hide number input spinners */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: none;
+}

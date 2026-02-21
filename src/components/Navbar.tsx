@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Menu, X, User, LogOut, Languages, ChevronDown, Check } from 'lucide-react';
@@ -241,14 +242,34 @@ const Navbar = () => {
         </div>
 
         {/* Mobile menu */}
-        {isOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-card rounded-lg mt-2 shadow-elevated">
+        <div
+          className={cn(
+            "fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden transition-opacity duration-300",
+            isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          )}
+          onClick={() => setIsOpen(false)}
+        />
+        <div className={cn(
+          "fixed inset-y-0 right-0 z-50 w-[80%] max-w-sm bg-background shadow-2xl md:hidden transition-transform duration-500 ease-in-out transform",
+          isOpen ? "translate-x-0" : "translate-x-full"
+        )}>
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <span className="font-bold text-lg">Menu</span>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-2 rounded-full hover:bg-accent transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.href}
-                  className={`text-foreground hover:text-primary block px-3 py-2 rounded-md text-base font-medium font-opensans transition-colors duration-300 ${location.pathname === link.href ? 'text-primary bg-accent/30' : ''
+                  className={`text-foreground hover:text-primary block px-4 py-3 rounded-2xl text-lg font-medium font-opensans transition-all duration-300 ${location.pathname === link.href ? 'text-primary bg-primary/10 shadow-sm' : 'hover:bg-accent/50'
                     }`}
                   onClick={() => setIsOpen(false)}
                 >
@@ -256,53 +277,56 @@ const Navbar = () => {
                 </Link>
               ))}
 
-              <div className="space-y-2 pt-4 border-t border-border">
-                <div className="px-3">
+              <div className="pt-6 mt-6 border-t border-border space-y-6">
+                <div className="flex items-center justify-between px-4">
+                  <span className="text-sm font-medium text-muted-foreground">Dark Mode</span>
                   <ThemeToggle />
                 </div>
-                <div className="px-3">
+                <div className="px-2">
                   <CustomLanguageSwitcher />
                 </div>
               </div>
 
               {user ? (
-                <div className="space-y-4 pt-4 border-t border-border">
-                  <div className="flex items-center space-x-2 text-muted-foreground px-3">
-                    <User className="w-4 h-4" />
-                    <span className="text-sm">{user.email}</span>
+                <div className="pt-6 mt-6 border-t border-border space-y-4">
+                  <div className="flex items-center space-x-3 px-4 py-2 bg-accent/30 rounded-2xl">
+                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                      <User className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-sm font-bold truncate">{user.user_metadata?.full_name || 'User'}</span>
+                      <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+                    </div>
                   </div>
-                  <div className="px-3">
-                    <Button
-                      onClick={handleSignOut}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={handleSignOut}
+                    variant="outline"
+                    className="w-full h-12 rounded-2xl border-destructive/20 text-destructive hover:bg-destructive/5"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
                 </div>
               ) : (
-                <div className="space-y-2 pt-4 border-t border-border">
-                  <div className="px-3">
-                    <Link to="/destinations" onClick={() => setIsOpen(false)}>
-                      <Button variant="safari" size="default" className="w-full">
-                        Book Now
-                      </Button>
-                    </Link>
-                  </div>
-                  <div className="px-3">
-                    <Link to="/auth" onClick={() => setIsOpen(false)}>
-                      <Button variant="outline" className="w-full">
-                        Sign In
-                      </Button>
-                    </Link>
-                  </div>
+                <div className="pt-6 mt-6 border-t border-border space-y-3">
+                  <Link to="/destinations" onClick={() => setIsOpen(false)}>
+                    <Button variant="safari" size="lg" className="w-full rounded-2xl shadow-lg">
+                      Book Now
+                    </Button>
+                  </Link>
+                  <Link to="/auth" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" size="lg" className="w-full rounded-2xl">
+                      Sign In
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>
+            <div className="p-6 border-t border-border text-center">
+              <p className="text-xs text-muted-foreground">© 2024 Ryoko Tours Africa</p>
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </nav>
   );

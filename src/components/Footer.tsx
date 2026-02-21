@@ -1,11 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Mail, Phone, MapPin, Instagram, Compass, MessageCircle, ArrowUpRight } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   const location = useLocation();
   const navigate = useNavigate();
+  const [settings, setSettings] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('*')
+        .in('key', [
+          'contact_email',
+          'contact_phone',
+          'contact_whatsapp',
+          'contact_address',
+          'social_instagram',
+          'footer_description'
+        ]);
+
+      if (data) {
+        const settingsMap = data.reduce((acc: Record<string, string>, s: any) => ({ ...acc, [s.key]: s.value }), {});
+        setSettings(settingsMap);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const handleTourLinkClick = (e: React.MouseEvent, category: string) => {
     e.preventDefault();
@@ -53,9 +77,21 @@ const Footer = () => {
     {
       title: "Contact",
       links: [
-        { name: "info@ryokotoursafrica.com", href: "mailto:info@ryokotoursafrica.com", icon: Mail },
-        { name: "+254 797 758 216", href: "https://wa.me/254797758216", icon: MessageCircle },
-        { name: "Nairobi, Kenya", href: "https://www.google.com/maps/search/?api=1&query=Nairobi%2C%20Kenya", icon: MapPin },
+        {
+          name: settings.contact_email || "info@ryokotoursafrica.com",
+          href: `mailto:${settings.contact_email || "info@ryokotoursafrica.com"}`,
+          icon: Mail
+        },
+        {
+          name: settings.contact_phone || "+254 797 758 216",
+          href: settings.contact_whatsapp ? `https://wa.me/${settings.contact_whatsapp}` : "https://wa.me/254797758216",
+          icon: MessageCircle
+        },
+        {
+          name: settings.contact_address || "Nairobi, Kenya",
+          href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(settings.contact_address || "Nairobi, Kenya")}`,
+          icon: MapPin
+        },
       ]
     }
   ];
@@ -80,13 +116,13 @@ const Footer = () => {
               <div className="h-0.5 w-12 bg-amber-500" />
             </div>
             <p className="text-white/80 dark:text-slate-400 text-lg leading-relaxed font-medium">
-              Curating exotic African journeys that transcend traditional travel. Immerse yourself in the soul of Kenya through our authentic, high-end experiences.
+              {settings.footer_description || "Curating exotic African journeys that transcend traditional travel. Immerse yourself in the soul of Kenya through our authentic, high-end experiences."}
             </p>
             <div className="flex gap-4">
               {[
-                { icon: MessageCircle, href: "https://wa.me/254797758216" },
-                { icon: Instagram, href: "https://instagram.com/ryokotoursafrica" },
-                { icon: Mail, href: "mailto:info@ryokotoursafrica.com" }
+                { icon: MessageCircle, href: settings.contact_whatsapp ? `https://wa.me/${settings.contact_whatsapp}` : "https://wa.me/254797758216" },
+                { icon: Instagram, href: settings.social_instagram || "https://instagram.com/ryokotoursafrica" },
+                { icon: Mail, href: `mailto:${settings.contact_email || "info@ryokotoursafrica.com"}` }
               ].map((social, i) => (
                 <a
                   key={i}

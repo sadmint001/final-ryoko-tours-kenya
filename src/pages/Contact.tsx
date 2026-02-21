@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,23 @@ const Contact = () => {
     message: ''
   });
   const [loading, setLoading] = useState(false);
+  const [settings, setSettings] = useState<Record<string, string>>({});
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('*')
+        .in('key', ['contact_email', 'contact_phone', 'contact_whatsapp', 'contact_address', 'form_submit_email']);
+
+      if (data) {
+        const settingsMap = data.reduce((acc: Record<string, string>, s: any) => ({ ...acc, [s.key]: s.value }), {});
+        setSettings(settingsMap);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -56,7 +72,8 @@ const Contact = () => {
       // 2. Submit form to FormSubmit (email service) via AJAX
       // This prevents the redirect and "submit" errors, keeping the user on the site
       try {
-        await fetch("https://formsubmit.co/ajax/info@ryokotoursafrica.com", {
+        const targetEmail = settings.form_submit_email || "info@ryokotoursafrica.com";
+        await fetch(`https://formsubmit.co/ajax/${targetEmail}`, {
           method: "POST",
           headers: {
             'Content-Type': 'application/json',
@@ -98,19 +115,19 @@ const Contact = () => {
     {
       icon: Mail,
       title: "Email Us",
-      content: ["info@ryokotoursafrica.com", "booking@ryokotoursafrica.com", "support@ryokotoursafrica.com"],
+      content: [settings.contact_email || "info@ryokotoursafrica.com", "booking@ryokotoursafrica.com", "support@ryokotoursafrica.com"],
       description: "We're available 24/7 via email"
     },
     {
       icon: Phone,
       title: "WhatsApp",
-      content: "0797758216",
+      content: settings.contact_phone || "0797758216",
       description: "Instant support on WhatsApp"
     },
     {
       icon: MapPin,
       title: "Visit Us",
-      content: "Nairobi, Kenya",
+      content: settings.contact_address || "Nairobi, Kenya",
       description: "Located in the CBD"
     },
     {

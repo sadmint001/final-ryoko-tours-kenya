@@ -47,6 +47,27 @@ const ChatWidget: React.FC = () => {
     const initSession = async () => {
         setChatError(null);
         let sId = Cookies.get(CHAT_SESSION_KEY);
+        if (sId) {
+            // Check if existing session in cookie is compatible with current auth state
+            const { data: sessionData } = await supabase
+                .from('chat_sessions')
+                .select('user_id, anon_id')
+                .eq('id', sId)
+                .single();
+
+            if (sessionData) {
+                const belongsToCurrentUser = user ? sessionData.user_id === user.id : !!sessionData.anon_id;
+                if (!belongsToCurrentUser) {
+                    console.log('Session mismatch with auth state. Starting fresh.');
+                    sId = null;
+                    Cookies.remove(CHAT_SESSION_KEY);
+                }
+            } else {
+                // Session doesn't exist in DB anymore
+                sId = null;
+                Cookies.remove(CHAT_SESSION_KEY);
+            }
+        }
 
         if (!sId) {
             const anonId = user ? null : getOrCreateAnonId();
@@ -62,12 +83,26 @@ const ChatWidget: React.FC = () => {
 
             if (error || !data) {
                 console.error('Session creation failed:', error);
+                // If it's a conflict or forbidden, try clearing the cookie and starting fresh
+                if (error?.code === '409' || error?.code === 'P0001' || error?.code === '403') {
+                    Cookies.remove(CHAT_SESSION_KEY);
+                }
                 setChatError('Could not start chat session. Please refresh the page.');
                 return;
             }
 
             sId = data.id;
             Cookies.set(CHAT_SESSION_KEY, sId, { expires: 7 });
+        }
+
+        // Validate that sId is a UUID
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(sId)) {
+            console.error('Invalid session ID format:', sId);
+            Cookies.remove(CHAT_SESSION_KEY);
+            setChatError('Session corrupted. Refreshing...');
+            window.location.reload();
+            return;
         }
 
         setSessionId(sId);
@@ -113,16 +148,11 @@ const ChatWidget: React.FC = () => {
     const handleSendMessage = async (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!message.trim() || loading) return;
-
-        // If no session yet, try to init first
         if (!sessionId) {
-            await initSession();
-            // Still no session after retry
-            if (!sessionId) {
-                setChatError('Could not connect to chat. Please refresh.');
-                return;
-            }
+            setChatError('Session not initialized. Please wait a moment.');
+            return;
         }
+
 
         const userMsg = message.trim();
         setMessage('');

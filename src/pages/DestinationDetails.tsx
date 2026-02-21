@@ -12,6 +12,7 @@ import { Calendar as ShadcnCalendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { cn } from '@/lib/utils';
 import {
   MapPin,
   Clock,
@@ -30,16 +31,16 @@ import {
   Camera,
   TreePine,
   ShieldCheck,
-  Info
+  Info,
+  ArrowRight
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { getPriceByResidency } from '@/lib/pricing';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { PaymentService } from '@/services/paymentService';
+import { PaymentService, PaymentRequest } from '@/services/paymentService';
 import { PAYMENT_CONFIG } from '@/lib/payment-config';
 import { useResidencyPersistence } from '@/hooks/useResidencyPersistence';
 import { getResidencyDisplay, getCurrency, formatPriceByResidency } from '@/lib/residencyUtils';
@@ -94,6 +95,7 @@ const DestinationDetails = () => {
     customerPhone: string;
     participants: number;
     startDate: Date | undefined;
+    endDate: Date | undefined;
     specialRequests: string;
     paymentMethod: 'pesapal' | 'bank' | 'mpesa';
   }
@@ -104,9 +106,12 @@ const DestinationDetails = () => {
     customerPhone: '',
     participants: 1,
     startDate: undefined,
+    endDate: undefined,
     specialRequests: '',
     paymentMethod: 'pesapal'
   });
+
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // Get residency from URL if provided and sync with hook
   useEffect(() => {
@@ -138,10 +143,25 @@ const DestinationDetails = () => {
     }
   }, [selectedResidency, navigate, toast]);
 
+  // Handle automatic end date calculation
+  useEffect(() => {
+    if (form.startDate && destination?.duration) {
+      const start = new Date(form.startDate);
+      const end = new Date(start);
+      // If duration is 1 day, end date is the same as start date or start + 1?
+      // Usually duration 1 day means same day. 2 days means next day.
+      // Let's go with start + (duration - 1) days.
+      end.setDate(start.getDate() + (destination.duration - 1));
+      setForm(prev => ({ ...prev, endDate: end }));
+    } else {
+      setForm(prev => ({ ...prev, endDate: undefined }));
+    }
+  }, [form.startDate, destination?.duration]);
+
   const calculateTotal = () => {
     if (!destination || !selectedResidency) return 0;
     const price = getPriceByResidency(destination.pricing, selectedResidency);
-    return price * form.participants;
+    return price * (Number(form.participants) || 0);
   };
 
   const handleInputChange = (field: keyof BookingForm, value: any) => {
@@ -162,12 +182,13 @@ const DestinationDetails = () => {
       const paymentData: PaymentRequest = {
         destinationId: destination.id.toString(),
         destinationTitle: destination.name,
-        participants: form.participants,
+        participants: Number(form.participants) || 1,
         totalAmount: calculateTotal(),
         customerName: form.customerName,
         customerEmail: form.customerEmail,
         customerPhone: form.customerPhone,
         startDate: form.startDate?.toISOString(),
+        endDate: form.endDate?.toISOString(),
         specialRequests: form.specialRequests,
         residency_type: selectedResidency,
       };
@@ -208,12 +229,13 @@ const DestinationDetails = () => {
       const paymentData: PaymentRequest = {
         destinationId: destination.id.toString(),
         destinationTitle: destination.name,
-        participants: form.participants,
+        participants: Number(form.participants) || 1,
         totalAmount: calculateTotal(),
         customerName: form.customerName,
         customerEmail: form.customerEmail,
         customerPhone: form.customerPhone,
         startDate: form.startDate?.toISOString(),
+        endDate: form.endDate?.toISOString(),
         specialRequests: form.specialRequests,
         residency_type: selectedResidency,
       };
@@ -261,12 +283,13 @@ const DestinationDetails = () => {
       const paymentData: PaymentRequest = {
         destinationId: destination.id.toString(),
         destinationTitle: destination.name,
-        participants: form.participants,
+        participants: Number(form.participants) || 1,
         totalAmount: calculateTotal(),
         customerName: form.customerName,
         customerEmail: form.customerEmail,
         customerPhone: form.customerPhone,
         startDate: form.startDate?.toISOString(),
+        endDate: form.endDate?.toISOString(),
         specialRequests: form.specialRequests,
         residency_type: selectedResidency,
       };
@@ -348,10 +371,10 @@ const DestinationDetails = () => {
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
+      const { data, error: fetchError }: any = await supabase
         .from('destinations')
         .select('*')
-        .eq('id', id)
+        .eq('id', Number(id))
         .single();
 
       if (fetchError || !data) {
@@ -379,10 +402,10 @@ const DestinationDetails = () => {
       };
 
       // Fetch gallery
-      const { data: galleryData } = await supabase
+      const { data: galleryData }: any = await supabase
         .from('destination_media')
         .select('*')
-        .eq('destination_id', id)
+        .eq('destination_id', Number(id))
         .order('sort_order', { ascending: true });
 
       if (galleryData) {
@@ -448,6 +471,7 @@ const DestinationDetails = () => {
           <img
             src={destination.updatedAt ? `${destination.image}?v=${new Date(destination.updatedAt).getTime()}` : destination.image}
             alt={destination.name}
+            loading="lazy"
             className="w-full h-full object-cover animate-ken-burns"
           />
         </div>
@@ -637,33 +661,61 @@ const DestinationDetails = () => {
 
               {/* Photos Tab */}
               <TabsContent value="photos" className="space-y-6 animate-fade-in">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 h-[600px]">
                   {destination.gallery && destination.gallery.length > 0 ? (
-                    destination.gallery.map((item) => (
-                      <div
-                        key={item.id}
-                        className="group relative aspect-[4/3] overflow-hidden rounded-3xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-500"
-                      >
-                        <img
-                          src={item.url}
-                          alt={item.caption || destination.name}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6">
-                          {item.caption && (
-                            <p className="text-white font-medium text-lg transform translateY(20px) group-hover:translateY(0) transition-transform duration-500">
-                              {item.caption}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-2 mt-2 transform translateY(20px) group-active:translateY(0) transition-transform duration-500 delay-75">
-                            <span className="w-8 h-0.5 bg-amber-500"></span>
-                            <span className="text-white/80 text-xs uppercase tracking-widest font-bold">View Discovery</span>
+                    <>
+                      {/* Main Large Image (First) */}
+                      {destination.gallery[0] && (
+                        <div className="md:col-span-2 md:row-span-2 group relative overflow-hidden rounded-3xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-500">
+                          <img
+                            src={destination.gallery[0].url}
+                            alt={destination.gallery[0].caption || destination.name}
+                            loading="lazy"
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6">
+                            {destination.gallery[0].caption && (
+                              <p className="text-white font-medium text-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                                {destination.gallery[0].caption}
+                              </p>
+                            )}
                           </div>
                         </div>
-                      </div>
-                    ))
+                      )}
+
+                      {/* Small Images (2-5) */}
+                      {destination.gallery.slice(1, 5).map((item, idx) => (
+                        <div
+                          key={item.id}
+                          className="group relative overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-500"
+                        >
+                          <img
+                            src={item.url}
+                            alt={item.caption || destination.name}
+                            loading="lazy"
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-4">
+                            {item.caption && (
+                              <p className="text-white font-medium text-sm transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                                {item.caption}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* If more than 5, show a "View All" placeholder on the last grid item if we have at least 5 */}
+                      {destination.gallery.length > 5 && (
+                        <div className="absolute bottom-4 right-4 z-30">
+                          <Badge variant="secondary" className="backdrop-blur-md bg-white/30 text-white border-white/50 px-4 py-2 text-sm font-bold shadow-2xl">
+                            +{destination.gallery.length - 5} More Photos
+                          </Badge>
+                        </div>
+                      )}
+                    </>
                   ) : (
-                    <div className="col-span-2 py-12 text-center bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-600">
+                    <div className="md:col-span-4 md:row-span-2 py-12 text-center bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-600 flex flex-col items-center justify-center">
                       <Camera className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                       <p className="text-slate-500 font-medium">No photography items added to this gallery yet.</p>
                     </div>
@@ -701,31 +753,57 @@ const DestinationDetails = () => {
                   </div>
 
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="startDate">Travel Date</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full justify-start text-left font-normal h-12 rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-900",
-                              !form.startDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {form.startDate ? format(form.startDate, "PPP") : <span>Pick a date</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <ShadcnCalendar
-                            mode="single"
-                            selected={form.startDate}
-                            onSelect={(date) => setForm(prev => ({ ...prev, startDate: date }))}
-                            initialFocus
-                            disabled={(date) => date < new Date()}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="startDate">Departure Date</Label>
+                        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full justify-start text-left font-normal h-12 rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-900 shadow-sm hover:border-amber-500/50 transition-colors",
+                                !form.startDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4 text-amber-500" />
+                              {form.startDate ? format(form.startDate, "PPP") : <span>Pick a start date</span>}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <ShadcnCalendar
+                              mode="single"
+                              selected={form.startDate}
+                              onSelect={(date) => {
+                                setForm(prev => ({ ...prev, startDate: date }));
+                                setCalendarOpen(false);
+                              }}
+                              initialFocus
+                              disabled={(date) => date < new Date()}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+
+                      {/* Display duration-based end date if exists */}
+                      {form.startDate && form.endDate && (
+                        <div className="bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-900/30 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="flex justify-between items-center text-sm">
+                            <div className="space-y-1">
+                              <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold tracking-wider">Estimated Return</span>
+                              <div className="font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5 text-amber-500" />
+                                {format(form.endDate, "PPP")}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <Badge variant="outline" className="bg-amber-100/50 border-amber-200 text-amber-700 dark:text-amber-400 font-bold">
+                                {destination.duration} Days
+                                <ArrowRight className="w-3 h-3 ml-1" />
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -737,7 +815,7 @@ const DestinationDetails = () => {
                           min="1"
                           max={destination.maxParticipants || 20}
                           value={form.participants}
-                          onChange={(e) => setForm(prev => ({ ...prev, participants: parseInt(e.target.value) || 1 }))}
+                          onChange={(e) => setForm(prev => ({ ...prev, participants: e.target.value === '' ? '' as any : parseInt(e.target.value) }))}
                           className="pl-10 h-12 rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-900"
                         />
                       </div>

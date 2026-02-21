@@ -136,7 +136,7 @@ const Destinations: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('destinations')
-          .select('*')
+          .select('id, name, description, highlights, image, citizen_price, resident_price, non_resident_price, category, duration, max_participants, location, updated_at')
           .eq('is_active', true)
           .order('id', { ascending: true });
 
@@ -227,8 +227,23 @@ const Destinations: React.FC = () => {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-500">
         <Navbar />
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <Loader label="Loading destinations..." />
+        <div className="container mx-auto px-4 pt-48 pb-24">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-md animate-pulse">
+                <div className="aspect-[4/3] bg-slate-200 dark:bg-slate-700" />
+                <div className="p-6 space-y-4">
+                  <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded-md w-3/4" />
+                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded-md w-full" />
+                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded-md w-5/6" />
+                  <div className="flex gap-4 pt-4">
+                    <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded-xl flex-1" />
+                    <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded-xl flex-1" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -469,6 +484,7 @@ const Destinations: React.FC = () => {
                 <img
                   src={dest.updatedAt ? `${dest.image}?v=${new Date(dest.updatedAt).getTime()}` : dest.image}
                   alt={dest.name}
+                  loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
 

@@ -118,6 +118,7 @@ const DestinationManagement: React.FC = () => {
     featuredOrder: 0,
     activities: [{ title: '', icon: 'Star', desc: '' }],
     best_time_to_visit: [{ season: '', description: '' }],
+    gallery: [] as GalleryItem[],
   };
   const [formData, setFormData] = useState(initialForm);
 
@@ -148,7 +149,13 @@ const DestinationManagement: React.FC = () => {
 
   // Helper function to handle RLS errors
   const handleRLSError = (error: any, defaultMessage: string) => {
-    console.error('Supabase error:', error);
+    console.error('Supabase error DETAILED:', {
+      message: error?.message,
+      details: error?.details,
+      hint: error?.hint,
+      code: error?.code,
+      fullError: error
+    });
 
     if (error?.message?.includes('row-level security policy') ||
       error?.message?.includes('RLS') ||
@@ -211,7 +218,7 @@ const DestinationManagement: React.FC = () => {
   useEffect(() => {
     const loadGallery = async () => {
       if (!editingDestination?.id) {
-        setGalleryItems([]);
+        // For new destinations, we keep whatever is in formData.gallery
         return;
       }
       try {
@@ -221,9 +228,12 @@ const DestinationManagement: React.FC = () => {
           .eq('destination_id', editingDestination.id)
           .order('sort_order', { ascending: true });
         if (!error && data) {
-          setGalleryItems(data.map((d: any) => ({ id: d.id, url: d.url, caption: d.caption, sort_order: d.sort_order })));
+          const loaded = data.map((d: any) => ({ id: d.id, url: d.url, caption: d.caption, sort_order: d.sort_order }));
+          setGalleryItems(loaded);
+          setFormData(prev => ({ ...prev, gallery: loaded }));
         } else {
           setGalleryItems([]);
+          setFormData(prev => ({ ...prev, gallery: [] }));
         }
       } catch (e) {
         console.error('Gallery load failed', e);
@@ -267,6 +277,7 @@ const DestinationManagement: React.FC = () => {
       featuredOrder: dest.featuredOrder ?? 0,
       activities: dest.activities && dest.activities.length > 0 ? dest.activities : [{ title: '', icon: 'Star', desc: '' }],
       best_time_to_visit: dest.best_time_to_visit && dest.best_time_to_visit.length > 0 ? dest.best_time_to_visit : [{ season: '', description: '' }],
+      gallery: [], // Loaded via useEffect
     });
     setIsDialogOpen(true);
   };
@@ -345,21 +356,21 @@ const DestinationManagement: React.FC = () => {
       const payload = {
         name: formData.name,
         description: formData.description,
-        highlights: formData.highlights,
+        highlights: formData.highlights.filter(h => h.trim() !== ''),
         image: formData.image,
         category: formData.category,
-        duration: formData.duration,
-        max_participants: formData.maxParticipants,
+        duration: Number(formData.duration) || 1,
+        max_participants: Number(formData.maxParticipants) || 10,
         difficulty: formData.difficulty,
         location: formData.location,
         is_active: formData.isActive,
         is_featured: formData.isFeatured,
         featured_order: formData.featuredOrder,
-        citizen_price: formData.citizenPrice,
-        resident_price: formData.residentPrice,
-        non_resident_price: formData.nonResidentPrice,
-        activities: formData.activities,
-        best_time_to_visit: formData.best_time_to_visit,
+        citizen_price: Number(formData.citizenPrice) || 0,
+        resident_price: Number(formData.residentPrice) || 0,
+        non_resident_price: Number(formData.nonResidentPrice) || 0,
+        activities: formData.activities.filter(a => a.title.trim() !== ''),
+        best_time_to_visit: formData.best_time_to_visit.filter(b => b.season.trim() !== ''),
       };
 
       let result;
@@ -413,13 +424,28 @@ const DestinationManagement: React.FC = () => {
         });
       }
 
+      // If we have local gallery items (for new destinations), save them now
+      if (!editingDestination && formData.gallery.length > 0) {
+        const destId = result.data?.id;
+        if (destId) {
+          const galleryEntries = formData.gallery.map(item => ({
+            destination_id: destId,
+            url: item.url,
+            caption: item.caption || null,
+            sort_order: item.sort_order
+          }));
+          await sb.from('destination_media').insert(galleryEntries);
+        }
+      }
+
       // Refresh list after change
       await fetchDestinations();
       setIsDialogOpen(false);
       resetForm();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Save failed:', err);
-      handleRLSError(err, 'Failed to save destination');
+      const detail = err?.details || err?.message || 'Unknown error';
+      handleRLSError(err, `Failed to save destination: ${detail}`);
     } finally {
       setSaving(false);
     }
@@ -553,6 +579,7 @@ const DestinationManagement: React.FC = () => {
         resident_price: dest.pricing.residentPrice,
         non_resident_price: dest.pricing.nonResidentPrice,
         best_time_to_visit: dest.best_time_to_visit,
+        activities: dest.activities,
       };
 
       const { data, error } = await sb
@@ -632,7 +659,7 @@ const DestinationManagement: React.FC = () => {
                   <TabsTrigger value="basic">Basic Info</TabsTrigger>
                   <TabsTrigger value="pricing">Pricing</TabsTrigger>
                   <TabsTrigger value="details">Details</TabsTrigger>
-                  <TabsTrigger value="media">Media</TabsTrigger>
+                  <TabsTrigger value="media">Photos</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="basic" className="space-y-4">
@@ -731,7 +758,7 @@ const DestinationManagement: React.FC = () => {
                         value={formData.citizenPrice}
                         onChange={(e) => setFormData((p) => ({
                           ...p,
-                          citizenPrice: parseInt(e.target.value || '0')
+                          citizenPrice: e.target.value === '' ? '' as any : parseInt(e.target.value || '0')
                         }))}
                         required
                       />
@@ -744,7 +771,7 @@ const DestinationManagement: React.FC = () => {
                         value={formData.residentPrice}
                         onChange={(e) => setFormData((p) => ({
                           ...p,
-                          residentPrice: parseInt(e.target.value || '0')
+                          residentPrice: e.target.value === '' ? '' as any : parseInt(e.target.value || '0')
                         }))}
                         required
                       />
@@ -757,7 +784,7 @@ const DestinationManagement: React.FC = () => {
                         value={formData.nonResidentPrice}
                         onChange={(e) => setFormData((p) => ({
                           ...p,
-                          nonResidentPrice: parseInt(e.target.value || '0')
+                          nonResidentPrice: e.target.value === '' ? '' as any : parseInt(e.target.value || '0')
                         }))}
                         required
                       />
@@ -811,7 +838,7 @@ const DestinationManagement: React.FC = () => {
                         value={formData.duration}
                         onChange={(e) => setFormData((p) => ({
                           ...p,
-                          duration: parseFloat(e.target.value || '1')
+                          duration: e.target.value === '' ? '' as any : parseFloat(e.target.value)
                         }))}
                       />
                     </div>
@@ -823,7 +850,7 @@ const DestinationManagement: React.FC = () => {
                         value={formData.maxParticipants}
                         onChange={(e) => setFormData((p) => ({
                           ...p,
-                          maxParticipants: parseInt(e.target.value || '10')
+                          maxParticipants: e.target.value === '' ? '' as any : parseInt(e.target.value)
                         }))}
                       />
                     </div>
@@ -996,17 +1023,11 @@ const DestinationManagement: React.FC = () => {
                     bucket={IMAGE_BUCKET}
                   />
 
-                  {editingDestination?.id ? (
-                    <MultiImageUpload
-                      destinationId={editingDestination.id}
-                      items={galleryItems}
-                      onItemsChange={setGalleryItems}
-                    />
-                  ) : (
-                    <div className="text-sm text-muted-foreground">
-                      Save the destination first to add gallery images.
-                    </div>
-                  )}
+                  <MultiImageUpload
+                    destinationId={editingDestination?.id}
+                    items={formData.gallery}
+                    onItemsChange={(items) => setFormData(p => ({ ...p, gallery: items }))}
+                  />
 
                   <div className="flex items-center space-x-2">
                     <Switch

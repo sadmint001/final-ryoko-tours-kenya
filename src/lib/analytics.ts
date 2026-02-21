@@ -79,25 +79,35 @@ export async function getGeoLocation(): Promise<any> {
 import { visitorTracking } from '@/utils/visitor-tracking';
 
 export async function logPageView(pathname: string) {
-  // If we want TRULY fail-proof impressions, we should allow anonymous tracking
-  // even if full marketing consent isn't set, as long as it's non-PII.
-  // if (!getCookieConsent()) return; 
-
   try {
-    console.log('[Analytics] Logging page view:', pathname);
+    // If we want TRULY fail-proof impressions, we should allow anonymous tracking
+    // even if full marketing consent isn't set, as long as it's non-PII.
+    // if (!getCookieConsent()) return; 
+
+    // ANTI-SPAM: Delay tracking by 1 second
+    // This filters out "hit-and-run" bots/scrapers that leave immediately
+    // and prevents double-counting on accidental fast refreshes.
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     const { id: visitorId, isPersistent } = visitorTracking.getVisitorId();
     const { isNewSession } = visitorTracking.getSessionId();
 
     console.log('[Analytics] VisitorID:', visitorId, 'NewSession:', isNewSession, 'Persistent:', isPersistent);
 
-    // Fetch geo data
-    const geo = await getGeoLocation();
-    console.log('[Analytics] Geo detected:', geo?.continent_name);
+    // Fetch geo data with fallback
+    let geo = null;
+    try {
+      geo = await getGeoLocation();
+    } catch (e) {
+      console.warn('[Analytics] Geo lookup failed, continuing anonymously', e);
+    }
+
+    console.log('[Analytics] Geo detected:', geo?.continent_name || 'Unknown');
 
     // Invoke robust tracking RPC
     const { error } = await (supabase.rpc as any)('track_visit', {
       p_visitor_id: visitorId,
-      p_region: geo?.continent_name,
+      p_region: geo?.continent_name || 'Unknown',
       p_is_new_session: isNewSession
     });
 

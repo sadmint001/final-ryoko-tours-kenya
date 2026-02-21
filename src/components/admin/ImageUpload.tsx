@@ -11,22 +11,26 @@ interface ImageUploadProps {
   value?: string;
   onChange: (url: string) => void;
   onRemove?: () => void;
+  onUploadComplete?: (url: string) => void;
   folder?: string;
   maxSize?: number; // in MB
   acceptedTypes?: string[];
   className?: string;
   bucket?: string; // Supabase storage bucket name
+  multiple?: boolean;
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
   value,
   onChange,
   onRemove,
+  onUploadComplete,
   folder = 'destinations',
   maxSize = 5,
   acceptedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
   className = '',
-  bucket = 'destination-images'
+  bucket = 'destination-images',
+  multiple = false
 }) => {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -37,17 +41,17 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     if (!acceptedTypes.includes(file.type)) {
       return `File type not supported. Please upload: ${acceptedTypes.join(', ')}`;
     }
-    
+
     if (file.size > maxSize * 1024 * 1024) {
       return `File size too large. Maximum size is ${maxSize}MB`;
     }
-    
+
     return null;
   };
 
   const uploadFile = async (file: File) => {
     setUploading(true);
-    
+
     try {
       const validationError = validateFile(file);
       if (validationError) {
@@ -82,7 +86,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         .getPublicUrl(filePath);
 
       onChange(publicUrl);
-      
+      if (onUploadComplete) {
+        onUploadComplete(publicUrl);
+      }
+
       toast({
         title: 'Success',
         description: 'Image uploaded successfully',
@@ -101,9 +108,13 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      uploadFile(file);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      if (multiple) {
+        Array.from(files).forEach(file => uploadFile(file));
+      } else {
+        uploadFile(files[0]);
+      }
     }
   };
 
@@ -121,10 +132,14 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      uploadFile(file);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      if (multiple) {
+        Array.from(files).forEach(file => uploadFile(file));
+      } else {
+        uploadFile(files[0]);
+      }
     }
   };
 
@@ -175,7 +190,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   return (
     <div className={`space-y-4 ${className}`}>
       <Label>Image Upload</Label>
-      
+
       {value ? (
         <Card className="relative">
           <CardContent className="p-4">
@@ -205,11 +220,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         </Card>
       ) : (
         <Card
-          className={`border-2 border-dashed transition-colors ${
-            dragActive 
-              ? 'border-primary bg-primary/5' 
+          className={`border-2 border-dashed transition-colors ${dragActive
+              ? 'border-primary bg-primary/5'
               : 'border-muted-foreground/25 hover:border-muted-foreground/50'
-          }`}
+            }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
@@ -250,11 +264,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       <Input
         ref={fileInputRef}
         type="file"
+        multiple={multiple}
         accept={acceptedTypes.join(',')}
         onChange={handleFileSelect}
         className="hidden"
       />
-      
+
       {/* Manual URL input as fallback */}
       <div className="space-y-2">
         <Label htmlFor="manual-url" className="text-sm">Or enter image URL manually:</Label>

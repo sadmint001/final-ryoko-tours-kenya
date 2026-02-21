@@ -41,7 +41,7 @@ export const visitorTracking = {
                 try {
                     Cookies.set(VISITOR_ID_KEY, id, {
                         expires: 365,
-                        sameSite: 'lax',
+                        sameSite: 'strict',
                         secure: window.location.protocol === 'https:'
                     });
 
@@ -76,7 +76,7 @@ export const visitorTracking = {
 
                 try {
                     Cookies.set(SESSION_ID_KEY, id, {
-                        sameSite: 'lax',
+                        sameSite: 'strict',
                         secure: window.location.protocol === 'https:'
                     });
                     if (!Cookies.get(SESSION_ID_KEY)) throw new Error('Cookies blocked');

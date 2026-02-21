@@ -18,7 +18,8 @@ import {
     User,
     Mail,
     Phone,
-    RefreshCcw
+    RefreshCcw,
+    Trash2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,7 @@ interface Transaction {
 const TransactionManagement = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
+    const [deleting, setDeleting] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const { toast } = useToast();
 
@@ -91,6 +93,60 @@ const TransactionManagement = () => {
         }
     };
 
+    const handleDeleteAll = async () => {
+        const firstConfirm = confirm(
+            '⚠️ DELETE ALL TRANSACTIONS & BOOKINGS\n\n' +
+            'This will permanently delete ALL transaction records and associated bookings. ' +
+            'This is intended for clearing sandbox/test data before going live.\n\n' +
+            'Are you sure you want to proceed?'
+        );
+        if (!firstConfirm) return;
+
+        const secondConfirm = confirm(
+            '🚨 FINAL CONFIRMATION\n\n' +
+            `You are about to delete ${transactions.length} transaction(s) and their associated bookings.\n` +
+            'This action CANNOT be undone.\n\n' +
+            'Type-check: Click OK to permanently delete all data.'
+        );
+        if (!secondConfirm) return;
+
+        try {
+            setDeleting(true);
+
+            // Delete transactions first (they FK-reference bookings)
+            const { error: txError } = await supabase
+                .from('pesapal_transactions')
+                .delete()
+                .neq('id', '00000000-0000-0000-0000-000000000000'); // matches all rows
+
+            if (txError) throw txError;
+
+            // Delete all bookings
+            const { error: bookingsError } = await supabase
+                .from('bookings')
+                .delete()
+                .neq('id', '00000000-0000-0000-0000-000000000000'); // matches all rows
+
+            if (bookingsError) throw bookingsError;
+
+            toast({
+                title: 'Sandbox data cleared',
+                description: 'All transactions and bookings have been deleted. You are ready to go live.',
+            });
+
+            fetchTransactions();
+        } catch (error: any) {
+            console.error('Error deleting transactions:', error);
+            toast({
+                title: 'Error',
+                description: error.message || 'Failed to delete transactions.',
+                variant: 'destructive',
+            });
+        } finally {
+            setDeleting(false);
+        }
+    };
+
     const filteredTransactions = transactions.filter(tx =>
         tx.merchant_reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tx.order_tracking_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -127,6 +183,15 @@ const TransactionManagement = () => {
                     />
                 </div>
                 <div className="flex items-center gap-2 w-full md:w-auto">
+                    <Button
+                        onClick={handleDeleteAll}
+                        variant="outline"
+                        disabled={deleting || transactions.length === 0}
+                        className="rounded-xl gap-2 border-red-200 dark:border-red-800 text-red-600 hover:bg-red-500 hover:text-white hover:border-red-500 transition-colors"
+                    >
+                        <Trash2 className={`h-4 w-4 ${deleting ? 'animate-pulse' : ''}`} />
+                        {deleting ? 'Deleting...' : 'Clear Sandbox Data'}
+                    </Button>
                     <Button
                         onClick={() => window.print()}
                         variant="outline"

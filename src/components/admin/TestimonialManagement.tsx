@@ -72,7 +72,7 @@ const TestimonialManagement = () => {
       const testimonialData = {
         name: formData.name.trim(),
         content: formData.content.trim(),
-        rating: formData.rating,
+        rating: Number(formData.rating) || 5,
         location: formData.location.trim(),
         source: formData.source,
         visible: formData.visible,
@@ -213,7 +213,7 @@ const TestimonialManagement = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Rating (1-5)</Label>
-                  <Input type="number" min="1" max="5" value={formData.rating} onChange={e => setFormData({ ...formData, rating: parseInt(e.target.value) })} required />
+                  <Input type="number" min="1" max="5" value={formData.rating} onChange={e => setFormData({ ...formData, rating: e.target.value === '' ? '' as any : parseInt(e.target.value) })} required />
                 </div>
                 <div className="space-y-2">
                   <Label>Source</Label>

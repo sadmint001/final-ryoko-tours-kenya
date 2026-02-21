@@ -10,6 +10,7 @@ export interface PaymentRequest {
   customerEmail: string;
   customerPhone: string;
   startDate?: string;
+  endDate?: string;
   specialRequests?: string;
   residency_type: string;
 }
@@ -45,6 +46,7 @@ export class PaymentService {
         customer_phone: paymentData.customerPhone,
         participants: paymentData.participants,
         start_date: paymentData.startDate?.split('T')[0],
+        end_date: paymentData.endDate?.split('T')[0],
         total_amount: paymentData.totalAmount,
         special_requests: paymentData.specialRequests,
         payment_status: PAYMENT_STATUS.PENDING,

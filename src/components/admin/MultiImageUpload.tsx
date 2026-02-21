@@ -16,7 +16,7 @@ export interface GalleryItem {
 }
 
 interface MultiImageUploadProps {
-  destinationId: number;
+  destinationId?: number | null;
   items: GalleryItem[];
   onItemsChange: (items: GalleryItem[]) => void;
 }
@@ -31,26 +31,46 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({ destinationId, item
     const urlToUse = (urlArg ?? newUrl).trim();
     const captionToUse = captionArg ?? newCaption;
     if (!urlToUse) return;
-    try {
-      const nextOrder = items.length ? Math.max(...items.map(i => i.sort_order)) + 1 : 0;
-      const { data, error } = await supabase
-        .from('destination_media')
-        .insert({
-          destination_id: destinationId,
-          url: urlToUse,
-          caption: captionToUse || null,
-          sort_order: nextOrder,
-        })
-        .select('*')
-        .single();
-      if (error) throw error;
-      onItemsChange([...items, { id: data.id, url: data.url, caption: data.caption, sort_order: data.sort_order }]);
+
+    const nextOrder = items.length ? Math.max(...items.map(i => i.sort_order)) + 1 : 0;
+
+    // If we have a destinationId, save to DB immediately
+    if (destinationId) {
+      try {
+        const { data, error } = await (supabase as any)
+          .from('destination_media')
+          .insert({
+            destination_id: destinationId,
+            url: urlToUse,
+            caption: captionToUse || null,
+            sort_order: nextOrder,
+          })
+          .select('*')
+          .single();
+        if (error) throw error;
+        if (data) {
+          onItemsChange([...items, { id: data.id, url: data.url, caption: data.caption, sort_order: data.sort_order }]);
+        }
+        setNewUrl('');
+        setNewCaption('');
+        setAdding(false);
+        toast({ title: 'Added', description: 'Image added to gallery' });
+      } catch (e: any) {
+        toast({ title: 'Error', description: e.message || 'Failed to add image', variant: 'destructive' });
+      }
+    } else {
+      // Otherwise, just update local state (for new destinations)
+      const newItem: GalleryItem = {
+        id: Date.now(), // Temporary ID for local management
+        url: urlToUse,
+        caption: captionToUse,
+        sort_order: nextOrder
+      };
+      onItemsChange([...items, newItem]);
       setNewUrl('');
       setNewCaption('');
       setAdding(false);
-      toast({ title: 'Added', description: 'Image added to gallery' });
-    } catch (e: any) {
-      toast({ title: 'Error', description: e.message || 'Failed to add image', variant: 'destructive' });
+      toast({ title: 'Staged', description: 'Image added to local gallery list' });
     }
   };
 
@@ -59,13 +79,18 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({ destinationId, item
   };
 
   const handleDelete = async (id: number) => {
-    try {
-      const { error } = await supabase.from('destination_media').delete().eq('id', id);
-      if (error) throw error;
+    if (destinationId) {
+      try {
+        const { error } = await supabase.from('destination_media').delete().eq('id', id);
+        if (error) throw error;
+        onItemsChange(items.filter(i => i.id !== id));
+        toast({ title: 'Removed', description: 'Image removed from gallery' });
+      } catch (e: any) {
+        toast({ title: 'Error', description: e.message || 'Failed to remove image', variant: 'destructive' });
+      }
+    } else {
       onItemsChange(items.filter(i => i.id !== id));
-      toast({ title: 'Removed', description: 'Image removed from gallery' });
-    } catch (e: any) {
-      toast({ title: 'Error', description: e.message || 'Failed to remove image', variant: 'destructive' });
+      toast({ title: 'Removed', description: 'Image removed from local list' });
     }
   };
 
@@ -75,23 +100,32 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({ destinationId, item
     const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
     if (swapIdx < 0 || swapIdx >= items.length) return;
 
-    const a = items[idx];
-    const b = items[swapIdx];
+    const a = { ...items[idx] };
+    const b = { ...items[swapIdx] };
 
-    try {
-      // Swap sort orders in DB
-      const { error } = await supabase.rpc('swap_destination_media_order', {
-        a_id: a.id,
-        b_id: b.id,
-      });
-      if (error) throw error;
-      // Swap locally
+    if (destinationId) {
+      try {
+        const { error } = await (supabase as any).rpc('swap_destination_media_order', {
+          a_id: a.id,
+          b_id: b.id,
+        });
+        if (error) throw error;
+        const newItems = [...items];
+        newItems[idx] = b;
+        newItems[swapIdx] = a;
+        onItemsChange(newItems);
+      } catch (e: any) {
+        toast({ title: 'Error', description: e.message || 'Failed to reorder', variant: 'destructive' });
+      }
+    } else {
+      // Local swap
       const newItems = [...items];
+      const tempOrder = a.sort_order;
+      a.sort_order = b.sort_order;
+      b.sort_order = tempOrder;
       newItems[idx] = b;
       newItems[swapIdx] = a;
       onItemsChange(newItems);
-    } catch (e: any) {
-      toast({ title: 'Error', description: e.message || 'Failed to reorder', variant: 'destructive' });
     }
   };
 
@@ -99,7 +133,7 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({ destinationId, item
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Label className="text-sm">Gallery Images</Label>
-        <Button variant="outline" size="sm" onClick={() => setAdding(v => !v)}>
+        <Button type="button" variant="outline" size="sm" onClick={() => setAdding(v => !v)}>
           {adding ? 'Cancel' : 'Add Image'}
         </Button>
       </div>
@@ -111,18 +145,30 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({ destinationId, item
               value={newUrl}
               onChange={setNewUrl}
               onRemove={() => setNewUrl('')}
+              onUploadComplete={(url) => handleAddByUrl(url)}
               folder="destinations/gallery"
+              multiple={true}
             />
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div className="md:col-span-3">
-                <Input placeholder="Or paste image URL" value={newUrl} onChange={e => setNewUrl(e.target.value)} />
+                <Input
+                  placeholder="Or paste image URL"
+                  value={newUrl}
+                  onChange={e => setNewUrl(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddByUrl(); } }}
+                />
               </div>
               <div>
-                <Input placeholder="Caption (optional)" value={newCaption} onChange={e => setNewCaption(e.target.value)} />
+                <Input
+                  placeholder="Caption (optional)"
+                  value={newCaption}
+                  onChange={e => setNewCaption(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddByUrl(); } }}
+                />
               </div>
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleAddByUrl} disabled={!newUrl}>Add to Gallery</Button>
+              <Button type="button" onClick={() => handleAddByUrl()} disabled={!newUrl}>Add to Gallery</Button>
             </div>
           </CardContent>
         </Card>
@@ -137,13 +183,13 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({ destinationId, item
             <CardContent className="p-3 flex items-center justify-between">
               <div className="text-sm truncate max-w-[60%]" title={item.caption || ''}>{item.caption || '—'}</div>
               <div className="flex items-center gap-1">
-                <Button variant="outline" size="icon" onClick={() => move(item.id, 'up')}>
+                <Button type="button" variant="outline" size="icon" onClick={() => move(item.id, 'up')}>
                   <ChevronUp className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon" onClick={() => move(item.id, 'down')}>
+                <Button type="button" variant="outline" size="icon" onClick={() => move(item.id, 'down')}>
                   <ChevronDown className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon" className="text-red-600" onClick={() => handleDelete(item.id)}>
+                <Button type="button" variant="outline" size="icon" className="text-red-600" onClick={() => handleDelete(item.id)}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>

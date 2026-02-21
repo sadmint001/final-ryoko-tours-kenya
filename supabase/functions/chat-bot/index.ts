@@ -17,6 +17,14 @@ serve(async (req: Request) => {
         const supabaseUrl = Deno.env.get('SUPABASE_URL')
         const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
+        if (!apiKey) {
+            console.error('AI_SERVICE_API_KEY is not set');
+            return new Response(JSON.stringify({ error: 'AI configuration error' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 500,
+            })
+        }
+
         if (!message || !sessionId) {
             return new Response(JSON.stringify({ error: 'Missing message or sessionId' }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -25,25 +33,54 @@ serve(async (req: Request) => {
         }
 
         const supabase = createClient(supabaseUrl!, supabaseKey!)
+        console.log('Fetching dynamic context...');
 
-        // 1. Prepare Grounding Context (Business Knowledge)
+        // 1. Fetch Dynamic Context from DB
+        const [destinationsRes, settingsRes] = await Promise.all([
+            supabase.from('destinations').select('*').eq('is_active', true).limit(10), // Limit to avoid prompt overflow
+            supabase.from('site_settings').select('*').in('key', ['ai_persona', 'ai_special_instructions', 'ai_company_knowledge'])
+        ]);
+
+        if (destinationsRes.error) console.error('Destinations fetch error:', destinationsRes.error);
+        if (settingsRes.error) console.error('Settings fetch error:', settingsRes.error);
+
+        const destinations = destinationsRes.data || [];
+        const settings = settingsRes.data || [];
+
+        console.log(`Found ${destinations.length} destinations and ${settings.length} settings`);
+
+        const persona = settings.find(s => s.key === 'ai_persona')?.value ||
+            "You are the Ryoko Tours Assistant, a professional and friendly customer service bot for Ryoko Tours Africa.";
+
+        const instructions = settings.find(s => s.key === 'ai_special_instructions')?.value ||
+            "Be professional, warm, and helpful. If you don't know something, ask them to leave a message.";
+
+        const knowledge = settings.find(s => s.key === 'ai_company_knowledge')?.value || "";
+
+        // Format destinations for the prompt - safely handling possible nulls
+        const toursContext = destinations.map(d => {
+            const descSnippet = (d.description || '').slice(0, 100);
+            return `- ${d.name}: ${d.location || 'N/A'}. Price from KSh ${d.resident_price || 0} (Resident) / $${d.non_resident_price || 0} (Non-Resident). ${descSnippet}...`;
+        }).join('\n');
+
+        console.log('Prepared context, calling OpenRouter...');
+
+        // 2. Prepare Grounding Context
         const context = `
-You are the Ryoko Tours Assistant, a professional and friendly customer service bot for Ryoko Tours Africa.
-Your goal is to help users plan their dream safari or tour in Kenya.
+${persona}
 
-**Company Profile:**
-- Values: Passion for Africa, Safety First, Sustainable Tourism, Expert Guides.
-- Specialized in: Mount Kenya, Serengeti, Kilimanjaro, and cultural experiences.
+**Company Knowledge Base (Ryoko Tours Africa):**
+${knowledge}
 
-**Grounding Data:**
-- Featured Tours: Serengeti Wildlife Expedition ($2199), Kilimanjaro Summit Challenge ($2799), Mount Kenya Safari ($1299).
-- Locations: Serengeti National Park, Mount Kenya, Kilimanjaro.
-- Services: Adventure Hiking, Wildlife Safaris, Cultural Experiences, Luxury Camping.
+**Company Rules & behavior:**
+${instructions}
 
-**Guidelines:**
-- Be professional, warm, and helpful.
-- If you don't know something, ask them to leave a message in the details and an agent will get back to them.
-- Encourage booking if they seem interested in a specific destination.
+**Our Available Tours & Pricing (Real-time):**
+${toursContext}
+
+**General Guidelines:**
+- Always prefer the data provided above over any pre-trained internal knowledge.
+- If a user asks about a tour not listed, tell them we are constantly adding new adventures and suggest they contact us.
 - Keep responses concise and engaging.
 `;
 
@@ -71,11 +108,13 @@ Your goal is to help users plan their dream safari or tour in Kenya.
 
         if (!response.ok) {
             const errorMsg = await response.text();
+            console.error('OpenRouter Error:', errorMsg);
             throw new Error(`AI Provider Error: ${errorMsg}`);
         }
 
-        const aiData = await response.json()
-        const aiMessage = aiData.choices[0].message.content
+        const aiData = await response.json();
+        const aiMessage = aiData.choices[0].message.content;
+        console.log('AI Response generated, storing in DB...');
 
         // 3. Store the AI response in chat_messages
         const { error: insertError } = await supabase
@@ -86,7 +125,12 @@ Your goal is to help users plan their dream safari or tour in Kenya.
                 content: aiMessage
             })
 
-        if (insertError) throw insertError
+        if (insertError) {
+            console.error('AI message store error:', insertError);
+            throw insertError;
+        }
+
+        console.log('AI message stored successfully');
 
         return new Response(JSON.stringify({ content: aiMessage }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },

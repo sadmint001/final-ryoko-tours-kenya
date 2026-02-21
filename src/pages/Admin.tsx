@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   Shield, Users, FileText, MessageSquare, Mail,
   MapPin, Image, LayoutDashboard, LogOut, Menu, X,
-  Moon, Sun, CreditCard
+  Moon, Sun, CreditCard, Bot, Settings
 } from 'lucide-react';
 import Loader from '@/components/ui/loader';
 import BlogManagement from '@/components/admin/BlogManagement';
@@ -19,6 +19,8 @@ import UsersDashboard from '@/components/admin/UsersDashboard';
 import ContactMessages from '@/components/admin/ContactMessages';
 import TransactionManagement from '@/components/admin/TransactionManagement';
 import SupportDashboard from '@/components/admin/SupportDashboard';
+import AISettings from '@/components/admin/AISettings';
+import GeneralSettings from '@/components/admin/GeneralSettings';
 
 const Admin = () => {
   const { user, signOut } = useAuth();
@@ -133,8 +135,10 @@ const Admin = () => {
     { value: 'blogs', label: 'Blogs', icon: FileText },
     { value: 'testimonials', label: 'Testimonials', icon: MessageSquare },
     { value: 'support', label: 'Support', icon: MessageSquare, badge: newMessagesCount },
+    { value: 'ai-settings', label: 'AI Settings', icon: Bot },
     { value: 'analytics', label: 'Analytics', icon: Image },
     { value: 'users', label: 'Users', icon: Users },
+    { value: 'site-settings', label: 'Site Settings', icon: Settings },
   ];
 
   return (
@@ -331,6 +335,18 @@ const Admin = () => {
               {activeTab === 'support' && (
                 <div className="animate-fade-in">
                   <SupportDashboard />
+                </div>
+              )}
+
+              {activeTab === 'ai-settings' && (
+                <div className="animate-fade-in">
+                  <AISettings />
+                </div>
+              )}
+
+              {activeTab === 'site-settings' && (
+                <div className="animate-fade-in">
+                  <GeneralSettings />
                 </div>
               )}
             </div>

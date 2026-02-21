@@ -26,10 +26,21 @@ const HeroSection = () => {
         {heroImages.map((image, index) => (
           <div
             key={index}
-            className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+            className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000 ${index === currentImageIndex ? 'opacity-100 scale-105' : 'opacity-0 scale-100'
               }`}
-            style={{ backgroundImage: `url(${image})` }}
+            style={{
+              backgroundImage: `url(${image})`,
+              willChange: 'transform, opacity'
+            }}
           >
+            <img
+              src={image as string}
+              className="hidden"
+              alt=""
+              loading={index === 0 ? "eager" : "lazy"}
+              // @ts-ignore - fetchpriority is a valid experimental attribute
+              fetchpriority={index === 0 ? "high" : "low"}
+            />
             <div className="absolute inset-0 bg-gradient-to-r from-earth-brown/70 via-earth-brown/50 to-transparent"></div>
           </div>
         ))}
@@ -46,26 +57,26 @@ const HeroSection = () => {
           </div>
 
           {/* Main Headline */}
-          <h1 className="text-4xl md:text-6xl lg:text-8xl font-bold font-playfair mb-8 animate-fade-up leading-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold font-playfair mb-6 md:mb-8 animate-fade-up leading-tight px-2">
             <span className="block text-safari-cream">Experience</span>
             <span className="block bg-gradient-luxury bg-clip-text text-transparent">Africa Beyond Safari</span>
           </h1>
 
           {/* Description */}
-          <p className="text-lg md:text-2xl font-opensans mb-10 opacity-95 max-w-4xl mx-auto animate-fade-up leading-relaxed text-safari-cream/90">
-            Immerse yourself in curated journeys that blend luxury with authenticity. From intimate wildlife encounters to profound cultural connections every moment crafted with sophistication.
+          <p className="text-base sm:text-lg md:text-2xl font-opensans mb-8 md:mb-10 opacity-95 max-w-4xl mx-auto animate-fade-up leading-relaxed text-safari-cream/90 px-4">
+            Immerse yourself in curated journeys that blend luxury with authenticity. Every moment crafted with sophistication.
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16 animate-fade-up">
-            <Link to="/destinations">
-              <Button size="lg" className="group bg-gradient-luxury hover:shadow-glow text-earth-brown border-0 px-8 py-4 font-semibold text-lg rounded-xl transition-all duration-300">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center mb-12 md:mb-16 animate-fade-up px-4 w-full max-w-md mx-auto sm:max-w-none">
+            <Link to="/destinations" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto group bg-gradient-luxury hover:shadow-glow text-earth-brown border-0 px-8 py-4 font-semibold text-base sm:text-lg rounded-xl transition-all duration-300">
                 Explore Destinations
                 <ChevronRight className="h-5 w-5 ml-2 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
-            <Link to="/contact">
-              <Button variant="outline" size="lg" className="bg-safari-cream/10 border-safari-cream/40 text-safari-cream hover:bg-safari-cream/20 px-8 py-4 font-semibold text-lg rounded-xl backdrop-blur-sm transition-all duration-300">
+            <Link to="/contact" className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto bg-safari-cream/10 border-safari-cream/40 text-safari-cream hover:bg-safari-cream/20 px-8 py-4 font-semibold text-base sm:text-lg rounded-xl backdrop-blur-sm transition-all duration-300">
                 Build My Itinerary
               </Button>
             </Link>

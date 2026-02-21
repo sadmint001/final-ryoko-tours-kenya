@@ -501,6 +501,113 @@ export type Database = {
           created_at?: string
         }
       }
+      destinations: {
+        Row: {
+          activities: Json | null
+          best_time_to_visit: Json | null
+          category: string
+          citizen_price: number
+          created_at: string
+          description: string
+          difficulty: string | null
+          duration: number | null
+          featured_order: number | null
+          highlights: string[] | null
+          id: number
+          image: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          location: string | null
+          max_participants: number | null
+          name: string
+          non_resident_price: number
+          rating: number | null
+          resident_price: number
+          updated_at: string
+        }
+        Insert: {
+          activities?: Json | null
+          best_time_to_visit?: Json | null
+          category: string
+          citizen_price: number
+          created_at?: string
+          description: string
+          difficulty?: string | null
+          duration?: number | null
+          featured_order?: number | null
+          highlights?: string[] | null
+          id?: number
+          image: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          location?: string | null
+          max_participants?: number | null
+          name: string
+          non_resident_price: number
+          rating?: number | null
+          resident_price: number
+          updated_at?: string
+        }
+        Update: {
+          activities?: Json | null
+          best_time_to_visit?: Json | null
+          category?: string
+          citizen_price?: number
+          created_at?: string
+          description?: string
+          difficulty?: string | null
+          duration?: number | null
+          featured_order?: number | null
+          highlights?: string[] | null
+          id?: number
+          image?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          location?: string | null
+          max_participants?: number | null
+          name?: string
+          non_resident_price?: number
+          rating?: number | null
+          resident_price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      destination_media: {
+        Row: {
+          caption: string | null
+          created_at: string
+          destination_id: number
+          id: number
+          sort_order: number
+          url: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          destination_id: number
+          id?: number
+          sort_order?: number
+          url: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          destination_id?: number
+          id?: number
+          sort_order?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "destination_media_destination_fk"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -510,6 +617,32 @@ export type Database = {
         Args: { user_id: string }
         Returns: boolean
       }
+      swap_destination_media_order: {
+        Args: { a_id: number; b_id: number }
+        Returns: void
+      }
+      get_managed_users: {
+        Args: Record<string, never>;
+        Returns: Array<{
+          id: string;
+          email: string;
+          full_name: string | null;
+          role: Database["public"]["Enums"]["user_role"];
+          created_at: string;
+          last_sign_in_at: string | null;
+        }>;
+      }
+      set_user_admin_status: {
+        Args: { target_user_id: string; is_admin_requested: boolean };
+        Returns: null;
+      }
+      daily_page_views: {
+        Args: Record<string, never>;
+        Returns: Array<{
+          date: string;
+          count: number;
+        }>;
+      }
     }
     Enums: {
       user_role: "user" | "admin"
@@ -518,31 +651,6 @@ export type Database = {
       [_ in never]: never
     }
   }
-  // Add custom RPCs for user role management and analytics
-  rpc: {
-    get_managed_users: {
-      Args: Record<string, never>;
-      Returns: Array<{
-        id: string;
-        email: string;
-        full_name: string | null;
-        role: Database["public"]["Enums"]["user_role"];
-        created_at: string;
-        last_sign_in_at: string | null;
-      }>;
-    };
-    set_user_admin_status: {
-      Args: { target_user_id: string; is_admin_requested: boolean };
-      Returns: null;
-    };
-    daily_page_views: {
-      Args: Record<string, never>;
-      Returns: Array<{
-        date: string;
-        count: number;
-      }>;
-    };
-  };
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">

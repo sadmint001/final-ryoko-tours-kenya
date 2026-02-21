@@ -16,6 +16,9 @@ const AnalyticsDashboard = () => {
     totalBookings: 0,
     totalMessages: 0,
     totalRevenue: 0,
+    revenueChange: '0',
+    revenueChangeType: 'neutral' as 'positive' | 'negative' | 'neutral',
+    revenueHistory: [] as { val: number }[],
     recentBookings: [],
     allViews: [],
     continentStats: [],
@@ -71,12 +74,66 @@ const AnalyticsDashboard = () => {
         .from('contact_messages')
         .select('*', { count: 'exact', head: true });
 
+      // Source 1: PesaPal transactions (case-insensitive status check)
       const { data: transactionsData } = await supabase
         .from('pesapal_transactions')
-        .select('amount, status')
-        .in('status', ['COMPLETED', 'SUCCESS', 'completed', 'success']);
+        .select('amount, status, created_at');
 
-      const totalRevenue = (transactionsData || []).reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+      const completedTx = (transactionsData || []).filter(tx =>
+        ['completed', 'success'].includes((tx.status || '').toLowerCase())
+      );
+      const pesapalRevenue = completedTx.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+
+      // Source 2: Bookings with paid status
+      const { data: paidBookings } = await supabase
+        .from('bookings')
+        .select('total_amount, payment_status, created_at')
+        .eq('payment_status', 'paid');
+
+      const bookingsRevenue = (paidBookings || []).reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
+
+      // Use the higher value to avoid under-reporting
+      const totalRevenue = Math.max(pesapalRevenue, bookingsRevenue);
+
+      // Calculate period-over-period change (last 30 days vs previous 30 days)
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+      // Combine both sources for period calculations
+      const allRevenueItems = [
+        ...completedTx.map(tx => ({ amount: Number(tx.amount) || 0, date: new Date(tx.created_at) })),
+        ...(pesapalRevenue >= bookingsRevenue ? [] :
+          (paidBookings || []).map(b => ({ amount: Number(b.total_amount) || 0, date: new Date(b.created_at) }))
+        )
+      ];
+
+      const recentRevenue = allRevenueItems
+        .filter(item => item.date >= thirtyDaysAgo)
+        .reduce((sum, item) => sum + item.amount, 0);
+      const previousRevenue = allRevenueItems
+        .filter(item => item.date >= sixtyDaysAgo && item.date < thirtyDaysAgo)
+        .reduce((sum, item) => sum + item.amount, 0);
+
+      const revenueChangePct = previousRevenue > 0
+        ? ((recentRevenue - previousRevenue) / previousRevenue * 100).toFixed(1)
+        : recentRevenue > 0 ? '100.0' : '0.0';
+      const revenueChangeType: 'positive' | 'negative' | 'neutral' =
+        Number(revenueChangePct) > 0 ? 'positive' : Number(revenueChangePct) < 0 ? 'negative' : 'neutral';
+
+      // Build real daily revenue sparkline (last 8 days)
+      const revenueHistory: { val: number }[] = [];
+      for (let i = 7; i >= 0; i--) {
+        const dayStart = new Date(now);
+        dayStart.setHours(0, 0, 0, 0);
+        dayStart.setDate(dayStart.getDate() - i);
+        const dayEnd = new Date(dayStart);
+        dayEnd.setDate(dayEnd.getDate() + 1);
+        const dayTotal = allRevenueItems
+          .filter(item => item.date >= dayStart && item.date < dayEnd)
+          .reduce((sum, item) => sum + item.amount, 0);
+        revenueHistory.push({ val: dayTotal });
+      }
 
       const pageCounts = pageViews.reduce((acc: any, view: any) => {
         const page = view.page_path || 'unknown';
@@ -96,6 +153,9 @@ const AnalyticsDashboard = () => {
         totalBookings: bookingsCount || 0,
         totalMessages: messagesCount || 0,
         totalRevenue: totalRevenue,
+        revenueChange: revenueChangePct,
+        revenueChangeType: revenueChangeType,
+        revenueHistory: revenueHistory,
         recentBookings: recentBookings,
         allViews: pageViews,
         continentStats: Object.entries(report.region_counts || {}).map(([name, count]) => ({ name, count: Number(count) })),
@@ -175,9 +235,9 @@ const AnalyticsDashboard = () => {
         <PerformanceCard
           title="Total Revenue"
           value={`KSh ${stats.totalRevenue.toLocaleString()}`}
-          change="+12.5%"
-          changeType="positive"
-          data={mockHistory}
+          change={`${Number(stats.revenueChange) >= 0 ? '+' : ''}${stats.revenueChange}%`}
+          changeType={stats.revenueChangeType}
+          data={stats.revenueHistory.length > 0 ? stats.revenueHistory : mockHistory}
           color="#10b981"
         />
         <PerformanceCard

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Calendar, Users, MapPin, CreditCard, Printer, ArrowLeft, Home, Download } from 'lucide-react';
+import { CheckCircle, Calendar, Users, MapPin, CreditCard, Printer, ArrowLeft, Home, Download, ArrowRight, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -15,6 +15,7 @@ interface Booking {
   customer_name: string;
   participants: number;
   start_date: string;
+  end_date?: string;
   total_amount: number;
   payment_status: string;
   status: string;
@@ -203,17 +204,39 @@ const BookingSuccess = () => {
 
                       <div>
                         <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
-                          <Calendar className="w-3 h-3" /> Scheduled For
+                          <Calendar className="w-3 h-3" /> Trip Schedule
                         </h4>
-                        <p className="font-bold text-lg text-foreground">
-                          {new Date(booking.start_date).toLocaleDateString('en-US', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </p>
-                        <p className="text-sm text-muted-foreground italic">Duration: {booking.tours.duration_days} Days</p>
+                        <div className="space-y-4">
+                          <div className="flex gap-4">
+                            <div className="flex-1">
+                              <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Departure</p>
+                              <p className="font-bold text-foreground">
+                                {new Date(booking.start_date).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-center justify-center px-4">
+                              <ArrowRight className="w-4 h-4 text-amber-500" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Return</p>
+                              <p className="font-bold text-foreground">
+                                {booking.end_date ? new Date(booking.end_date).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                }) : '-'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="bg-primary/5 rounded-lg p-2 flex items-center gap-2 border border-primary/10">
+                            <Clock className="w-3.5 h-3.5 text-primary" />
+                            <p className="text-xs font-medium text-primary">Total Duration: {booking.tours.duration_days} Days</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
 

@@ -176,7 +176,7 @@ const Booking = () => {
   const calculateTotal = () => {
     if (!selectedDestination || !selectedResidency) return 0;
     const price = getPriceByResidency(selectedDestination.pricing, selectedResidency);
-    return price * form.participants;
+    return price * (Number(form.participants) || 0);
   };
 
   const handleInputChange = (field: keyof BookingForm, value: any) => {
@@ -193,7 +193,7 @@ const Booking = () => {
       const paymentData = {
         destinationId: selectedDestination!.id,
         destinationTitle: selectedDestination!.name,
-        participants: form.participants,
+        participants: Number(form.participants) || 1,
         totalAmount: calculateTotal(),
         customerName: form.customerName,
         customerEmail: form.customerEmail,
@@ -232,7 +232,7 @@ const Booking = () => {
         customer_name: form.customerName,
         customer_email: form.customerEmail,
         customer_phone: form.customerPhone,
-        participants: form.participants,
+        participants: Number(form.participants) || 1,
         start_date: form.startDate?.toISOString().split('T')[0],
         total_amount: calculateTotal(),
         special_requests: form.specialRequests,
@@ -276,7 +276,7 @@ const Booking = () => {
           destinationId: selectedDestination!.id,
           customerName: form.customerName,
           customerEmail: form.customerEmail,
-          participants: form.participants,
+          participants: Number(form.participants) || 1,
           startDate: form.startDate?.toISOString(),
           specialRequests: form.specialRequests,
         },
@@ -668,7 +668,7 @@ const Booking = () => {
                             min="1"
                             max={selectedDestination.maxParticipants || 20}
                             value={form.participants}
-                            onChange={(e) => handleInputChange('participants', parseInt(e.target.value))}
+                            onChange={(e) => handleInputChange('participants', e.target.value === '' ? '' as any : parseInt(e.target.value))}
                             required
                           />
                         </div>
