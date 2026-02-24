@@ -2,12 +2,15 @@ export interface PricingTier {
   citizenPrice: number;
   residentPrice: number;
   nonResidentPrice: number;
+  citizenChildPrice?: number;
+  residentChildPrice?: number;
+  nonResidentChildPrice?: number;
 }
 
 export const getPriceByResidency = (pricing: PricingTier, residency: string | null): number | null => {
   if (!residency) return null;
-  
-  switch(residency) {
+
+  switch (residency) {
     case 'citizen':
       return pricing.citizenPrice;
     case 'resident':
@@ -19,13 +22,28 @@ export const getPriceByResidency = (pricing: PricingTier, residency: string | nu
   }
 };
 
+export const getChildPriceByResidency = (pricing: PricingTier, residency: string | null): number | null => {
+  if (!residency) return null;
+
+  switch (residency) {
+    case 'citizen':
+      return pricing.citizenChildPrice ?? 0;
+    case 'resident':
+      return pricing.residentChildPrice ?? 0;
+    case 'nonResident':
+      return pricing.nonResidentChildPrice ?? 0;
+    default:
+      return 0;
+  }
+};
+
 export const formatPrice = (price: number | null): string => {
   if (price === null) return 'Select residency';
   return `KSh ${price.toLocaleString()}`;
 };
 
 export const getResidencyLabel = (residency: string | null): string => {
-  switch(residency) {
+  switch (residency) {
     case 'citizen':
       return 'Kenyan Citizens';
     case 'resident':

@@ -18,7 +18,9 @@ const GeneralSettings = () => {
         social_instagram: '',
         social_facebook: '',
         footer_description: '',
-        form_submit_email: ''
+        form_submit_email: '',
+        group_discount_threshold: '',
+        group_discount_percentage: ''
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -218,6 +220,44 @@ const GeneralSettings = () => {
                                 onChange={(e) => handleChange('form_submit_email', e.target.value)}
                             />
                             <p className="text-xs text-slate-500">The email where Contact Us form submissions will be sent.</p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Pricing & Discounts */}
+                <Card className="border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 overflow-hidden lg:col-span-2">
+                    <CardHeader className="border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
+                        <div className="flex items-center gap-2">
+                            <Settings className="w-4 h-4 text-green-500" />
+                            <CardTitle className="text-lg">Pricing & Discounts</CardTitle>
+                        </div>
+                        <CardDescription>Configure global discount rules for group bookings.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="group_discount_threshold">Group Discount Minimum Guests</Label>
+                            <Input
+                                id="group_discount_threshold"
+                                type="number"
+                                min="0"
+                                value={settings.group_discount_threshold}
+                                onChange={(e) => handleChange('group_discount_threshold', e.target.value)}
+                                placeholder="e.g., 5"
+                            />
+                            <p className="text-xs text-slate-500">Minimum total guests (adults + children) to trigger the discount. Set to 0 to disable.</p>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="group_discount_percentage">Group Discount Percentage (%)</Label>
+                            <Input
+                                id="group_discount_percentage"
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={settings.group_discount_percentage}
+                                onChange={(e) => handleChange('group_discount_percentage', e.target.value)}
+                                placeholder="e.g., 10"
+                            />
+                            <p className="text-xs text-slate-500">The percentage discount applied to the total base price.</p>
                         </div>
                     </CardContent>
                 </Card>

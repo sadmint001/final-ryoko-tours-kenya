@@ -16,6 +16,8 @@ interface Booking {
   participants: number;
   start_date: string;
   end_date?: string;
+  adults_count?: number;
+  children_count?: number;
   total_amount: number;
   payment_status: string;
   status: string;
@@ -224,17 +226,29 @@ const BookingSuccess = () => {
                             <div className="flex-1">
                               <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Return</p>
                               <p className="font-bold text-foreground">
-                                {booking.end_date ? new Date(booking.end_date).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric'
-                                }) : '-'}
+                                {(() => {
+                                  const start = new Date(booking.start_date);
+                                  const durationDays = booking.tours?.duration_days || 0;
+
+                                  let end = null;
+                                  if (durationDays > 0) {
+                                    end = new Date(start.getTime() + (durationDays * 24 * 60 * 60 * 1000));
+                                  } else if (booking.end_date) {
+                                    end = new Date(booking.end_date);
+                                  }
+
+                                  return end ? end.toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                  }) : '-';
+                                })()}
                               </p>
                             </div>
                           </div>
                           <div className="bg-primary/5 rounded-lg p-2 flex items-center gap-2 border border-primary/10">
                             <Clock className="w-3.5 h-3.5 text-primary" />
-                            <p className="text-xs font-medium text-primary">Total Duration: {booking.tours.duration_days} Days</p>
+                            <p className="text-xs font-medium text-primary">Total Duration: {booking.tours?.duration_days || 0} Days</p>
                           </div>
                         </div>
                       </div>
@@ -246,9 +260,17 @@ const BookingSuccess = () => {
                           <Users className="w-3 h-3" /> Guest Information
                         </h4>
                         <p className="font-bold text-lg text-foreground">{booking.customer_name}</p>
-                        <p className="text-muted-foreground">
-                          {booking.participants} Traveler{booking.participants !== 1 ? 's' : ''}
-                        </p>
+                        <div className="text-muted-foreground">
+                          {booking.children_count && booking.children_count > 0 ? (
+                            <div className="flex flex-col gap-1">
+                              <span>{booking.adults_count || booking.participants} Adult{(booking.adults_count || booking.participants) !== 1 ? 's' : ''}</span>
+                              <span>{booking.children_count} Child{booking.children_count !== 1 ? 'ren' : ''}</span>
+                              <span className="text-xs border-t pt-1 mt-1 inline-block">Total Participants: {booking.participants}</span>
+                            </div>
+                          ) : (
+                            <span>{booking.adults_count || booking.participants} Adult{(booking.adults_count || booking.participants) !== 1 ? 's' : ''}</span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="bg-accent/5 p-4 rounded-xl border border-accent/10">

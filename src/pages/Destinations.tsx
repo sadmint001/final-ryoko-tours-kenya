@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Clock, Users, ExternalLink, Filter, ArrowLeft, Search, Globe, ChevronDown, Check, Award } from 'lucide-react';
+import { MapPin, Clock, Users, ExternalLink, Filter, ArrowLeft, Search, Globe, ChevronDown, Check, Award, Sparkles, Percent, ArrowRight } from 'lucide-react';
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -39,6 +39,7 @@ const Destinations: React.FC = () => {
   const [sortBy, setSortBy] = useState<string>('recommended');
   const [showResidencyMenu, setShowResidencyMenu] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [discountSettings, setDiscountSettings] = useState({ threshold: 0, percentage: 0 });
 
   // Hero Image Carousel State
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
@@ -183,6 +184,30 @@ const Destinations: React.FC = () => {
       mounted = false;
       channel.unsubscribe();
     };
+  }, []);
+
+  // Fetch discount settings
+  useEffect(() => {
+    const fetchDiscount = async () => {
+      try {
+        const { data } = await supabase
+          .from('site_settings')
+          .select('*')
+          .in('key', ['group_discount_threshold', 'group_discount_percentage']);
+        if (data && data.length > 0) {
+          const typedData = data as any[];
+          const tObj = typedData.find((d: any) => d.key === 'group_discount_threshold');
+          const pObj = typedData.find((d: any) => d.key === 'group_discount_percentage');
+          setDiscountSettings({
+            threshold: tObj && tObj.value && !isNaN(parseInt(tObj.value)) ? parseInt(tObj.value) : 5,
+            percentage: pObj && pObj.value && !isNaN(parseInt(pObj.value)) ? parseInt(pObj.value) : 10,
+          });
+        }
+      } catch (e) {
+        console.error('Failed to load discount settings', e);
+      }
+    };
+    fetchDiscount();
   }, []);
 
   useEffect(() => {
@@ -468,6 +493,68 @@ const Destinations: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Premium Group Discount Banner ── */}
+      {discountSettings.threshold > 0 && discountSettings.percentage > 0 && (
+        <div className="container mx-auto px-4 -mt-6 mb-12 relative z-20">
+          <div className="relative overflow-hidden rounded-3xl shadow-2xl">
+            {/* Layered Background */}
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-amber-900 to-slate-900" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(251,191,36,0.3),transparent_60%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(245,158,11,0.2),transparent_60%)]" />
+
+            {/* Animated shimmer */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-spin" style={{ animationDuration: '30s' }}>
+                <div className="absolute top-1/2 left-1/2 w-32 h-[200%] bg-gradient-to-b from-transparent via-amber-400/5 to-transparent -translate-x-1/2" />
+              </div>
+            </div>
+
+            {/* Border glow */}
+            <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-amber-400/20" />
+
+            <div className="relative px-6 py-8 md:px-12 md:py-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
+              {/* Left: Icon cluster */}
+              <div className="flex-shrink-0 relative group">
+                <div className="bg-red-600 rounded-xl px-4 py-2 sm:px-5 sm:py-3 flex items-center justify-center gap-2 sm:gap-3 shadow-lg shadow-red-600/30 group-hover:scale-105 transition-transform duration-300">
+                  <Percent className="w-8 h-8 sm:w-10 sm:h-10 text-white stroke-[2.5]" />
+                  <div className="flex flex-col items-start justify-center">
+                    <span className="text-xl sm:text-2xl font-black leading-none tracking-tight text-white whitespace-nowrap">
+                      {discountSettings.percentage}% OFF
+                    </span>
+                    <span className="text-[10px] sm:text-xs font-bold tracking-[0.15em] text-white/90 mt-[1px] sm:mt-0.5 uppercase whitespace-nowrap">
+                      Group Savings
+                    </span>
+                  </div>
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg animate-bounce" style={{ animationDuration: '2s' }}>
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+              </div>
+
+              {/* Center: Copy */}
+              <div className="flex-grow text-center md:text-left space-y-3">
+                <div className="flex items-center justify-center md:justify-start gap-2">
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.25em] text-amber-400/80">Limited Time Offer</span>
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                </div>
+                <h3 className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold text-white leading-tight">
+                  Book for{' '}
+                  <span className="relative inline-block">
+                    <span className="relative z-10 text-amber-400">{discountSettings.threshold}+ Guests</span>
+                    <span className="absolute bottom-0 left-0 w-full h-2 bg-amber-400/20 rounded-full -z-0" />
+                  </span>
+                  {' '}and Save{' '}
+                  <span className="text-amber-400">{discountSettings.percentage}%</span>
+                </h3>
+                <p className="text-sm md:text-base text-white/60 max-w-lg leading-relaxed">
+                  Gather your friends, family, or colleagues and unlock exclusive group savings on any destination. The more, the merrier — and the cheaper!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Destinations Grid */}
       <div className="container mx-auto px-4 pb-24">

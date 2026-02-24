@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { getPriceByResidency } from '@/lib/pricing';
+import { getPriceByResidency, getChildPriceByResidency } from '@/lib/pricing';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -61,6 +61,9 @@ interface DestinationDetail {
     citizenPrice: number;
     residentPrice: number;
     nonResidentPrice: number;
+    citizenChildPrice: number;
+    residentChildPrice: number;
+    nonResidentChildPrice: number;
   };
   category: string;
   duration?: number;
@@ -83,6 +86,7 @@ const DestinationDetails = () => {
   const [error, setError] = useState<string | null>(null);
   const [pesapalUrl, setPesapalUrl] = useState<string | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [discountSettings, setDiscountSettings] = useState({ threshold: 5, percentage: 10 });
 
   const { selectedResidency, setResidency } = useResidencyPersistence();
   const { user } = useAuth();
@@ -94,6 +98,8 @@ const DestinationDetails = () => {
     customerEmail: string;
     customerPhone: string;
     participants: number;
+    adultsCount: number;
+    childrenCount: number;
     startDate: Date | undefined;
     endDate: Date | undefined;
     specialRequests: string;
@@ -105,6 +111,8 @@ const DestinationDetails = () => {
     customerEmail: user?.email || '',
     customerPhone: '',
     participants: 1,
+    adultsCount: 1,
+    childrenCount: 0,
     startDate: undefined,
     endDate: undefined,
     specialRequests: '',
@@ -130,6 +138,33 @@ const DestinationDetails = () => {
       }));
     }
   }, [user]);
+
+  useEffect(() => {
+    const fetchDiscountSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('*')
+          .in('key', ['group_discount_threshold', 'group_discount_percentage']);
+
+        if (data && !error) {
+          const thresholdObj = data.find(d => d.key === 'group_discount_threshold');
+          const percentageObj = data.find(d => d.key === 'group_discount_percentage');
+
+          const parsedThreshold = thresholdObj ? parseInt(thresholdObj.value) : NaN;
+          const parsedPercentage = percentageObj ? parseInt(percentageObj.value) : NaN;
+
+          setDiscountSettings({
+            threshold: !isNaN(parsedThreshold) ? parsedThreshold : 5,
+            percentage: !isNaN(parsedPercentage) ? parsedPercentage : 10
+          });
+        }
+      } catch (e) {
+        console.error('Failed to load discount settings:', e);
+      }
+    };
+    fetchDiscountSettings();
+  }, []);
 
   // Redirect if no residency
   useEffect(() => {
@@ -158,10 +193,32 @@ const DestinationDetails = () => {
     }
   }, [form.startDate, destination?.duration]);
 
-  const calculateTotal = () => {
+  const getBaseTotal = () => {
     if (!destination || !selectedResidency) return 0;
-    const price = getPriceByResidency(destination.pricing, selectedResidency);
-    return price * (Number(form.participants) || 0);
+    const adultPrice = getPriceByResidency(destination.pricing, selectedResidency) || 0;
+    const childPrice = (destination.pricing as any).citizenChildPrice !== undefined
+      ? (selectedResidency === 'citizen' ? destination.pricing.citizenChildPrice :
+        selectedResidency === 'resident' ? destination.pricing.residentChildPrice :
+          destination.pricing.nonResidentChildPrice)
+      : 0;
+
+    return (adultPrice * (Number(form.adultsCount) || 1)) + (childPrice * (Number(form.childrenCount) || 0));
+  };
+
+  const getDiscountAmount = () => {
+    const baseTotal = getBaseTotal();
+    const totalParticipants = (Number(form.adultsCount) || 1) + (Number(form.childrenCount) || 0);
+
+    if (discountSettings.threshold > 0 && discountSettings.percentage > 0 && totalParticipants >= discountSettings.threshold) {
+      return baseTotal * (discountSettings.percentage / 100);
+    }
+    return 0;
+  };
+
+  const calculateTotal = () => {
+    const baseTotal = getBaseTotal();
+    const discountAmount = getDiscountAmount();
+    return baseTotal - discountAmount;
   };
 
   const handleInputChange = (field: keyof BookingForm, value: any) => {
@@ -182,7 +239,9 @@ const DestinationDetails = () => {
       const paymentData: PaymentRequest = {
         destinationId: destination.id.toString(),
         destinationTitle: destination.name,
-        participants: Number(form.participants) || 1,
+        participants: (Number(form.adultsCount) || 1) + (Number(form.childrenCount) || 0),
+        adults_count: Number(form.adultsCount) || 1,
+        children_count: Number(form.childrenCount) || 0,
         totalAmount: calculateTotal(),
         customerName: form.customerName,
         customerEmail: form.customerEmail,
@@ -229,7 +288,9 @@ const DestinationDetails = () => {
       const paymentData: PaymentRequest = {
         destinationId: destination.id.toString(),
         destinationTitle: destination.name,
-        participants: Number(form.participants) || 1,
+        participants: (Number(form.adultsCount) || 1) + (Number(form.childrenCount) || 0),
+        adults_count: Number(form.adultsCount) || 1,
+        children_count: Number(form.childrenCount) || 0,
         totalAmount: calculateTotal(),
         customerName: form.customerName,
         customerEmail: form.customerEmail,
@@ -283,7 +344,9 @@ const DestinationDetails = () => {
       const paymentData: PaymentRequest = {
         destinationId: destination.id.toString(),
         destinationTitle: destination.name,
-        participants: Number(form.participants) || 1,
+        participants: (Number(form.adultsCount) || 1) + (Number(form.childrenCount) || 0),
+        adults_count: Number(form.adultsCount) || 1,
+        children_count: Number(form.childrenCount) || 0,
         totalAmount: calculateTotal(),
         customerName: form.customerName,
         customerEmail: form.customerEmail,
@@ -344,17 +407,8 @@ const DestinationDetails = () => {
     setSubmitting(true);
 
     try {
-      switch (form.paymentMethod) {
-        case 'pesapal':
-          await handlePesapalPayment();
-          break;
-        case 'bank':
-          await handleBankPayment();
-          break;
-        case 'mpesa':
-          await handleMpesaPayment();
-          break;
-      }
+      // All payment methods route through PesaPal
+      await handlePesapalPayment();
     } finally {
       setSubmitting(false);
     }
@@ -391,6 +445,9 @@ const DestinationDetails = () => {
           citizenPrice: data.citizen_price,
           residentPrice: data.resident_price,
           nonResidentPrice: data.non_resident_price,
+          citizenChildPrice: data.citizen_child_price || 0,
+          residentChildPrice: data.resident_child_price || 0,
+          nonResidentChildPrice: data.non_resident_child_price || 0,
         },
         category: data.category,
         duration: data.duration,
@@ -747,12 +804,34 @@ const DestinationDetails = () => {
                     </span>
                     <div className="text-2xl font-bold text-amber-600 dark:text-amber-500">
                       {selectedResidency
-                        ? formatPriceByResidency(getPriceByResidency(destination.pricing, selectedResidency), selectedResidency)
+                        ? formatPriceByResidency(getPriceByResidency(destination.pricing, selectedResidency) || 0, selectedResidency)
                         : '-'}
+                      <span className="text-xs font-normal text-slate-500 ml-1">(Adult)</span>
+                    </div>
+                    <div className="text-xl font-bold text-amber-500 dark:text-amber-400 mt-1">
+                      {selectedResidency
+                        ? formatPriceByResidency(getChildPriceByResidency(destination.pricing, selectedResidency) || 0, selectedResidency)
+                        : '-'}
+                      <span className="text-xs font-normal text-slate-500 ml-1">(Child)</span>
                     </div>
                   </div>
 
                   <form onSubmit={handleSubmit} className="space-y-4">
+                    {discountSettings.threshold > 0 && discountSettings.percentage > 0 && (
+                      <div className="bg-gradient-to-br from-amber-50 dark:from-amber-900/20 to-orange-50 dark:to-orange-900/20 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-4 flex gap-3 items-start shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div className="bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-full p-1.5 shadow-inner flex-shrink-0 mt-0.5">
+                          <LucideIcons.Star className="w-4 h-4 fill-current" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-amber-900 dark:text-amber-400 mb-1 flex items-center gap-1.5">
+                            Special Group Offer ✨
+                          </h4>
+                          <p className="text-xs text-amber-800/80 dark:text-amber-200/80 leading-relaxed">
+                            Book for <span className="font-bold">{discountSettings.threshold}+</span> guests and get <span className="font-bold text-amber-700 dark:text-amber-300">{discountSettings.percentage}% off</span>!
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="startDate">Departure Date</Label>
@@ -806,17 +885,29 @@ const DestinationDetails = () => {
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="participants">Travelers</Label>
-                      <div className="relative">
-                        <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="adultsCount">Adults</Label>
                         <Input
+                          id="adultsCount"
                           type="number"
                           min="1"
                           max={destination.maxParticipants || 20}
-                          value={form.participants}
-                          onChange={(e) => setForm(prev => ({ ...prev, participants: e.target.value === '' ? '' as any : parseInt(e.target.value) }))}
-                          className="pl-10 h-12 rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-900"
+                          value={form.adultsCount}
+                          onChange={(e) => handleInputChange('adultsCount', e.target.value === '' ? '' as any : parseInt(e.target.value))}
+                          className="h-12 rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-900"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="childrenCount">Children</Label>
+                        <Input
+                          id="childrenCount"
+                          type="number"
+                          min="0"
+                          max={destination.maxParticipants || 20}
+                          value={form.childrenCount}
+                          onChange={(e) => handleInputChange('childrenCount', e.target.value === '' ? '' as any : parseInt(e.target.value))}
+                          className="h-12 rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-900"
                         />
                       </div>
                     </div>
@@ -887,10 +978,23 @@ const DestinationDetails = () => {
                       </RadioGroup>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-700 mt-4">
-                      <div className="flex justify-between items-center text-sm mb-4">
-                        <span className="text-slate-500">Total Amount</span>
-                        <span className="text-xl font-bold text-slate-800 dark:text-white">
+                    <div className="pt-4 border-t border-slate-100 dark:border-slate-700 mt-4 space-y-3">
+                      {selectedResidency && getDiscountAmount() > 0 && (
+                        <div className="flex flex-col gap-2">
+                          <div className="flex justify-between items-center text-sm text-slate-500 line-through">
+                            <span>Base Amount</span>
+                            <span>{formatPriceByResidency(getBaseTotal(), selectedResidency)}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                            <span>Group Discount ({discountSettings.percentage}%)</span>
+                            <span>- {formatPriceByResidency(getDiscountAmount(), selectedResidency)}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className={`flex justify-between items-center ${selectedResidency && getDiscountAmount() > 0 ? "pt-3 border-t border-slate-100 dark:border-slate-700" : ""}`}>
+                        <span className="text-sm font-medium text-slate-500">Total Amount</span>
+                        <span className="text-2xl font-bold text-amber-500">
                           {selectedResidency && calculateTotal() > 0
                             ? formatPriceByResidency(calculateTotal(), selectedResidency)
                             : '-'}

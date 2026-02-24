@@ -1,112 +1,152 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Users, GraduationCap, Tent, Plane } from 'lucide-react';
+import { Users, Sparkles, Percent, ArrowRight, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const SERVICES_ALLOWED = [
-  'Team Building & Corporate Retreats',
-  'School Excursions',
-  'Camping, Hiking & Training',
-];
+import { supabase } from '@/integrations/supabase/client';
 
 const Services = () => {
-  const services = [
-    {
-      id: 1,
-      title: "Team Building & Corporate Retreats",
-      description: "Strengthen your team bonds with adventure-based activities in Kenya's stunning natural settings",
-      icon: Users,
-      features: ["Adventure challenges", "Leadership activities", "Scenic venues", "Professional facilitation"],
-      image: "/lovable-uploads/8830a94e-8109-4438-99fc-7b8392c0c9c5.png"
-    },
-    {
-      id: 2,
-      title: "School Excursions",
-      description: "Educational and fun trips designed to inspire learning through real-world experiences",
-      icon: GraduationCap,
-      features: ["Educational tours", "Wildlife learning", "Cultural experiences", "Safe supervision"],
-      image: "/lovable-uploads/da389b0b-2c48-446a-93d4-03d23e502f85.png"
-    },
-    {
-      id: 3,
-      title: "Camping, Hiking & Training",
-      description: "Outdoor adventures that challenge and inspire, perfect for building resilience and skills",
-      icon: Tent,
-      features: ["Mountain hiking", "Survival training", "Outdoor skills", "Group camping"],
-      image: "/lovable-uploads/67714bb6-efb7-46fc-9d50-40094c91c610.png"
-    }
+  const [discountSettings, setDiscountSettings] = useState({ threshold: 5, percentage: 10 });
+
+  useEffect(() => {
+    const fetchDiscount = async () => {
+      try {
+        const { data } = await supabase
+          .from('site_settings')
+          .select('*')
+          .in('key', ['group_discount_threshold', 'group_discount_percentage']);
+        if (data) {
+          const tObj = data.find((d: any) => d.key === 'group_discount_threshold');
+          const pObj = data.find((d: any) => d.key === 'group_discount_percentage');
+          setDiscountSettings({
+            threshold: tObj && !isNaN(parseInt(tObj.value)) ? parseInt(tObj.value) : 5,
+            percentage: pObj && !isNaN(parseInt(pObj.value)) ? parseInt(pObj.value) : 10,
+          });
+        }
+      } catch (e) {
+        console.error('Failed to load discount settings', e);
+      }
+    };
+    fetchDiscount();
+  }, []);
+
+  const features = [
+    'Automatic group discounts applied at checkout',
+    'Dedicated trip coordinator for your group',
+    'Customizable itineraries for any group size',
+    'Private safari vehicles & exclusive experiences',
+    'Flexible payment plans for large parties',
+    'Special rates for corporate & school groups',
   ];
 
   return (
-    <section className="py-20 bg-gradient-subtle">
-      <div className="container mx-auto px-4">
+    <section className="py-24 bg-slate-950 relative overflow-hidden">
+      {/* Background texture */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(251,191,36,0.06),transparent_60%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(245,158,11,0.04),transparent_60%)]" />
+
+      <div className="container mx-auto px-4 relative z-10">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold font-playfair text-primary mb-4">
-            Our Services
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="w-12 h-px bg-amber-500/50" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-amber-400/70">Exclusive Offer</span>
+            <div className="w-12 h-px bg-amber-500/50" />
+          </div>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold font-serif text-white mb-5">
+            Group <span className="text-amber-400">Deals</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Beyond tours, we offer specialized services for groups, students, and international travelers
+          <p className="text-lg text-white/50 max-w-2xl mx-auto leading-relaxed">
+            Travel together, save together. Unlock exclusive group discounts on every destination when you book for {discountSettings.threshold} or more guests.
           </p>
         </div>
 
-        {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {services.filter(s => SERVICES_ALLOWED.includes(s.title)).map((service) => {
-            const IconComponent = service.icon;
-            return (
-              <Card key={service.id} className="group hover:shadow-elevated transition-all duration-300 overflow-hidden">
-                <div 
-                  className="h-48 bg-cover bg-center relative overflow-hidden group-hover:scale-105 transition-transform duration-300"
-                  style={{ backgroundImage: `url(${service.image})` }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-                  <div className="absolute bottom-4 left-4 flex items-center gap-3">
-                    <div className="p-3 rounded-full bg-white/20 backdrop-blur-sm">
-                      <IconComponent className="h-6 w-6 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold font-playfair text-white">
-                      {service.title}
-                    </h3>
+        {/* Main Card */}
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-3xl overflow-hidden shadow-2xl shadow-black/50 border border-white/5">
+
+            {/* Image Side */}
+            <div className="relative h-72 lg:h-auto lg:min-h-[480px] overflow-hidden">
+              <img
+                src="/images/safari/sunset_safari.jpg"
+                alt="Group Safari Experience"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/30 hidden lg:block" />
+
+              {/* Floating discount badge */}
+              <div className="absolute top-6 left-6">
+                <div className="bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl px-5 py-3 shadow-xl shadow-amber-500/30 flex items-center gap-3">
+                  <Percent className="w-6 h-6 text-slate-900" />
+                  <div>
+                    <p className="text-2xl font-black text-slate-900 leading-none">{discountSettings.percentage}% OFF</p>
+                    <p className="text-[10px] font-bold text-slate-900/70 uppercase tracking-wider">Group Savings</p>
                   </div>
                 </div>
-                
-                <CardContent className="p-6">
-                  <p className="text-muted-foreground mb-6 leading-relaxed">
-                    {service.description}
-                  </p>
-                  
-                  <div className="mb-6">
-                    <h4 className="font-semibold text-foreground mb-3">Key Features:</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      {service.features.map((feature, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-primary"></div>
-                          <span className="text-sm text-muted-foreground">{feature}</span>
-                        </div>
-                      ))}
-                    </div>
+              </div>
+
+              {/* Bottom overlay text */}
+              <div className="absolute bottom-6 left-6 right-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="w-5 h-5 text-amber-400" />
+                  <span className="text-sm font-bold text-amber-400 uppercase tracking-wider">
+                    {discountSettings.threshold}+ Guests Required
+                  </span>
+                </div>
+                <p className="text-white/70 text-sm leading-relaxed">
+                  Bring your friends, family, or team and experience the wild heart of Kenya together.
+                </p>
+              </div>
+            </div>
+
+            {/* Content Side */}
+            <div className="bg-slate-900 p-8 lg:p-10 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                    <Sparkles className="w-5 h-5 text-white" />
                   </div>
+                  <div>
+                    <h3 className="text-2xl font-bold font-serif text-white">Group Safari Deals</h3>
+                  </div>
+                </div>
 
-                  <Link to="/contact">
-                    <Button className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 transition-all text-black font-medium px-4 md:px-6">
-                      Get Quote
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                <p className="text-white/50 mb-8 leading-relaxed">
+                  Book for <span className="text-amber-400 font-semibold">{discountSettings.threshold} or more guests</span> on any destination and automatically receive a <span className="text-amber-400 font-semibold">{discountSettings.percentage}% discount</span> on your entire booking — no promo codes needed.
+                </p>
 
-        {/* CTA */}
-        <div className="text-center mt-12">
-          <Link to="/contact">
-            <Button className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 transition-all text-black font-medium px-4 md:px-6">
-              Contact Us for Custom Services
-            </Button>
-          </Link>
+                {/* Features Grid */}
+                <div className="space-y-3 mb-8">
+                  {features.map((feature, index) => (
+                    <div
+                      key={index}
+                      className="flex items-start gap-3 group"
+                    >
+                      <div className="w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-emerald-500/20 transition-colors">
+                        <Check className="w-3 h-3 text-emerald-400" />
+                      </div>
+                      <span className="text-sm text-white/60 group-hover:text-white/80 transition-colors">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link to="/destinations" className="flex-1">
+                  <Button className="w-full bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-slate-900 font-bold h-13 rounded-xl shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 transition-all duration-300 hover:-translate-y-0.5 text-sm group">
+                    Explore Destinations
+                    <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+                <Link to="/contact" className="flex-1">
+                  <Button variant="outline" className="w-full border-white/10 text-white hover:bg-white/5 hover:border-amber-500/30 font-semibold h-13 rounded-xl transition-all duration-300 text-sm">
+                    Get Quote
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

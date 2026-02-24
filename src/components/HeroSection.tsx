@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Award, Users, MapPin } from 'lucide-react';
+import { ChevronRight, Sparkles, Percent, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 // Dynamically import all hero images using Vite's import.meta.glob
 const heroImages = Object.values(
@@ -10,6 +11,7 @@ const heroImages = Object.values(
 
 const HeroSection = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [discountSettings, setDiscountSettings] = useState({ threshold: 0, percentage: 0 });
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -17,6 +19,29 @@ const HeroSection = () => {
     }, 15000); // Change image every 15 seconds
 
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const fetchDiscount = async () => {
+      try {
+        const { data } = await supabase
+          .from('site_settings')
+          .select('*')
+          .in('key', ['group_discount_threshold', 'group_discount_percentage']);
+        if (data && data.length > 0) {
+          const typedData = data as any[];
+          const tObj = typedData.find((d: any) => d.key === 'group_discount_threshold');
+          const pObj = typedData.find((d: any) => d.key === 'group_discount_percentage');
+          setDiscountSettings({
+            threshold: tObj && tObj.value && !isNaN(parseInt(tObj.value)) ? parseInt(tObj.value) : 5,
+            percentage: pObj && pObj.value && !isNaN(parseInt(pObj.value)) ? parseInt(pObj.value) : 10,
+          });
+        }
+      } catch (e) {
+        console.error('Failed to load discount settings', e);
+      }
+    };
+    fetchDiscount();
   }, []);
 
   return (
@@ -64,7 +89,7 @@ const HeroSection = () => {
 
           {/* Description */}
           <p className="text-base sm:text-lg md:text-2xl font-opensans mb-8 md:mb-10 opacity-95 max-w-4xl mx-auto animate-fade-up leading-relaxed text-safari-cream/90 px-4">
-            Immerse yourself in curated journeys that blend luxury with authenticity. Every moment crafted with sophistication.
+            Immerse yourself in curated journeys that blend luxury with authenticity. Every moment crafted with care.
           </p>
 
           {/* CTA Buttons */}
@@ -82,36 +107,58 @@ const HeroSection = () => {
             </Link>
           </div>
 
-          {/* Luxury Stats - Hidden on Mobile to prevent overcrowding */}
-          <div className="hidden md:grid grid-cols-3 gap-12 max-w-3xl mx-auto animate-scale-up">
-            <div className="text-center group">
-              <div className="flex items-center justify-center gap-3 mb-3">
-                <div className="p-2 rounded-full bg-gradient-luxury/20 backdrop-blur-sm">
-                  <Users className="h-6 w-6 text-sunset-gold" />
+          {/* Promotional Discount Banner */}
+          {discountSettings.threshold > 0 && discountSettings.percentage > 0 && (
+            <div className="max-w-3xl mx-auto animate-scale-up">
+              <div className="relative overflow-hidden rounded-2xl border border-white/10">
+                {/* Layered Background */}
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-xl" />
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-transparent to-amber-500/10" />
+                <div className="absolute inset-0 ring-1 ring-inset ring-amber-400/20 rounded-2xl" />
+
+                <div className="relative px-6 py-5 md:px-8 md:py-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                  {/* Icon */}
+                  <div className="flex-shrink-0 relative group">
+                    <div className="bg-red-600 rounded-xl px-4 py-2 sm:px-5 sm:py-3 flex items-center justify-center gap-2 sm:gap-3 shadow-lg shadow-red-600/30 group-hover:scale-105 transition-transform duration-300">
+                      <Percent className="w-8 h-8 sm:w-10 sm:h-10 text-white stroke-[2.5]" />
+                      <div className="flex flex-col items-start justify-center">
+                        <span className="text-xl sm:text-2xl font-black leading-none tracking-tight text-white whitespace-nowrap">
+                          {discountSettings.percentage}% OFF
+                        </span>
+                        <span className="text-[10px] sm:text-xs font-bold tracking-[0.15em] text-white/90 mt-[1px] sm:mt-0.5 uppercase whitespace-nowrap">
+                          Group Savings
+                        </span>
+                      </div>
+                    </div>
+                    <div className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center shadow-md animate-bounce" style={{ animationDuration: '2s' }}>
+                      <Sparkles className="w-3 h-3 text-white" />
+                    </div>
+                  </div>
+
+                  {/* Copy */}
+                  <div className="flex-grow text-center sm:text-left">
+                    <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
+                      <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.25em] text-amber-400/80">Group Offer</span>
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    </div>
+                    <p className="text-base md:text-lg font-serif font-bold text-white leading-snug">
+                      Book for <span className="text-amber-400">{discountSettings.threshold}+</span> guests & save <span className="text-amber-400">{discountSettings.percentage}%</span> instantly
+                    </p>
+                  </div>
+
+                  {/* CTA */}
+                  <div className="flex-shrink-0">
+                    <Link to="/destinations">
+                      <Button className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-slate-900 font-bold px-6 py-3 h-auto rounded-xl shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 transition-all duration-300 hover:-translate-y-0.5 text-sm group">
+                        Get Offer
+                        <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
-                <span className="text-4xl font-bold font-playfair text-safari-cream">1000+</span>
               </div>
-              <p className="font-opensans opacity-90 text-safari-cream/80 font-medium">Happy Travelers</p>
             </div>
-            <div className="text-center group">
-              <div className="flex items-center justify-center gap-3 mb-3">
-                <div className="p-2 rounded-full bg-gradient-luxury/20 backdrop-blur-sm">
-                  <MapPin className="h-6 w-6 text-sunset-gold" />
-                </div>
-                <span className="text-4xl font-bold font-playfair text-safari-cream">25+</span>
-              </div>
-              <p className="font-opensans opacity-90 text-safari-cream/80 font-medium">Destinations</p>
-            </div>
-            <div className="text-center group">
-              <div className="flex items-center justify-center gap-3 mb-3">
-                <div className="p-2 rounded-full bg-gradient-luxury/20 backdrop-blur-sm">
-                  <Award className="h-6 w-6 text-sunset-gold" />
-                </div>
-                <span className="text-4xl font-bold font-playfair text-safari-cream">4.9</span>
-              </div>
-              <p className="font-opensans opacity-90 text-safari-cream/80 font-medium">Average Rating</p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 

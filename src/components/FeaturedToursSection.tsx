@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Compass, Camera, Mountain, Leaf, ArrowRight, Award } from 'lucide-react';
+import { Map, Camera, Tent, Sprout, Crown, ArrowRight } from 'lucide-react';
 import featuredBg from '@/assets/featured-bg.jpg';
 
 interface Tour {
@@ -19,7 +19,7 @@ const tours: Tour[] = [
     {
         key: 'Historical',
         title: 'Historical, Cultural & Art',
-        icon: <Compass className="w-6 h-6" />,
+        icon: <Map className="w-6 h-6" />,
         emoji: '🏛️',
         desc: "Immerse yourself in Kenya's rich heritage and artistry through authentic local experiences",
         tags: ['Kazuri Beads', 'Maasai Market', 'Karen Blixen Museum'],
@@ -41,7 +41,7 @@ const tours: Tour[] = [
     {
         key: 'Nature',
         title: 'Hiking, Picnic & Nature',
-        icon: <Mountain className="w-6 h-6" />,
+        icon: <Tent className="w-6 h-6" />,
         emoji: '🥾',
         desc: "Explore Kenya's breathtaking natural landscapes and scenic trails",
         tags: ['Ngong Hills', 'Karura Forest', "Hell's Gate"],
@@ -52,7 +52,7 @@ const tours: Tour[] = [
     {
         key: 'Farming',
         title: 'Farming, Coffee & Tea',
-        icon: <Leaf className="w-6 h-6" />,
+        icon: <Sprout className="w-6 h-6" />,
         emoji: '🌿',
         desc: "Educational experiences in Kenya's world-famous agricultural heritage",
         tags: ['Fairview Coffee', 'Kiambethu Tea Farm'],
@@ -63,7 +63,7 @@ const tours: Tour[] = [
     {
         key: 'Signature',
         title: 'Signature Experience',
-        icon: <Award className="w-6 h-6" />,
+        icon: <Crown className="w-6 h-6" />,
         emoji: '✨',
         desc: "Exclusively crafted journeys for the discerning traveler, featuring our most premium offerings",
         tags: ['Private Safari', 'Luxury Stay', 'Unique Moments'],
@@ -172,7 +172,7 @@ const FeaturedToursSection = () => {
                       group-hover:shadow-xl
                       group-hover:from-white group-hover:to-white
                     `}>
-                                            <span className="text-3xl animate-bounce-subtle">{tour.emoji}</span>
+                                            <span className="text-white drop-shadow-md animate-bounce-subtle z-10">{tour.icon}</span>
                                             {/* Glow effect */}
                                             <div className={`absolute inset-0 bg-gradient-to-br ${tour.gradient} rounded-2xl blur-xl opacity-0 group-hover:opacity-50 transition-opacity duration-500`}></div>
                                         </div>

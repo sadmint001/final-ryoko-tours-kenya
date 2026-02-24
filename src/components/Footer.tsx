@@ -70,7 +70,7 @@ const Footer = () => {
         { name: "Wildlife Safari", href: "#", category: "Wildlife" },
         { name: "Cultural & Arts", href: "#", category: "Historical" },
         { name: "Nature & Hiking", href: "#", category: "Nature" },
-        { name: "Farming & Coffee", href: "#", category: "Farming" },
+        { name: "Farm Tours", href: "#", category: "Farming" },
         { name: "Signature Luxe", href: "#", category: "Signature" },
       ]
     },

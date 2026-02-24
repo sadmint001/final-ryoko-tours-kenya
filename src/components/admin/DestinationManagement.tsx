@@ -71,6 +71,9 @@ interface Destination {
     citizenPrice: number;
     residentPrice: number;
     nonResidentPrice: number;
+    citizenChildPrice: number;
+    residentChildPrice: number;
+    nonResidentChildPrice: number;
   };
   best_time_to_visit?: { season: string; description: string }[];
 }
@@ -113,6 +116,9 @@ const DestinationManagement: React.FC = () => {
     citizenPrice: 0,
     residentPrice: 0,
     nonResidentPrice: 0,
+    citizenChildPrice: 0,
+    residentChildPrice: 0,
+    nonResidentChildPrice: 0,
     isActive: true,
     isFeatured: false,
     featuredOrder: 0,
@@ -143,6 +149,9 @@ const DestinationManagement: React.FC = () => {
       citizenPrice: d.citizen_price ?? 0,
       residentPrice: d.resident_price ?? 0,
       nonResidentPrice: d.non_resident_price ?? 0,
+      citizenChildPrice: d.citizen_child_price ?? 0,
+      residentChildPrice: d.resident_child_price ?? 0,
+      nonResidentChildPrice: d.non_resident_child_price ?? 0,
     },
     best_time_to_visit: d.best_time_to_visit || [],
   });
@@ -272,6 +281,9 @@ const DestinationManagement: React.FC = () => {
       citizenPrice: dest.pricing.citizenPrice ?? 0,
       residentPrice: dest.pricing.residentPrice ?? 0,
       nonResidentPrice: dest.pricing.nonResidentPrice ?? 0,
+      citizenChildPrice: dest.pricing.citizenChildPrice ?? 0,
+      residentChildPrice: dest.pricing.residentChildPrice ?? 0,
+      nonResidentChildPrice: dest.pricing.nonResidentChildPrice ?? 0,
       isActive: dest.isActive ?? true,
       isFeatured: dest.isFeatured ?? false,
       featuredOrder: dest.featuredOrder ?? 0,
@@ -369,6 +381,9 @@ const DestinationManagement: React.FC = () => {
         citizen_price: Number(formData.citizenPrice) || 0,
         resident_price: Number(formData.residentPrice) || 0,
         non_resident_price: Number(formData.nonResidentPrice) || 0,
+        citizen_child_price: Number(formData.citizenChildPrice) || 0,
+        resident_child_price: Number(formData.residentChildPrice) || 0,
+        non_resident_child_price: Number(formData.nonResidentChildPrice) || 0,
         activities: formData.activities.filter(a => a.title.trim() !== ''),
         best_time_to_visit: formData.best_time_to_visit.filter(b => b.season.trim() !== ''),
       };
@@ -751,7 +766,7 @@ const DestinationManagement: React.FC = () => {
                 <TabsContent value="pricing" className="space-y-4">
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label htmlFor="citizenPrice">Citizen Price (KSh)</Label>
+                      <Label htmlFor="citizenPrice">Citizen Adult (KSh)</Label>
                       <Input
                         id="citizenPrice"
                         type="number"
@@ -764,7 +779,7 @@ const DestinationManagement: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="residentPrice">Resident Price (KSh)</Label>
+                      <Label htmlFor="residentPrice">Resident Adult (KSh)</Label>
                       <Input
                         id="residentPrice"
                         type="number"
@@ -777,7 +792,7 @@ const DestinationManagement: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="nonResidentPrice">Non-Resident Price (KSh)</Label>
+                      <Label htmlFor="nonResidentPrice">Non-Resident Adult (KSh)</Label>
                       <Input
                         id="nonResidentPrice"
                         type="number"
@@ -787,6 +802,45 @@ const DestinationManagement: React.FC = () => {
                           nonResidentPrice: e.target.value === '' ? '' as any : parseInt(e.target.value || '0')
                         }))}
                         required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="citizenChildPrice">Citizen Child (KSh)</Label>
+                      <Input
+                        id="citizenChildPrice"
+                        type="number"
+                        value={formData.citizenChildPrice}
+                        onChange={(e) => setFormData((p) => ({
+                          ...p,
+                          citizenChildPrice: e.target.value === '' ? '' as any : parseInt(e.target.value || '0')
+                        }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="residentChildPrice">Resident Child (KSh)</Label>
+                      <Input
+                        id="residentChildPrice"
+                        type="number"
+                        value={formData.residentChildPrice}
+                        onChange={(e) => setFormData((p) => ({
+                          ...p,
+                          residentChildPrice: e.target.value === '' ? '' as any : parseInt(e.target.value || '0')
+                        }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="nonResidentChildPrice">Non-Res Child (KSh)</Label>
+                      <Input
+                        id="nonResidentChildPrice"
+                        type="number"
+                        value={formData.nonResidentChildPrice}
+                        onChange={(e) => setFormData((p) => ({
+                          ...p,
+                          nonResidentChildPrice: e.target.value === '' ? '' as any : parseInt(e.target.value || '0')
+                        }))}
                       />
                     </div>
                   </div>

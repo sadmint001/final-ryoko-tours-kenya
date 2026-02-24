@@ -32,6 +32,8 @@ serve(async (req) => {
         const customerEmail = body.customerEmail;
         const customerPhone = body.customerPhone;
         const participants = body.participants || 1;
+        const adultsCount = body.adultsCount || body.adults_count || 1;
+        const childrenCount = body.childrenCount || body.children_count || 0;
         const startDate = body.startDate;
         const specialRequests = body.specialRequests;
         const residency = body.residency_type || body.residency || 'citizen';
@@ -53,16 +55,43 @@ serve(async (req) => {
             throw new Error("Invalid destination selected");
         }
 
-        let unitPrice = 0;
-        if (residency === 'citizen') unitPrice = tour.citizen_price;
-        else if (residency === 'resident') unitPrice = tour.resident_price;
-        else if (residency === 'nonResident') unitPrice = tour.non_resident_price;
-        else unitPrice = tour.non_resident_price; // fallback
+        let adultPrice = 0;
+        let childPrice = 0;
+        if (residency === 'citizen') {
+            adultPrice = tour.citizen_price;
+            childPrice = tour.citizen_child_price || 0;
+        } else if (residency === 'resident') {
+            adultPrice = tour.resident_price;
+            childPrice = tour.resident_child_price || 0;
+        } else {
+            adultPrice = tour.non_resident_price;
+            childPrice = tour.non_resident_child_price || 0;
+        }
 
-        const expectedTotal = unitPrice * participants;
+        let expectedTotal = (adultPrice * adultsCount) + (childPrice * childrenCount);
 
+        const { data: settingsData } = await supabaseClient
+            .from('site_settings')
+            .select('*')
+            .in('key', ['group_discount_threshold', 'group_discount_percentage']);
+
+        let threshold = 5;
+        let percentage = 10;
+        if (settingsData) {
+            const tObj = settingsData.find(d => d.key === 'group_discount_threshold');
+            const pObj = settingsData.find(d => d.key === 'group_discount_percentage');
+            if (tObj && !isNaN(parseInt(tObj.value))) threshold = parseInt(tObj.value);
+            if (pObj && !isNaN(parseInt(pObj.value))) percentage = parseInt(pObj.value);
+        }
+
+        const totalParticipants = adultsCount + childrenCount;
+        if (threshold > 0 && percentage > 0 && totalParticipants >= threshold) {
+            expectedTotal = expectedTotal - (expectedTotal * (percentage / 100));
+        }
+
+        console.log(`Validating client amount: ${clientAmount} against expected: ${expectedTotal}`);
         // Use a small epsilon for decimal comparison if needed, but here they are likely integers or fixed decimals
-        if (Math.abs(clientAmount - expectedTotal) > 0.01) {
+        if (Math.abs(clientAmount - expectedTotal) > 1.0) {
             console.error(`Amount mismatch! Client: ${clientAmount}, Expected: ${expectedTotal}`);
             throw new Error("Payment amount mismatch. Please try again.");
         }
@@ -155,6 +184,8 @@ serve(async (req) => {
                 customer_email: customerEmail,
                 customer_phone: customerPhone,
                 participants,
+                adults_count: adultsCount,
+                children_count: childrenCount,
                 start_date: startDate?.split('T')[0],
                 total_amount: expectedTotal,
                 special_requests: specialRequests,

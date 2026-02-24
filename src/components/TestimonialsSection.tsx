@@ -166,38 +166,7 @@ const TestimonialsSection = () => {
                         Don't just take our word for it — hear from travelers who experienced the magic of Kenya with us
                     </p>
 
-                    {/* Rating Badges */}
-                    <div className="flex flex-wrap items-center justify-center gap-6 mt-8">
-                        <div className="flex items-center gap-3 px-5 py-3 bg-white dark:bg-white/10 rounded-2xl shadow-lg dark:shadow-none border border-slate-200 dark:border-white/10 hover:shadow-xl dark:hover:bg-white/15 transition-all duration-300">
-                            <GoogleLogo />
-                            <div className="text-left">
-                                <div className="flex items-center gap-1">
-                                    <span className="text-lg font-bold text-slate-800 dark:text-white">{googleAvgRating}</span>
-                                    <div className="flex">
-                                        {[...Array(5)].map((_, i) => (
-                                            <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                                        ))}
-                                    </div>
-                                </div>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">{googleReviews.length ? googleReviews.length * 52 : 120} reviews</p>
-                            </div>
-                        </div>
 
-                        <div className="flex items-center gap-3 px-5 py-3 bg-white dark:bg-white/10 rounded-2xl shadow-lg dark:shadow-none border border-slate-200 dark:border-white/10 hover:shadow-xl dark:hover:bg-white/15 transition-all duration-300">
-                            <TripAdvisorLogo />
-                            <div className="text-left">
-                                <div className="flex items-center gap-1">
-                                    <span className="text-lg font-bold text-slate-800 dark:text-white">{tripAdvisorAvgRating}</span>
-                                    <div className="flex">
-                                        {[...Array(5)].map((_, i) => (
-                                            <Star key={i} className="w-4 h-4 fill-emerald-400 text-emerald-400" />
-                                        ))}
-                                    </div>
-                                </div>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">{tripAdvisorReviews.length ? tripAdvisorReviews.length * 34 : 85} reviews</p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 {/* Reviews Carousel */}

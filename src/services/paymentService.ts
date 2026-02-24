@@ -13,6 +13,8 @@ export interface PaymentRequest {
   endDate?: string;
   specialRequests?: string;
   residency_type: string;
+  adults_count: number;
+  children_count: number;
 }
 
 export interface PaymentResponse {
@@ -36,7 +38,7 @@ export class PaymentService {
     // Check if we already have a user for this email or use a null UUID for guests
     const userId = user?.id || '00000000-0000-0000-0000-000000000000';
 
-    const { data: booking, error } = await supabase
+    const { data: booking, error } = await (supabase
       .from('bookings')
       .insert({
         tour_id: paymentData.destinationId,
@@ -45,6 +47,8 @@ export class PaymentService {
         customer_email: paymentData.customerEmail,
         customer_phone: paymentData.customerPhone,
         participants: paymentData.participants,
+        adults_count: paymentData.adults_count,
+        children_count: paymentData.children_count,
         start_date: paymentData.startDate?.split('T')[0],
         end_date: paymentData.endDate?.split('T')[0],
         total_amount: paymentData.totalAmount,
@@ -53,9 +57,9 @@ export class PaymentService {
         status: status,
         payment_method: paymentMethod,
         residency_type: paymentData.residency_type
-      })
+      } as any)
       .select()
-      .single();
+      .single() as any);
 
     if (error) {
       console.error(`Error creating booking for ${paymentMethod}:`, error);

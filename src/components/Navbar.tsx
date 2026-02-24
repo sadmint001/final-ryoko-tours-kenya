@@ -68,26 +68,25 @@ const CustomLanguageSwitcher = ({ isMobile = false }: { isMobile?: boolean }) =>
     setCurrentLangName(langName);
     setIsMobileOpen(false);
 
-    const googleCombo = document.querySelector('.goog-te-combo') as HTMLSelectElement;
-    if (googleCombo) {
-      googleCombo.value = langCode;
-      googleCombo.dispatchEvent(new Event('change'));
+    // Robust function to apply language change via Google Translate element
+    const applyTranslation = (attemptsLeft = 10) => {
+      const googleCombo = document.querySelector('.goog-te-combo') as HTMLSelectElement;
 
-      setTimeout(() => {
+      if (googleCombo) {
+        googleCombo.value = langCode;
+        googleCombo.dispatchEvent(new Event('change'));
+        // Slight delay to allow Google's script to update the DOM
+        setTimeout(() => setIsTranslating(false), 300);
+      } else if (attemptsLeft > 0) {
+        // If combo box isn't ready yet, retry in 100ms
+        setTimeout(() => applyTranslation(attemptsLeft - 1), 100);
+      } else {
+        // Stop the loading spinner even if translation fails so UI doesn't hang
         setIsTranslating(false);
-      }, 1000);
-    } else {
-      setTimeout(() => {
-        const retryCombo = document.querySelector('.goog-te-combo') as HTMLSelectElement;
-        if (retryCombo) {
-          retryCombo.value = langCode;
-          retryCombo.dispatchEvent(new Event('change'));
-          setIsTranslating(false);
-        } else {
-          window.location.reload();
-        }
-      }, 500);
-    }
+      }
+    };
+
+    applyTranslation();
   };
 
   // Sync initial state
@@ -152,11 +151,7 @@ const CustomLanguageSwitcher = ({ isMobile = false }: { isMobile?: boolean }) =>
   return (
     <div className="relative group">
       <button className="flex items-center gap-2 px-3 py-2 rounded-full bg-accent/30 hover:bg-accent/50 border border-slate-200 dark:border-white/20 transition-all duration-300 backdrop-blur-sm disabled:opacity-70 disabled:cursor-not-allowed" disabled={isTranslating}>
-        {isTranslating ? (
-          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        ) : (
-          <Languages className="w-4 h-4 text-primary" />
-        )}
+        <Languages className="w-4 h-4 text-primary" />
         <span className="text-xs font-bold uppercase tracking-widest hidden lg:inline">{currentLangName}</span>
         <ChevronDown className="w-3 h-3 text-muted-foreground group-hover:rotate-180 transition-transform" />
       </button>
