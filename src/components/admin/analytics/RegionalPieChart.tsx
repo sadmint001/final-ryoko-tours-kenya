@@ -1,14 +1,5 @@
-import { Pie } from 'react-chartjs-2';
-import {
-    Chart as ChartJS,
-    ArcElement,
-    Tooltip,
-    Legend,
-    ChartOptions
-} from 'chart.js';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { motion } from 'framer-motion';
-
-ChartJS.register(ArcElement, Tooltip, Legend);
 
 interface RegionalPieChartProps {
     data: Record<string, number>;
@@ -30,51 +21,50 @@ const RegionalPieChart = ({ data, onSelect, selectedRegion }: RegionalPieChartPr
         '#8b5cf6', // Oceania - Violet
     ];
 
-    const chartData = {
-        labels: regions,
-        datasets: [
-            {
-                data: values,
-                backgroundColor: colors.map((c, i) => {
-                    if (!selectedRegion) return c;
-                    return selectedRegion === regions[i] ? c : `${c}33`; // 33 is ~20% opacity
-                }),
-                borderWidth: 0,
-                hoverOffset: 15,
-            },
-        ],
-    };
-
-    const options: ChartOptions<'pie'> = {
-        plugins: {
-            legend: {
-                display: false,
-            },
-            tooltip: {
-                callbacks: {
-                    label: (context) => {
-                        const label = context.label || '';
-                        const value = context.parsed || 0;
-                        const percentage = ((value / total) * 100).toFixed(1);
-                        return `${label}: ${value.toLocaleString()} (${percentage}%)`;
-                    },
-                },
-            },
-        },
-        responsive: true,
-        maintainAspectRatio: false,
-        onClick: (_, elements) => {
-            if (elements.length > 0 && onSelect) {
-                const index = elements[0].index;
-                onSelect(regions[index]);
-            }
-        },
-    };
+    const chartData = regions.map((region, i) => ({
+        name: region,
+        value: data[region],
+        color: colors[i]
+    }));
 
     return (
         <div className="w-full h-full flex flex-col items-center">
             <div className="relative w-full h-64 mb-6">
-                <Pie data={chartData} options={options} />
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Tooltip
+                            formatter={(value: number, name: string) => {
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return [`${value.toLocaleString()} (${percentage}%)`, name];
+                            }}
+                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                        />
+                        <Pie
+                            data={chartData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={40}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            dataKey="value"
+                            onClick={(data) => {
+                                if (data && data.name && onSelect) {
+                                    onSelect(data.name);
+                                }
+                            }}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            {chartData.map((entry, index) => (
+                                <Cell
+                                    key={`cell-${index}`}
+                                    fill={entry.color}
+                                    opacity={(!selectedRegion || selectedRegion === entry.name) ? 1 : 0.3}
+                                    className="transition-opacity duration-300 outline-none"
+                                />
+                            ))}
+                        </Pie>
+                    </PieChart>
+                </ResponsiveContainer>
             </div>
 
             <div className="grid grid-cols-2 gap-x-8 gap-y-3 w-full max-w-xs mx-auto">
@@ -86,12 +76,12 @@ const RegionalPieChart = ({ data, onSelect, selectedRegion }: RegionalPieChartPr
                     return (
                         <motion.div
                             key={region}
-                            className={`flex items-center gap-2 transition-opacity duration-300 ${isSelected ? 'opacity-100' : 'opacity-30'}`}
+                            className={`flex items-center gap-2 transition-opacity duration-300 ${isSelected ? 'opacity-100' : 'opacity-30'} cursor-pointer`}
                             whileHover={{ scale: 1.05 }}
                             onClick={() => onSelect?.(region)}
                         >
                             <div
-                                className="w-2 h-2 rounded-full"
+                                className="w-2 h-2 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: colors[i] }}
                             />
                             <div className="flex flex-col">

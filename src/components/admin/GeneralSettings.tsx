@@ -7,6 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Settings, Save, Mail, Phone, MapPin, Instagram, Facebook, Globe } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Loader from '@/components/ui/loader';
 
 const GeneralSettings = () => {
@@ -20,15 +24,33 @@ const GeneralSettings = () => {
         footer_description: '',
         form_submit_email: '',
         group_discount_threshold: '',
-        group_discount_percentage: ''
+        group_discount_percentage: '',
+        is_discount_active: 'false',
+        group_discount_destinations: 'all'
     });
+    const [destinations, setDestinations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const { toast } = useToast();
 
     useEffect(() => {
         fetchSettings();
+        fetchDestinations();
     }, []);
+
+    const fetchDestinations = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('destinations')
+                .select('id, name')
+                .eq('is_active', true)
+                .order('name');
+            if (error) throw error;
+            if (data) setDestinations(data);
+        } catch (error) {
+            console.error('Error fetching destinations:', error);
+        }
+    };
 
     const fetchSettings = async () => {
         try {
@@ -92,6 +114,25 @@ const GeneralSettings = () => {
 
     const handleChange = (key: keyof typeof settings, value: string) => {
         setSettings(prev => ({ ...prev, [key]: value }));
+    };
+
+    const handleDestinationsChange = (destinationId: string, checked: boolean) => {
+        try {
+            let currentDestinations: string[] = [];
+            if (settings.group_discount_destinations !== 'all' && settings.group_discount_destinations) {
+                currentDestinations = JSON.parse(settings.group_discount_destinations);
+            }
+
+            if (checked) {
+                currentDestinations.push(destinationId);
+            } else {
+                currentDestinations = currentDestinations.filter(id => id !== destinationId);
+            }
+
+            handleChange('group_discount_destinations', JSON.stringify(currentDestinations));
+        } catch (e) {
+            handleChange('group_discount_destinations', JSON.stringify([destinationId]));
+        }
     };
 
     if (loading) return <div className="p-12 flex justify-center"><Loader label="Loading configuration..." /></div>;
@@ -233,32 +274,103 @@ const GeneralSettings = () => {
                         </div>
                         <CardDescription>Configure global discount rules for group bookings.</CardDescription>
                     </CardHeader>
-                    <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="group_discount_threshold">Group Discount Minimum Guests</Label>
-                            <Input
-                                id="group_discount_threshold"
-                                type="number"
-                                min="0"
-                                value={settings.group_discount_threshold}
-                                onChange={(e) => handleChange('group_discount_threshold', e.target.value)}
-                                placeholder="e.g., 5"
+                    <CardContent className="p-6 space-y-6">
+                        <div className="flex items-center justify-between border border-slate-200 dark:border-white/5 rounded-xl p-4 bg-slate-50/50 dark:bg-white/5">
+                            <div className="space-y-0.5">
+                                <Label htmlFor="is_discount_active" className="text-base">Enable Group Discounts</Label>
+                                <p className="text-sm text-slate-500">Turn on or off the promotional group discounts site-wide.</p>
+                            </div>
+                            <Switch
+                                id="is_discount_active"
+                                checked={settings.is_discount_active === 'true'}
+                                onCheckedChange={(checked) => handleChange('is_discount_active', checked ? 'true' : 'false')}
                             />
-                            <p className="text-xs text-slate-500">Minimum total guests (adults + children) to trigger the discount. Set to 0 to disable.</p>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="group_discount_percentage">Group Discount Percentage (%)</Label>
-                            <Input
-                                id="group_discount_percentage"
-                                type="number"
-                                min="0"
-                                max="100"
-                                value={settings.group_discount_percentage}
-                                onChange={(e) => handleChange('group_discount_percentage', e.target.value)}
-                                placeholder="e.g., 10"
-                            />
-                            <p className="text-xs text-slate-500">The percentage discount applied to the total base price.</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="group_discount_threshold">Group Discount Minimum Guests</Label>
+                                <Input
+                                    id="group_discount_threshold"
+                                    type="number"
+                                    min="0"
+                                    value={settings.group_discount_threshold}
+                                    onChange={(e) => handleChange('group_discount_threshold', e.target.value)}
+                                    placeholder="e.g., 5"
+                                />
+                                <p className="text-xs text-slate-500">Minimum total guests (adults + children) to trigger the discount. Set to 0 to disable.</p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="group_discount_percentage">Group Discount Percentage (%)</Label>
+                                <Input
+                                    id="group_discount_percentage"
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={settings.group_discount_percentage}
+                                    onChange={(e) => handleChange('group_discount_percentage', e.target.value)}
+                                    placeholder="e.g., 10"
+                                />
+                                <p className="text-xs text-slate-500">The percentage discount applied to the total base price.</p>
+                            </div>
                         </div>
+
+                        {settings.is_discount_active === 'true' && (
+                            <div className="pt-4 border-t border-slate-100 dark:border-white/5 space-y-4">
+                                <Label className="text-base font-semibold">Target Destinations</Label>
+                                <RadioGroup
+                                    value={settings.group_discount_destinations === 'all' ? 'all' : 'specific'}
+                                    onValueChange={(val) => {
+                                        if (val === 'all') {
+                                            handleChange('group_discount_destinations', 'all');
+                                        } else {
+                                            handleChange('group_discount_destinations', '[]');
+                                        }
+                                    }}
+                                    className="flex flex-col gap-3"
+                                >
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="all" id="dest-all" />
+                                        <Label htmlFor="dest-all">Apply to All Destinations</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="specific" id="dest-specific" />
+                                        <Label htmlFor="dest-specific">Apply to Specific Destinations</Label>
+                                    </div>
+                                </RadioGroup>
+
+                                {settings.group_discount_destinations !== 'all' && (
+                                    <div className="pl-6 pt-2">
+                                        <ScrollArea className="h-48 rounded-md border border-slate-200 dark:border-white/5 p-4 bg-slate-50 dark:bg-slate-900/50">
+                                            <div className="space-y-3">
+                                                {destinations.map(dest => {
+                                                    let isChecked = false;
+                                                    try {
+                                                        const parsed = JSON.parse(settings.group_discount_destinations);
+                                                        isChecked = Array.isArray(parsed) && parsed.includes(dest.id);
+                                                    } catch (e) { }
+
+                                                    return (
+                                                        <div key={dest.id} className="flex items-center space-x-2">
+                                                            <Checkbox
+                                                                id={`dest-${dest.id}`}
+                                                                checked={isChecked}
+                                                                onCheckedChange={(checked) => handleDestinationsChange(dest.id, checked as boolean)}
+                                                            />
+                                                            <label
+                                                                htmlFor={`dest-${dest.id}`}
+                                                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                            >
+                                                                {dest.name}
+                                                            </label>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </ScrollArea>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

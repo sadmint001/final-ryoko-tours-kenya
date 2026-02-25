@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
 const Services = () => {
-  const [discountSettings, setDiscountSettings] = useState({ threshold: 5, percentage: 10 });
+  const [discountSettings, setDiscountSettings] = useState({ isActive: false, threshold: 5, percentage: 10, destinations: 'all' });
 
   useEffect(() => {
     const fetchDiscount = async () => {
@@ -13,13 +13,18 @@ const Services = () => {
         const { data } = await supabase
           .from('site_settings')
           .select('*')
-          .in('key', ['group_discount_threshold', 'group_discount_percentage']);
-        if (data) {
-          const tObj = data.find((d: any) => d.key === 'group_discount_threshold');
-          const pObj = data.find((d: any) => d.key === 'group_discount_percentage');
+          .in('key', ['group_discount_threshold', 'group_discount_percentage', 'is_discount_active', 'group_discount_destinations']);
+        if (data && data.length > 0) {
+          const typedData = data as any[];
+          const tObj = typedData.find((d: any) => d.key === 'group_discount_threshold');
+          const pObj = typedData.find((d: any) => d.key === 'group_discount_percentage');
+          const activeObj = typedData.find((d: any) => d.key === 'is_discount_active');
+          const destsObj = typedData.find((d: any) => d.key === 'group_discount_destinations');
           setDiscountSettings({
-            threshold: tObj && !isNaN(parseInt(tObj.value)) ? parseInt(tObj.value) : 5,
-            percentage: pObj && !isNaN(parseInt(pObj.value)) ? parseInt(pObj.value) : 10,
+            isActive: activeObj ? activeObj.value === 'true' : false,
+            threshold: tObj && tObj.value && !isNaN(parseInt(tObj.value)) ? parseInt(tObj.value) : 5,
+            percentage: pObj && pObj.value && !isNaN(parseInt(pObj.value)) ? parseInt(pObj.value) : 10,
+            destinations: destsObj ? destsObj.value : 'all',
           });
         }
       } catch (e) {
@@ -56,7 +61,7 @@ const Services = () => {
             Group <span className="text-amber-400">Deals</span>
           </h2>
           <p className="text-lg text-white/50 max-w-2xl mx-auto leading-relaxed">
-            Travel together, save together. Unlock exclusive group discounts on every destination when you book for {discountSettings.threshold} or more guests.
+            {discountSettings.isActive ? `Travel together, save together. Unlock exclusive group discounts ${discountSettings.destinations !== 'all' ? 'on select' : 'on every'} destination${discountSettings.destinations !== 'all' ? 's' : ''} when you book for ${discountSettings.threshold} or more guests.` : 'Travel together and experience the wild heart of Kenya as a group. Exclusive group itineraries and dedicated coordinators available.'}
           </p>
         </div>
 
@@ -75,15 +80,17 @@ const Services = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/30 hidden lg:block" />
 
               {/* Floating discount badge */}
-              <div className="absolute top-6 left-6">
-                <div className="bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl px-5 py-3 shadow-xl shadow-amber-500/30 flex items-center gap-3">
-                  <Percent className="w-6 h-6 text-slate-900" />
-                  <div>
-                    <p className="text-2xl font-black text-slate-900 leading-none">{discountSettings.percentage}% OFF</p>
-                    <p className="text-[10px] font-bold text-slate-900/70 uppercase tracking-wider">Group Savings</p>
+              {discountSettings.isActive && discountSettings.percentage > 0 && (
+                <div className="absolute top-6 left-6">
+                  <div className="bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl px-5 py-3 shadow-xl shadow-amber-500/30 flex items-center gap-3">
+                    <Percent className="w-6 h-6 text-slate-900" />
+                    <div>
+                      <p className="text-2xl font-black text-slate-900 leading-none">{discountSettings.percentage}% OFF</p>
+                      <p className="text-[10px] font-bold text-slate-900/70 uppercase tracking-wider">Group Savings</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Bottom overlay text */}
               <div className="absolute bottom-6 left-6 right-6">
@@ -112,7 +119,15 @@ const Services = () => {
                 </div>
 
                 <p className="text-white/50 mb-8 leading-relaxed">
-                  Book for <span className="text-amber-400 font-semibold">{discountSettings.threshold} or more guests</span> on any destination and automatically receive a <span className="text-amber-400 font-semibold">{discountSettings.percentage}% discount</span> on your entire booking — no promo codes needed.
+                  {discountSettings.isActive ? (
+                    <>
+                      Book for <span className="text-amber-400 font-semibold">{discountSettings.threshold} or more guests</span> {discountSettings.destinations !== 'all' ? 'on select destinations' : 'on any destination'} and automatically receive a <span className="text-amber-400 font-semibold">{discountSettings.percentage}% discount</span> on your entire booking — no promo codes needed.
+                    </>
+                  ) : (
+                    <>
+                      Book as a group and get access to exclusive private safari vehicles, dedicated group coordinators, and tailored itineraries for your entire party.
+                    </>
+                  )}
                 </p>
 
                 {/* Features Grid */}

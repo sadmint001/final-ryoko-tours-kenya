@@ -86,7 +86,7 @@ const DestinationDetails = () => {
   const [error, setError] = useState<string | null>(null);
   const [pesapalUrl, setPesapalUrl] = useState<string | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [discountSettings, setDiscountSettings] = useState({ threshold: 5, percentage: 10 });
+  const [discountSettings, setDiscountSettings] = useState({ isActive: false, threshold: 5, percentage: 10, destinations: 'all' });
 
   const { selectedResidency, setResidency } = useResidencyPersistence();
   const { user } = useAuth();
@@ -145,18 +145,22 @@ const DestinationDetails = () => {
         const { data, error } = await supabase
           .from('site_settings')
           .select('*')
-          .in('key', ['group_discount_threshold', 'group_discount_percentage']);
+          .in('key', ['group_discount_threshold', 'group_discount_percentage', 'is_discount_active', 'group_discount_destinations']);
 
         if (data && !error) {
           const thresholdObj = data.find(d => d.key === 'group_discount_threshold');
           const percentageObj = data.find(d => d.key === 'group_discount_percentage');
+          const activeObj = data.find(d => d.key === 'is_discount_active');
+          const destsObj = data.find(d => d.key === 'group_discount_destinations');
 
           const parsedThreshold = thresholdObj ? parseInt(thresholdObj.value) : NaN;
           const parsedPercentage = percentageObj ? parseInt(percentageObj.value) : NaN;
 
           setDiscountSettings({
+            isActive: activeObj ? activeObj.value === 'true' : false,
             threshold: !isNaN(parsedThreshold) ? parsedThreshold : 5,
-            percentage: !isNaN(parsedPercentage) ? parsedPercentage : 10
+            percentage: !isNaN(parsedPercentage) ? parsedPercentage : 10,
+            destinations: destsObj ? destsObj.value : 'all'
           });
         }
       } catch (e) {
@@ -205,11 +209,29 @@ const DestinationDetails = () => {
     return (adultPrice * (Number(form.adultsCount) || 1)) + (childPrice * (Number(form.childrenCount) || 0));
   };
 
+  const isDiscountEligible = () => {
+    if (!discountSettings.isActive) return false;
+
+    // Check if discount is applicable to this destination
+    if (discountSettings.destinations !== 'all') {
+      try {
+        const destArr = JSON.parse(discountSettings.destinations);
+        if (Array.isArray(destArr) && !destArr.includes(destination?.id)) {
+          return false;
+        }
+      } catch (e) {
+        return false;
+      }
+    }
+    return true;
+  };
+
   const getDiscountAmount = () => {
+    if (!isDiscountEligible()) return 0;
     const baseTotal = getBaseTotal();
     const totalParticipants = (Number(form.adultsCount) || 1) + (Number(form.childrenCount) || 0);
 
-    if (discountSettings.threshold > 0 && discountSettings.percentage > 0 && totalParticipants >= discountSettings.threshold) {
+    if (isDiscountEligible() && discountSettings.threshold > 0 && discountSettings.percentage > 0 && totalParticipants >= discountSettings.threshold) {
       return baseTotal * (discountSettings.percentage / 100);
     }
     return 0;
@@ -399,6 +421,15 @@ const DestinationDetails = () => {
       toast({
         title: 'Date Required',
         description: 'Please select a start date.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (Number(form.adultsCount) < 1) {
+      toast({
+        title: 'Adult Required',
+        description: 'At least one adult is required to make a booking. Children cannot book unaccompanied.',
         variant: 'destructive',
       });
       return;
@@ -817,7 +848,7 @@ const DestinationDetails = () => {
                   </div>
 
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    {discountSettings.threshold > 0 && discountSettings.percentage > 0 && (
+                    {isDiscountEligible() && discountSettings.threshold > 0 && discountSettings.percentage > 0 && (
                       <div className="bg-gradient-to-br from-amber-50 dark:from-amber-900/20 to-orange-50 dark:to-orange-900/20 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-4 flex gap-3 items-start shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
                         <div className="bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-full p-1.5 shadow-inner flex-shrink-0 mt-0.5">
                           <LucideIcons.Star className="w-4 h-4 fill-current" />
@@ -909,6 +940,9 @@ const DestinationDetails = () => {
                           onChange={(e) => handleInputChange('childrenCount', e.target.value === '' ? '' as any : parseInt(e.target.value))}
                           className="h-12 rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-900"
                         />
+                        <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1.5 font-medium leading-tight">
+                          * Children are aged 1-12 years. Verification is required before travel.
+                        </p>
                       </div>
                     </div>
 

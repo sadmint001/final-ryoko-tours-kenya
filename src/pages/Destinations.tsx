@@ -39,7 +39,7 @@ const Destinations: React.FC = () => {
   const [sortBy, setSortBy] = useState<string>('recommended');
   const [showResidencyMenu, setShowResidencyMenu] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [discountSettings, setDiscountSettings] = useState({ threshold: 0, percentage: 0 });
+  const [discountSettings, setDiscountSettings] = useState({ isActive: false, threshold: 0, percentage: 0, destinations: 'all' });
 
   // Hero Image Carousel State
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
@@ -193,14 +193,18 @@ const Destinations: React.FC = () => {
         const { data } = await supabase
           .from('site_settings')
           .select('*')
-          .in('key', ['group_discount_threshold', 'group_discount_percentage']);
+          .in('key', ['group_discount_threshold', 'group_discount_percentage', 'is_discount_active', 'group_discount_destinations']);
         if (data && data.length > 0) {
           const typedData = data as any[];
           const tObj = typedData.find((d: any) => d.key === 'group_discount_threshold');
           const pObj = typedData.find((d: any) => d.key === 'group_discount_percentage');
+          const activeObj = typedData.find((d: any) => d.key === 'is_discount_active');
+          const destsObj = typedData.find((d: any) => d.key === 'group_discount_destinations');
           setDiscountSettings({
+            isActive: activeObj ? activeObj.value === 'true' : false,
             threshold: tObj && tObj.value && !isNaN(parseInt(tObj.value)) ? parseInt(tObj.value) : 5,
             percentage: pObj && pObj.value && !isNaN(parseInt(pObj.value)) ? parseInt(pObj.value) : 10,
+            destinations: destsObj ? destsObj.value : 'all',
           });
         }
       } catch (e) {
@@ -495,7 +499,7 @@ const Destinations: React.FC = () => {
       </div>
 
       {/* ── Premium Group Discount Banner ── */}
-      {discountSettings.threshold > 0 && discountSettings.percentage > 0 && (
+      {discountSettings.isActive && discountSettings.threshold > 0 && discountSettings.percentage > 0 && (
         <div className="container mx-auto px-4 -mt-6 mb-12 relative z-20">
           <div className="relative overflow-hidden rounded-3xl shadow-2xl">
             {/* Layered Background */}

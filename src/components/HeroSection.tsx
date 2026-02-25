@@ -11,7 +11,7 @@ const heroImages = Object.values(
 
 const HeroSection = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [discountSettings, setDiscountSettings] = useState({ threshold: 0, percentage: 0 });
+  const [discountSettings, setDiscountSettings] = useState({ isActive: false, threshold: 0, percentage: 0, destinations: 'all' });
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -27,14 +27,18 @@ const HeroSection = () => {
         const { data } = await supabase
           .from('site_settings')
           .select('*')
-          .in('key', ['group_discount_threshold', 'group_discount_percentage']);
+          .in('key', ['group_discount_threshold', 'group_discount_percentage', 'is_discount_active', 'group_discount_destinations']);
         if (data && data.length > 0) {
           const typedData = data as any[];
           const tObj = typedData.find((d: any) => d.key === 'group_discount_threshold');
           const pObj = typedData.find((d: any) => d.key === 'group_discount_percentage');
+          const activeObj = typedData.find((d: any) => d.key === 'is_discount_active');
+          const destsObj = typedData.find((d: any) => d.key === 'group_discount_destinations');
           setDiscountSettings({
+            isActive: activeObj ? activeObj.value === 'true' : false,
             threshold: tObj && tObj.value && !isNaN(parseInt(tObj.value)) ? parseInt(tObj.value) : 5,
             percentage: pObj && pObj.value && !isNaN(parseInt(pObj.value)) ? parseInt(pObj.value) : 10,
+            destinations: destsObj ? destsObj.value : 'all',
           });
         }
       } catch (e) {
@@ -108,7 +112,7 @@ const HeroSection = () => {
           </div>
 
           {/* Promotional Discount Banner */}
-          {discountSettings.threshold > 0 && discountSettings.percentage > 0 && (
+          {discountSettings.isActive && discountSettings.threshold > 0 && discountSettings.percentage > 0 && (
             <div className="max-w-3xl mx-auto animate-scale-up">
               <div className="relative overflow-hidden rounded-2xl border border-white/10">
                 {/* Layered Background */}
@@ -142,7 +146,7 @@ const HeroSection = () => {
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     </div>
                     <p className="text-base md:text-lg font-serif font-bold text-white leading-snug">
-                      Book for <span className="text-amber-400">{discountSettings.threshold}+</span> guests & save <span className="text-amber-400">{discountSettings.percentage}%</span> instantly
+                      Book for <span className="text-amber-400">{discountSettings.threshold}+</span> guests & save <span className="text-amber-400">{discountSettings.percentage}%</span> instantly {discountSettings.destinations !== 'all' ? 'on select destinations' : 'on any destination'}
                     </p>
                   </div>
 
