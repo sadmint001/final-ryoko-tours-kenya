@@ -670,7 +670,7 @@ const DestinationManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold">Destination Management</h2>
           <p className="text-muted-foreground">Manage your destinations, update images, pricing, and details</p>
@@ -678,13 +678,13 @@ const DestinationManagement: React.FC = () => {
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openCreateDialog}>
+            <Button onClick={openCreateDialog} className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Add Destination
             </Button>
           </DialogTrigger>
 
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle>{editingDestination ? 'Edit Destination' : 'Add New Destination'}</DialogTitle>
               <DialogDescription>
@@ -694,15 +694,15 @@ const DestinationManagement: React.FC = () => {
 
             <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
               <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                  <TabsTrigger value="pricing">Pricing</TabsTrigger>
-                  <TabsTrigger value="details">Details</TabsTrigger>
-                  <TabsTrigger value="media">Photos</TabsTrigger>
+                <TabsList className="flex w-full overflow-x-auto h-auto p-1 bg-muted/50 no-scrollbar">
+                  <TabsTrigger value="basic" className="flex-1 py-2">Basic Info</TabsTrigger>
+                  <TabsTrigger value="pricing" className="flex-1 py-2">Pricing</TabsTrigger>
+                  <TabsTrigger value="details" className="flex-1 py-2">Details</TabsTrigger>
+                  <TabsTrigger value="media" className="flex-1 py-2">Photos</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="basic" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <TabsContent value="basic" className="space-y-4 pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="name">Destination Name</Label>
                       <Input
@@ -787,8 +787,8 @@ const DestinationManagement: React.FC = () => {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="pricing" className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
+                <TabsContent value="pricing" className="space-y-4 pt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="citizenPrice">Citizen Adult (KSh)</Label>
                       <Input
@@ -803,7 +803,7 @@ const DestinationManagement: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="residentPrice">Resident Adult (KSh)</Label>
+                      <Label htmlFor="residentPrice">Resident Adult (USD)</Label>
                       <Input
                         id="residentPrice"
                         type="number"
@@ -816,7 +816,7 @@ const DestinationManagement: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="nonResidentPrice">Non-Resident Adult (KSh)</Label>
+                      <Label htmlFor="nonResidentPrice">Non-Resident Adult (USD)</Label>
                       <Input
                         id="nonResidentPrice"
                         type="number"
@@ -830,7 +830,7 @@ const DestinationManagement: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="citizenChildPrice">Citizen Child (KSh)</Label>
                       <Input
@@ -844,7 +844,7 @@ const DestinationManagement: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="residentChildPrice">Resident Child (KSh)</Label>
+                      <Label htmlFor="residentChildPrice">Resident Child (USD)</Label>
                       <Input
                         id="residentChildPrice"
                         type="number"
@@ -879,7 +879,7 @@ const DestinationManagement: React.FC = () => {
                         ...p,
                         childAgeLimit: e.target.value === '' ? '' as any : parseInt(e.target.value || '12')
                       }))}
-                      className="w-1/3"
+                      className="w-full sm:w-1/3"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
                       Up to what age does the child pricing apply for this destination? (default 12)
@@ -912,10 +912,11 @@ const DestinationManagement: React.FC = () => {
                               ...p,
                               discountPercentage: e.target.value === '' ? '' as any : parseInt(e.target.value || '0')
                             }))}
+                            className="bg-white dark:bg-slate-950"
                           />
                         </div>
                         <div>
-                          <Label htmlFor="discountThreshold">Minimum Guests Threshold</Label>
+                          <Label htmlFor="discountThreshold">Min guests for discount</Label>
                           <Input
                             id="discountThreshold"
                             type="number"
@@ -925,6 +926,7 @@ const DestinationManagement: React.FC = () => {
                               ...p,
                               discountThreshold: e.target.value === '' ? '' as any : parseInt(e.target.value || '0')
                             }))}
+                            className="bg-white dark:bg-slate-950"
                           />
                         </div>
                       </div>
@@ -932,8 +934,8 @@ const DestinationManagement: React.FC = () => {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="details" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <TabsContent value="details" className="space-y-6 pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="location">Location</Label>
                       <Input
@@ -968,7 +970,7 @@ const DestinationManagement: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="duration">Duration (days)</Label>
                       <Input
@@ -1000,7 +1002,7 @@ const DestinationManagement: React.FC = () => {
                     <Label className="text-base font-bold">Activities</Label>
                     <div className="space-y-4">
                       {formData.activities?.map((activity, idx) => (
-                        <Card key={idx} className="p-4 bg-slate-50/50 dark:bg-slate-900/50 border-dashed">
+                        <Card key={idx} className="p-3 sm:p-4 bg-slate-50/50 dark:bg-slate-900/50 border-dashed relative group">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <Label className="text-xs">Title</Label>
@@ -1037,18 +1039,18 @@ const DestinationManagement: React.FC = () => {
                               />
                             </div>
                           </div>
-                          <div className="flex justify-end mt-2">
+                          <div className="flex sm:justify-end mt-4">
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="text-red-500 h-8"
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 h-9 w-full sm:w-auto"
                               onClick={() => setFormData((p) => ({
                                 ...p,
                                 activities: p.activities?.filter((_, i) => i !== idx)
                               }))}
                             >
-                              <Trash2 className="h-4 w-4 mr-1" /> Remove Activity
+                              <Trash2 className="h-4 w-4 mr-2" /> Remove Activity
                             </Button>
                           </div>
                         </Card>
@@ -1071,7 +1073,7 @@ const DestinationManagement: React.FC = () => {
                     <Label className="text-base font-bold">Best Time to Visit</Label>
                     <div className="space-y-4">
                       {formData.best_time_to_visit?.map((item, idx) => (
-                        <Card key={idx} className="p-4 bg-slate-50/50 dark:bg-slate-900/50 border-dashed">
+                        <Card key={idx} className="p-3 sm:p-4 bg-slate-50/50 dark:bg-slate-900/50 border-dashed relative group">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <Label className="text-xs">Season</Label>
@@ -1096,18 +1098,18 @@ const DestinationManagement: React.FC = () => {
                               />
                             </div>
                           </div>
-                          <div className="flex justify-end mt-2">
+                          <div className="flex sm:justify-end mt-4">
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="text-red-500 h-8"
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 h-9 w-full sm:w-auto"
                               onClick={() => setFormData((p) => ({
                                 ...p,
                                 best_time_to_visit: p.best_time_to_visit?.filter((_, i) => i !== idx)
                               }))}
                             >
-                              <Trash2 className="h-4 w-4 mr-1" /> Remove Season
+                              <Trash2 className="h-4 w-4 mr-2" /> Remove Season
                             </Button>
                           </div>
                         </Card>
@@ -1126,7 +1128,7 @@ const DestinationManagement: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 items-center pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center pt-6 border-t border-slate-100 dark:border-slate-800">
                     <div className="flex items-center space-x-2">
                       <Switch
                         id="isFeatured"
@@ -1183,7 +1185,7 @@ const DestinationManagement: React.FC = () => {
                 </TabsContent>
               </Tabs>
 
-              <div className="flex justify-end gap-2">
+              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t">
                 <Button
                   type="button"
                   variant="outline"
@@ -1191,12 +1193,14 @@ const DestinationManagement: React.FC = () => {
                     setIsDialogOpen(false);
                     resetForm();
                   }}
+                  className="w-full sm:w-auto order-2 sm:order-1"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={saving}
+                  className="w-full sm:w-auto order-1 sm:order-2"
                 >
                   {saving ? (
                     <Loader size="sm" />
@@ -1213,7 +1217,7 @@ const DestinationManagement: React.FC = () => {
       </div>
 
       {/* Controls & grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {destinations.map((dest) => (
           <Card key={dest.id}>
             <div className="relative">
@@ -1247,17 +1251,17 @@ const DestinationManagement: React.FC = () => {
             </CardHeader>
 
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
+              <div className="grid grid-cols-2 sm:flex sm:items-center gap-y-2 gap-x-4 text-xs font-medium text-slate-500">
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-blue-500" />
                   {dest.location || 'Location not set'}
                 </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-emerald-500" />
                   {dest.duration ?? '-'} {dest.duration === 1 ? 'day' : 'days'}
                 </div>
-                <div className="flex items-center gap-1">
-                  <Users className="w-4 h-4" />
+                <div className="flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-purple-500" />
                   Max {dest.maxParticipants ?? '-'}
                 </div>
               </div>
@@ -1266,43 +1270,43 @@ const DestinationManagement: React.FC = () => {
                 <div className="font-medium mb-1">Pricing:</div>
                 <div className="space-y-1 text-muted-foreground">
                   <div>Citizen: KSh {dest.pricing.citizenPrice.toLocaleString()}</div>
-                  <div>Resident: KSh {dest.pricing.residentPrice.toLocaleString()}</div>
-                  <div>Non-Resident: KSh {dest.pricing.nonResidentPrice.toLocaleString()}</div>
+                  <div>Resident: USD {dest.pricing.residentPrice.toLocaleString()}</div>
+                  <div>Non-Resident: USD {dest.pricing.nonResidentPrice.toLocaleString()}</div>
                 </div>
               </div>
 
-              <div className="flex gap-2 flex-wrap">
+              <div className="grid grid-cols-2 gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => openEditDialog(dest)}
-                  className="flex-1"
+                  className="w-full text-xs h-9 bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20 text-blue-600 hover:bg-blue-100"
                 >
-                  <Edit className="mr-2 h-4 w-4" />Edit
+                  <Edit className="mr-1.5 h-3.5 w-3.5" />Edit
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleDuplicate(dest)}
-                  className="flex-1"
+                  className="w-full text-xs h-9 bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/10 text-slate-600 hover:bg-slate-100"
                 >
-                  <Copy className="mr-2 h-4 w-4" />Duplicate
+                  <Copy className="mr-1.5 h-3.5 w-3.5" />Duplicate
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleToggleActive(dest.id, !dest.isActive)}
-                  className="flex-1"
+                  className={`w-full text-xs h-9 ${dest.isActive ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-100 text-amber-600' : 'bg-green-50 dark:bg-green-500/10 border-green-100 text-green-600'}`}
                 >
                   {dest.isActive ? 'Deactivate' : 'Activate'}
                 </Button>
                 <Button
-                  variant="destructive"
+                  variant="outline"
                   size="sm"
                   onClick={() => handleDelete(dest.id)}
-                  className="text-red-600 hover:text-red-700"
+                  className="w-full text-xs h-9 bg-red-50 dark:bg-red-500/10 border-red-100 text-red-600 hover:bg-red-100"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />Delete
                 </Button>
               </div>
             </CardContent>

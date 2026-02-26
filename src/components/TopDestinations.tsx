@@ -117,7 +117,7 @@ const TopDestinations = () => {
                       <>
                         <div className="text-sm text-black dark:text-black font-medium">Starting from</div>
                         <div className="text-2xl font-bold text-primary">
-                          {formatPrice(getPriceByResidency(destination.pricing, selectedResidency))}
+                          {formatPrice(getPriceByResidency(destination.pricing, selectedResidency), selectedResidency)}
                           <span className="text-sm font-normal text-black dark:text-black ml-1">
                             per person
                           </span>

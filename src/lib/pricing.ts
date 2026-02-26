@@ -37,9 +37,10 @@ export const getChildPriceByResidency = (pricing: PricingTier, residency: string
   }
 };
 
-export const formatPrice = (price: number | null): string => {
+export const formatPrice = (price: number | null, residency: string = 'citizen'): string => {
   if (price === null) return 'Select residency';
-  return `KSh ${price.toLocaleString()}`;
+  const currency = (residency === 'citizen' || !residency) ? 'KSh' : 'USD';
+  return `${currency} ${price.toLocaleString()}`;
 };
 
 export const getResidencyLabel = (residency: string | null): string => {
