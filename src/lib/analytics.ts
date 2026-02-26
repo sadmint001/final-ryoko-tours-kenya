@@ -92,7 +92,7 @@ export async function logPageView(pathname: string) {
     const { id: visitorId, isPersistent } = visitorTracking.getVisitorId();
     const { isNewSession } = visitorTracking.getSessionId();
 
-    console.log('[Analytics] VisitorID:', visitorId, 'NewSession:', isNewSession, 'Persistent:', isPersistent);
+    // console.log('[Analytics] VisitorID:', visitorId, 'NewSession:', isNewSession, 'Persistent:', isPersistent);
 
     // Fetch geo data with fallback
     let geo = null;
@@ -102,7 +102,7 @@ export async function logPageView(pathname: string) {
       console.warn('[Analytics] Geo lookup failed, continuing anonymously', e);
     }
 
-    console.log('[Analytics] Geo detected:', geo?.continent_name || 'Unknown');
+    // console.log('[Analytics] Geo detected:', geo?.continent_name || 'Unknown');
 
     // Invoke robust tracking RPC
     const { error } = await (supabase.rpc as any)('track_visit', {
@@ -114,7 +114,7 @@ export async function logPageView(pathname: string) {
     if (error) {
       console.error('[Analytics] RPC Error:', error);
     } else {
-      console.log('[Analytics] Successfully tracked visit');
+      // console.log('[Analytics] Successfully tracked visit');
     }
 
     // Optionally still log to the raw page_views table for backwards compatibility

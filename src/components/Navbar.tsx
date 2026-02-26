@@ -106,6 +106,8 @@ const CustomLanguageSwitcher = ({ isMobile = false }: { isMobile?: boolean }) =>
           <div className="relative">
             <button
               onClick={() => setIsMobileOpen(!isMobileOpen)}
+              aria-label="Toggle language menu"
+              aria-expanded={isMobileOpen}
               className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-accent/20 hover:bg-accent/30 border border-primary/10 transition-all duration-300"
             >
               <div className="flex items-center gap-3">
@@ -150,7 +152,11 @@ const CustomLanguageSwitcher = ({ isMobile = false }: { isMobile?: boolean }) =>
 
   return (
     <div className="relative group">
-      <button className="flex items-center gap-2 px-3 py-2 rounded-full bg-accent/30 hover:bg-accent/50 border border-slate-200 dark:border-white/20 transition-all duration-300 backdrop-blur-sm disabled:opacity-70 disabled:cursor-not-allowed" disabled={isTranslating}>
+      <button
+        aria-label="Change language"
+        className="flex items-center gap-2 px-3 py-2 rounded-full bg-accent/30 hover:bg-accent/50 border border-slate-200 dark:border-white/20 transition-all duration-300 backdrop-blur-sm disabled:opacity-70 disabled:cursor-not-allowed"
+        disabled={isTranslating}
+      >
         <Languages className="w-4 h-4 text-primary" />
         <span className="text-xs font-bold uppercase tracking-widest hidden lg:inline">{currentLangName}</span>
         <ChevronDown className="w-3 h-3 text-muted-foreground group-hover:rotate-180 transition-transform" />
@@ -309,6 +315,7 @@ const Navbar = () => {
               <ThemeToggle />
               <button
                 onClick={() => setIsOpen(!isOpen)}
+                aria-label="Toggle navigation menu"
                 className="relative z-[100] p-2 rounded-full bg-accent/50 text-foreground hover:text-primary transition-all duration-300 active:scale-90"
               >
                 <AnimatePresence mode="wait">
@@ -370,6 +377,7 @@ const Navbar = () => {
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
+                  aria-label="Close menu"
                   className="p-2 rounded-full bg-accent/50 text-foreground hover:text-primary transition-all duration-300"
                 >
                   <X className="w-6 h-6" />
@@ -460,16 +468,16 @@ const Navbar = () => {
 
                 <div className="pt-10 pb-6 text-center space-y-6">
                   <div className="flex items-center justify-center gap-6">
-                    <a href="#" className="p-2 text-muted-foreground hover:text-primary transition-colors hover:scale-110 active:scale-95 duration-300">
+                    <a href="#" aria-label="Instagram" className="p-2 text-muted-foreground hover:text-primary transition-colors hover:scale-110 active:scale-95 duration-300">
                       <Instagram className="w-5 h-5" />
                     </a>
-                    <a href="#" className="p-2 text-muted-foreground hover:text-primary transition-colors hover:scale-110 active:scale-95 duration-300">
+                    <a href="#" aria-label="Facebook" className="p-2 text-muted-foreground hover:text-primary transition-colors hover:scale-110 active:scale-95 duration-300">
                       <Facebook className="h-5 w-5" />
                     </a>
-                    <a href="#" className="p-2 text-muted-foreground hover:text-primary transition-colors hover:scale-110 active:scale-95 duration-300">
+                    <a href="#" aria-label="Twitter" className="p-2 text-muted-foreground hover:text-primary transition-colors hover:scale-110 active:scale-95 duration-300">
                       <Twitter className="h-5 w-5" />
                     </a>
-                    <a href="#" className="p-2 text-muted-foreground hover:text-primary transition-colors hover:scale-110 active:scale-95 duration-300">
+                    <a href="#" aria-label="Website" className="p-2 text-muted-foreground hover:text-primary transition-colors hover:scale-110 active:scale-95 duration-300">
                       <Globe className="h-5 w-5" />
                     </a>
                   </div>

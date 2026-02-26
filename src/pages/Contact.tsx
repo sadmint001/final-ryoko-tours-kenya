@@ -201,7 +201,7 @@ const Contact = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Full Name</Label>
-                      <Input id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="Your full name" required className="rounded-xl" />
+                      <Input id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="Your full name" required maxLength={100} className="rounded-xl" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email">Email Address</Label>
@@ -210,11 +210,11 @@ const Contact = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="subject">Subject</Label>
-                    <Input id="subject" name="subject" value={formData.subject} onChange={handleInputChange} placeholder="Booking inquiry, custom trip, etc." required className="rounded-xl" />
+                    <Input id="subject" name="subject" value={formData.subject} onChange={handleInputChange} placeholder="Booking inquiry, custom trip, etc." required maxLength={150} className="rounded-xl" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="message">Message</Label>
-                    <Textarea id="message" name="message" value={formData.message} onChange={handleInputChange} placeholder="Tell us how we can help..." rows={6} required className="rounded-xl" />
+                    <Textarea id="message" name="message" value={formData.message} onChange={handleInputChange} placeholder="Tell us how we can help..." rows={6} required maxLength={2000} className="rounded-xl" />
                   </div>
                   <Button type="submit" className="w-full py-6 text-lg font-semibold rounded-xl bg-gradient-to-r from-primary to-accent hover:opacity-90 transition" disabled={loading}>
                     {loading ? 'Sending...' : 'Send Message'}

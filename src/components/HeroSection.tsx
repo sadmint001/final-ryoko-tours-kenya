@@ -11,7 +11,7 @@ const heroImages = Object.values(
 
 const HeroSection = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [discountSettings, setDiscountSettings] = useState({ isActive: false, threshold: 0, percentage: 0, destinations: 'all' });
+  const [discountDests, setDiscountDests] = useState<{ id: number; name: string; percentage: number; threshold: number; }[]>([]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -22,31 +22,33 @@ const HeroSection = () => {
   }, []);
 
   useEffect(() => {
-    const fetchDiscount = async () => {
+    const fetchDiscountDests = async () => {
       try {
         const { data } = await supabase
-          .from('site_settings')
-          .select('*')
-          .in('key', ['group_discount_threshold', 'group_discount_percentage', 'is_discount_active', 'group_discount_destinations']);
+          .from('destinations')
+          .select('id, name, discount_percentage, discount_threshold')
+          .eq('is_active', true)
+          .eq('has_group_discount', true);
+
         if (data && data.length > 0) {
-          const typedData = data as any[];
-          const tObj = typedData.find((d: any) => d.key === 'group_discount_threshold');
-          const pObj = typedData.find((d: any) => d.key === 'group_discount_percentage');
-          const activeObj = typedData.find((d: any) => d.key === 'is_discount_active');
-          const destsObj = typedData.find((d: any) => d.key === 'group_discount_destinations');
-          setDiscountSettings({
-            isActive: activeObj ? activeObj.value === 'true' : false,
-            threshold: tObj && tObj.value && !isNaN(parseInt(tObj.value)) ? parseInt(tObj.value) : 5,
-            percentage: pObj && pObj.value && !isNaN(parseInt(pObj.value)) ? parseInt(pObj.value) : 10,
-            destinations: destsObj ? destsObj.value : 'all',
-          });
+          setDiscountDests(data.map((d: any) => ({
+            id: d.id,
+            name: d.name,
+            percentage: d.discount_percentage || 0,
+            threshold: d.discount_threshold || 1
+          })));
         }
       } catch (e) {
-        console.error('Failed to load discount settings', e);
+        console.error('Failed to load discount destinations', e);
       }
     };
-    fetchDiscount();
+    fetchDiscountDests();
   }, []);
+
+  const hasDiscounts = discountDests.length > 0;
+  const isSingleDiscount = discountDests.length === 1;
+  const promo = isSingleDiscount ? discountDests[0] : (hasDiscounts ? discountDests[0] : null); // Fallback to first if multiple
+  const promoLink = isSingleDiscount ? `/destinations/${discountDests[0].id}` : '/destinations?group_deals=true';
 
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -112,7 +114,7 @@ const HeroSection = () => {
           </div>
 
           {/* Promotional Discount Banner */}
-          {discountSettings.isActive && discountSettings.threshold > 0 && discountSettings.percentage > 0 && (
+          {hasDiscounts && promo && (
             <div className="max-w-3xl mx-auto animate-scale-up">
               <div className="relative overflow-hidden rounded-2xl border border-white/10">
                 {/* Layered Background */}
@@ -127,7 +129,7 @@ const HeroSection = () => {
                       <Percent className="w-8 h-8 sm:w-10 sm:h-10 text-white stroke-[2.5]" />
                       <div className="flex flex-col items-start justify-center">
                         <span className="text-xl sm:text-2xl font-black leading-none tracking-tight text-white whitespace-nowrap">
-                          {discountSettings.percentage}% OFF
+                          {isSingleDiscount ? `${promo.percentage}% OFF` : `Up to ${Math.max(...discountDests.map(d => d.percentage))}% OFF`}
                         </span>
                         <span className="text-[10px] sm:text-xs font-bold tracking-[0.15em] text-white/90 mt-[1px] sm:mt-0.5 uppercase whitespace-nowrap">
                           Group Savings
@@ -142,19 +144,25 @@ const HeroSection = () => {
                   {/* Copy */}
                   <div className="flex-grow text-center sm:text-left">
                     <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
-                      <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.25em] text-amber-400/80">Group Offer</span>
+                      <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.25em] text-amber-400/80">
+                        {isSingleDiscount ? 'Exclusive Destination Deal' : 'Multiple Group Offers'}
+                      </span>
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     </div>
                     <p className="text-base md:text-lg font-serif font-bold text-white leading-snug">
-                      Book for <span className="text-amber-400">{discountSettings.threshold}+</span> guests & save <span className="text-amber-400">{discountSettings.percentage}%</span> instantly {discountSettings.destinations !== 'all' ? 'on select destinations' : 'on any destination'}
+                      {isSingleDiscount ? (
+                        <>Book for <span className="text-amber-400">{promo.threshold}+</span> guests & save <span className="text-amber-400">{promo.percentage}%</span> instantly on <span className="text-emerald-400">{promo.name}</span></>
+                      ) : (
+                        <>Book for <span className="text-amber-400">{promo.threshold}+</span> guests & save instantly on select destinations like <span className="text-emerald-400">{promo.name}</span></>
+                      )}
                     </p>
                   </div>
 
                   {/* CTA */}
                   <div className="flex-shrink-0">
-                    <Link to="/destinations">
+                    <Link to={promoLink}>
                       <Button className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-slate-900 font-bold px-6 py-3 h-auto rounded-xl shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 transition-all duration-300 hover:-translate-y-0.5 text-sm group">
-                        Get Offer
+                        {isSingleDiscount ? 'View Deal' : 'View Deals'}
                         <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                       </Button>
                     </Link>

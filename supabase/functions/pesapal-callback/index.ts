@@ -12,11 +12,26 @@ serve(async (req) => {
     }
 
     try {
-        // PesaPal sends OrderTrackingId and MerchantReference (bookingId) in the query params
+        // PesaPal sends OrderTrackingId and MerchantReference (bookingId) in the query params or body
         const url = new URL(req.url);
-        const orderTrackingId = url.searchParams.get("OrderTrackingId");
-        const merchantReference = url.searchParams.get("OrderMerchantReference");
-        const orderNotificationType = url.searchParams.get("OrderNotificationType");
+        let orderTrackingId = url.searchParams.get("OrderTrackingId") || url.searchParams.get("orderTrackingId");
+        let merchantReference = url.searchParams.get("OrderMerchantReference") || url.searchParams.get("orderMerchantReference");
+        let orderNotificationType = url.searchParams.get("OrderNotificationType") || url.searchParams.get("orderNotificationType");
+
+        // If not in query params, try to extract from body (for IPN notifications)
+        if (req.method === "POST" && (!orderTrackingId || !merchantReference)) {
+            try {
+                const bodyText = await req.text();
+                if (bodyText) {
+                    const body = JSON.parse(bodyText);
+                    orderTrackingId = orderTrackingId || body.OrderTrackingId || body.orderTrackingId;
+                    merchantReference = merchantReference || body.OrderMerchantReference || body.orderMerchantReference;
+                    orderNotificationType = orderNotificationType || body.OrderNotificationType || body.orderNotificationType;
+                }
+            } catch (e) {
+                console.warn("Could not parse IPN body:", e);
+            }
+        }
 
         if (!orderTrackingId) throw new Error("Missing OrderTrackingId");
 

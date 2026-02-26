@@ -74,7 +74,7 @@ export class PaymentService {
    */
   static async processPesapalPayment(paymentData: PaymentRequest): Promise<PaymentResponse> {
     try {
-      console.log('Initiating PesaPal payment invocation...', paymentData);
+      // console.log('Initiating PesaPal payment invocation...', paymentData);
 
       const { data, error } = await supabase.functions.invoke('pesapal-payment', {
         body: {
@@ -118,7 +118,7 @@ export class PaymentService {
    */
   static async processMpesaPayment(paymentData: PaymentRequest): Promise<PaymentResponse> {
     try {
-      console.log('Initiating M-Pesa payment flow...', paymentData);
+      // console.log('Initiating M-Pesa payment flow...', paymentData);
 
       // 1. Create booking first
       const booking = await this.createBookingRecord(paymentData, 'mpesa');

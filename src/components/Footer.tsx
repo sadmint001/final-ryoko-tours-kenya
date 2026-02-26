@@ -129,6 +129,7 @@ const Footer = () => {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label={`Visit our ${social.icon.name || 'social media'}`}
                   className="w-12 h-12 bg-white/10 dark:bg-white/5 border border-white/20 rounded-2xl flex items-center justify-center hover:bg-amber-500/10 hover:border-amber-500/30 transition-all duration-300 group"
                 >
                   <social.icon className="w-5 h-5 text-white/70 dark:text-slate-400 group-hover:text-amber-500 transition-colors" />

@@ -11,7 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calendar as ShadcnCalendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from '@/lib/utils';
 import {
   MapPin,
@@ -32,7 +32,8 @@ import {
   TreePine,
   ShieldCheck,
   Info,
-  ArrowRight
+  ArrowRight,
+  Percent
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -68,9 +69,12 @@ interface DestinationDetail {
   category: string;
   duration?: number;
   maxParticipants?: number;
-  difficulty?: string;
-  rating?: number;
   location?: string;
+  hasGroupDiscount?: boolean;
+  discountPercentage?: number;
+  discountThreshold?: number;
+  childAgeLimit?: number;
+  featuredOrder?: number;
   updatedAt?: string;
   activities?: { title: string; icon?: string; desc: string }[];
   gallery?: { id: number; url: string; caption?: string }[];
@@ -86,7 +90,7 @@ const DestinationDetails = () => {
   const [error, setError] = useState<string | null>(null);
   const [pesapalUrl, setPesapalUrl] = useState<string | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [discountSettings, setDiscountSettings] = useState({ isActive: false, threshold: 5, percentage: 10, destinations: 'all' });
+  const [isIframeLoading, setIsIframeLoading] = useState(true);
 
   const { selectedResidency, setResidency } = useResidencyPersistence();
   const { user } = useAuth();
@@ -140,34 +144,7 @@ const DestinationDetails = () => {
   }, [user]);
 
   useEffect(() => {
-    const fetchDiscountSettings = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('site_settings')
-          .select('*')
-          .in('key', ['group_discount_threshold', 'group_discount_percentage', 'is_discount_active', 'group_discount_destinations']);
-
-        if (data && !error) {
-          const thresholdObj = data.find(d => d.key === 'group_discount_threshold');
-          const percentageObj = data.find(d => d.key === 'group_discount_percentage');
-          const activeObj = data.find(d => d.key === 'is_discount_active');
-          const destsObj = data.find(d => d.key === 'group_discount_destinations');
-
-          const parsedThreshold = thresholdObj ? parseInt(thresholdObj.value) : NaN;
-          const parsedPercentage = percentageObj ? parseInt(percentageObj.value) : NaN;
-
-          setDiscountSettings({
-            isActive: activeObj ? activeObj.value === 'true' : false,
-            threshold: !isNaN(parsedThreshold) ? parsedThreshold : 5,
-            percentage: !isNaN(parsedPercentage) ? parsedPercentage : 10,
-            destinations: destsObj ? destsObj.value : 'all'
-          });
-        }
-      } catch (e) {
-        console.error('Failed to load discount settings:', e);
-      }
-    };
-    fetchDiscountSettings();
+    // Left intentionally empty, discount details now attached to destination obj
   }, []);
 
   // Redirect if no residency
@@ -210,29 +187,18 @@ const DestinationDetails = () => {
   };
 
   const isDiscountEligible = () => {
-    if (!discountSettings.isActive) return false;
-
-    // Check if discount is applicable to this destination
-    if (discountSettings.destinations !== 'all') {
-      try {
-        const destArr = JSON.parse(discountSettings.destinations);
-        if (Array.isArray(destArr) && !destArr.includes(destination?.id)) {
-          return false;
-        }
-      } catch (e) {
-        return false;
-      }
-    }
-    return true;
+    if (!destination) return false;
+    if (!destination.hasGroupDiscount) return false;
+    const totalParticipants = (Number(form.adultsCount) || 1) + (Number(form.childrenCount) || 0);
+    return totalParticipants >= (destination.discountThreshold || 0);
   };
 
   const getDiscountAmount = () => {
-    if (!isDiscountEligible()) return 0;
+    if (!destination || !isDiscountEligible()) return 0;
     const baseTotal = getBaseTotal();
-    const totalParticipants = (Number(form.adultsCount) || 1) + (Number(form.childrenCount) || 0);
 
-    if (isDiscountEligible() && discountSettings.threshold > 0 && discountSettings.percentage > 0 && totalParticipants >= discountSettings.threshold) {
-      return baseTotal * (discountSettings.percentage / 100);
+    if (destination.discountPercentage && destination.discountPercentage > 0) {
+      return baseTotal * (destination.discountPercentage / 100);
     }
     return 0;
   };
@@ -277,12 +243,11 @@ const DestinationDetails = () => {
       const result = await PaymentService.processPesapalPayment(paymentData);
 
       if (result.success && result.url) {
-        setPesapalUrl(result.url);
-        setIsPaymentModalOpen(true);
         toast({
-          title: 'Payment Session Created',
-          description: 'Please complete payment in the secure window.',
+          title: 'Redirecting to Secure Payment',
+          description: 'Please wait while we redirect you to PesaPal...',
         });
+        window.location.href = result.url;
       } else {
         throw new Error(result.error || 'Payment failed');
       }
@@ -458,7 +423,7 @@ const DestinationDetails = () => {
 
       const { data, error: fetchError }: any = await supabase
         .from('destinations')
-        .select('*')
+        .select('*, has_group_discount, discount_percentage, discount_threshold, child_age_limit')
         .eq('id', Number(id))
         .single();
 
@@ -484,6 +449,10 @@ const DestinationDetails = () => {
         duration: data.duration,
         maxParticipants: data.max_participants,
         location: data.location,
+        hasGroupDiscount: data.has_group_discount,
+        discountPercentage: data.discount_percentage,
+        discountThreshold: data.discount_threshold,
+        childAgeLimit: data.child_age_limit,
         updatedAt: data.updated_at,
         activities: data.activities || [],
         best_time_to_visit: data.best_time_to_visit || [],
@@ -829,26 +798,85 @@ const DestinationDetails = () => {
 
                 <CardContent className="space-y-6">
                   {/* Price Display */}
-                  <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl text-center border border-slate-100 dark:border-slate-700">
-                    <span className="text-slate-500 dark:text-slate-400 text-sm uppercase tracking-wide font-semibold block mb-1">
-                      Price Per Person
-                    </span>
-                    <div className="text-2xl font-bold text-amber-600 dark:text-amber-500">
-                      {selectedResidency
-                        ? formatPriceByResidency(getPriceByResidency(destination.pricing, selectedResidency) || 0, selectedResidency)
-                        : '-'}
-                      <span className="text-xs font-normal text-slate-500 ml-1">(Adult)</span>
-                    </div>
-                    <div className="text-xl font-bold text-amber-500 dark:text-amber-400 mt-1">
-                      {selectedResidency
-                        ? formatPriceByResidency(getChildPriceByResidency(destination.pricing, selectedResidency) || 0, selectedResidency)
-                        : '-'}
-                      <span className="text-xs font-normal text-slate-500 ml-1">(Child)</span>
+                  <div className="relative overflow-hidden rounded-3xl p-5 border border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md shadow-xl group">
+                    <div className="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all duration-500"></div>
+
+                    <div className="relative space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-[0.2em] font-bold">
+                          Standard Rates
+                        </span>
+                        <Badge variant="outline" className="text-[10px] bg-amber-100/50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 font-bold uppercase tracking-tighter">
+                          Verified Pricing
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-3">
+                        {/* Adult Price */}
+                        <div className="flex items-center justify-between p-3 rounded-2xl bg-white/50 dark:bg-slate-800/50 border border-white/50 dark:border-slate-700/50 shadow-sm transition-transform hover:scale-[1.02] duration-300">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl text-amber-600 dark:text-amber-400">
+                              <Users className="w-5 h-5" />
+                            </div>
+                            <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Adult</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xl font-black text-slate-800 dark:text-white tracking-tight">
+                              {selectedResidency
+                                ? formatPriceByResidency(getPriceByResidency(destination.pricing, selectedResidency) || 0, selectedResidency)
+                                : '-'}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-medium mt-0.5">per person</div>
+                          </div>
+                        </div>
+
+                        {/* Child Price */}
+                        <div className="flex items-center justify-between p-3 rounded-2xl bg-white/50 dark:bg-slate-800/50 border border-white/50 dark:border-slate-700/50 shadow-sm transition-transform hover:scale-[1.02] duration-300">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl text-emerald-600 dark:text-emerald-400">
+                              <LucideIcons.User className="w-5 h-5" />
+                            </div>
+                            <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">
+                              Child (Under {destination.childAgeLimit || 12})
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-slate-700 dark:text-slate-200 tracking-tight">
+                              {selectedResidency
+                                ? formatPriceByResidency(getChildPriceByResidency(destination.pricing, selectedResidency) || 0, selectedResidency)
+                                : '-'}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-medium mt-0.5">per child</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
+                  {/* Destination-Specific Discount Banner */}
+                  {destination.hasGroupDiscount && destination.discountPercentage && destination.discountPercentage > 0 && (
+                    <div className="relative overflow-hidden rounded-2xl border border-amber-200/50 dark:border-amber-500/20 shadow-sm">
+                      <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 dark:from-amber-900/20 dark:via-orange-900/15 dark:to-amber-900/20" />
+                      <div className="relative px-4 py-4 flex items-start gap-3">
+                        <div className="flex-shrink-0 bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-2.5 shadow-lg shadow-red-500/25">
+                          <Percent className="w-5 h-5 text-white stroke-[2.5]" />
+                        </div>
+                        <div className="flex-grow">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="text-sm font-bold text-amber-900 dark:text-amber-400">Group Discount Available</h4>
+                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          </div>
+                          <p className="text-xs text-amber-800/80 dark:text-amber-200/70 leading-relaxed">
+                            Book for <span className="font-bold text-amber-900 dark:text-amber-300">{destination.discountThreshold}+</span> guests and get{' '}
+                            <span className="font-bold text-red-600 dark:text-red-400">{destination.discountPercentage}% off</span> your entire booking — automatically applied at checkout!
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    {isDiscountEligible() && discountSettings.threshold > 0 && discountSettings.percentage > 0 && (
+                    {isDiscountEligible() && (
                       <div className="bg-gradient-to-br from-amber-50 dark:from-amber-900/20 to-orange-50 dark:to-orange-900/20 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-4 flex gap-3 items-start shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
                         <div className="bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-full p-1.5 shadow-inner flex-shrink-0 mt-0.5">
                           <LucideIcons.Star className="w-4 h-4 fill-current" />
@@ -858,7 +886,7 @@ const DestinationDetails = () => {
                             Special Group Offer ✨
                           </h4>
                           <p className="text-xs text-amber-800/80 dark:text-amber-200/80 leading-relaxed">
-                            Book for <span className="font-bold">{discountSettings.threshold}+</span> guests and get <span className="font-bold text-amber-700 dark:text-amber-300">{discountSettings.percentage}% off</span>!
+                            Book for <span className="font-bold">{destination.discountThreshold}+</span> guests and get <span className="font-bold text-amber-700 dark:text-amber-300">{destination.discountPercentage}% off</span>!
                           </p>
                         </div>
                       </div>
@@ -940,8 +968,8 @@ const DestinationDetails = () => {
                           onChange={(e) => handleInputChange('childrenCount', e.target.value === '' ? '' as any : parseInt(e.target.value))}
                           className="h-12 rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-900"
                         />
-                        <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1.5 font-medium leading-tight">
-                          * Children are aged 1-12 years. Verification is required before travel.
+                        <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1.5 font-medium leading-tight italic">
+                          * Children are aged 1-{destination?.childAgeLimit || 12} years. Verification is required before travel.
                         </p>
                       </div>
                     </div>
@@ -1020,7 +1048,7 @@ const DestinationDetails = () => {
                             <span>{formatPriceByResidency(getBaseTotal(), selectedResidency)}</span>
                           </div>
                           <div className="flex justify-between items-center text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                            <span>Group Discount ({discountSettings.percentage}%)</span>
+                            <span>Group Discount ({destination.discountPercentage}%)</span>
                             <span>- {formatPriceByResidency(getDiscountAmount(), selectedResidency)}</span>
                           </div>
                         </div>
@@ -1091,14 +1119,35 @@ const DestinationDetails = () => {
               <ShieldCheck className="w-5 h-5 text-emerald-500" />
               Secure Payment
             </DialogTitle>
+            <DialogDescription className="text-slate-500 text-xs">
+              Complete your transaction securely via PesaPal
+            </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 h-full bg-slate-50 dark:bg-slate-950">
+          <div className="flex-1 h-full bg-slate-50 dark:bg-slate-950 relative">
+            {isIframeLoading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm z-10 transition-opacity duration-300">
+                <Loader2 className="w-12 h-12 text-amber-500 animate-spin mb-4" />
+                <p className="text-slate-600 dark:text-slate-300 font-medium animate-pulse">
+                  Connecting to secure payment gateway...
+                </p>
+                <p className="text-xs text-slate-400 mt-2">
+                  This may take a moment
+                </p>
+              </div>
+            )}
             {pesapalUrl && (
               <iframe
                 src={pesapalUrl}
-                className="w-full h-full border-0"
+                className={cn(
+                  "w-full h-full border-0 transition-opacity duration-500",
+                  isIframeLoading ? "opacity-0" : "opacity-100"
+                )}
                 title="PesaPal Payment"
                 allow="payment"
+                onLoad={() => {
+                  console.log("PesaPal iframe loaded");
+                  setIsIframeLoading(false);
+                }}
               />
             )}
           </div>

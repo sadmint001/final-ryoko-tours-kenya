@@ -2,12 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Calendar, Users, MapPin, CreditCard, Printer, ArrowLeft, Home, Download, ArrowRight, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Loader from '@/components/ui/loader';
 import { cn } from '@/lib/utils';
+import { getResidencyDisplay, getCurrency, formatPriceByResidency } from '@/lib/residencyUtils';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface Booking {
   id: string;
@@ -21,6 +25,7 @@ interface Booking {
   total_amount: number;
   payment_status: string;
   status: string;
+  residency_type: string;
   tours: {
     title: string;
     location: string;
@@ -32,6 +37,7 @@ const BookingSuccess = () => {
   const [searchParams] = useSearchParams();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
+  const receiptRef = React.useRef<HTMLDivElement>(null);
 
   const bookingIdParam = searchParams.get('bookingId') || searchParams.get('id');
   const trackingIdParam = searchParams.get('trackingId') || searchParams.get('OrderTrackingId');
@@ -121,6 +127,30 @@ const BookingSuccess = () => {
 
     fetchBooking();
   }, [bookingIdParam, trackingIdParam]);
+  const handleDownloadPDF = async () => {
+    if (!receiptRef.current || !booking) return;
+
+    try {
+      const canvas = await html2canvas(receiptRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/png');
+
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.save(`Ryoko-Receipt-${booking.id.slice(0, 8)}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
+  };
 
   if (loading) {
     return (
@@ -151,7 +181,7 @@ const BookingSuccess = () => {
 
           {booking ? (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <Card className="border-2 border-primary/20 shadow-luxury overflow-hidden bg-white dark:bg-slate-900 print:shadow-none print:border-slate-200">
+              <Card className="border-2 border-primary/20 shadow-luxury overflow-hidden bg-white dark:bg-slate-900 print:shadow-none print:border-slate-200" ref={receiptRef}>
                 {/* Receipt Header (Visible only when printing or as style) */}
                 <div className="bg-primary/5 p-8 border-b border-primary/10 flex justify-between items-start">
                   <div>
@@ -265,10 +295,20 @@ const BookingSuccess = () => {
                             <div className="flex flex-col gap-1">
                               <span>{booking.adults_count || booking.participants} Adult{(booking.adults_count || booking.participants) !== 1 ? 's' : ''}</span>
                               <span>{booking.children_count} Child{booking.children_count !== 1 ? 'ren' : ''}</span>
-                              <span className="text-xs border-t pt-1 mt-1 inline-block">Total Participants: {booking.participants}</span>
+                              <div className="flex items-center gap-2 mt-1 pt-1 border-t border-slate-100 dark:border-slate-800">
+                                <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-tight bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                  {getResidencyDisplay(booking.residency_type)}
+                                </Badge>
+                              </div>
+                              <span className="text-xs pt-1 mt-1 inline-block">Total Participants: {booking.participants}</span>
                             </div>
                           ) : (
-                            <span>{booking.adults_count || booking.participants} Adult{(booking.adults_count || booking.participants) !== 1 ? 's' : ''}</span>
+                            <div className="flex flex-col gap-2">
+                              <span>{booking.adults_count || booking.participants} Adult{(booking.adults_count || booking.participants) !== 1 ? 's' : ''}</span>
+                              <Badge variant="secondary" className="w-fit text-[10px] font-bold uppercase tracking-tight bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                {getResidencyDisplay(booking.residency_type)}
+                              </Badge>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -278,9 +318,12 @@ const BookingSuccess = () => {
                           <CreditCard className="w-3 h-3" /> Payment Summary
                         </h4>
                         <div className="flex justify-between items-end">
-                          <span className="text-sm text-muted-foreground">Total Paid (KSh)</span>
+                          <span className="text-sm text-muted-foreground flex flex-col">
+                            <span>Total Paid</span>
+                            <span className="text-[10px] font-bold uppercase tracking-tighter opacity-60">Currency: {getCurrency(booking.residency_type)}</span>
+                          </span>
                           <span className="text-3xl font-display font-bold text-primary">
-                            {booking.total_amount.toLocaleString()}
+                            {formatPriceByResidency(booking.total_amount, booking.residency_type)}
                           </span>
                         </div>
                       </div>
@@ -310,13 +353,7 @@ const BookingSuccess = () => {
                       <Button
                         variant="outline"
                         className="gap-2 border-primary/20 hover:bg-primary/5"
-                        onClick={() => {
-                          const link = document.createElement('a');
-                          link.href = '#';
-                          link.download = `Ryoko-Booking-${booking.id.slice(0, 8)}.txt`;
-                          // In a real app, this might be a generated PDF
-                          alert("PDF processing would happen here. For now, please use the Print function.");
-                        }}
+                        onClick={handleDownloadPDF}
                       >
                         <Download className="w-4 h-4" />
                         Save as PDF

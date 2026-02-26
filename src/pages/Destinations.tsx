@@ -30,6 +30,9 @@ interface Destination {
   maxParticipants?: number;
   location?: string;
   updatedAt?: string;
+  hasGroupDiscount?: boolean;
+  discountPercentage?: number;
+  discountThreshold?: number;
 }
 
 const Destinations: React.FC = () => {
@@ -37,9 +40,9 @@ const Destinations: React.FC = () => {
   const [allDestinations, setAllDestinations] = useState<Destination[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recommended');
-  const [showResidencyMenu, setShowResidencyMenu] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [discountSettings, setDiscountSettings] = useState({ isActive: false, threshold: 0, percentage: 0, destinations: 'all' });
+  const [showResidencyMenu, setShowResidencyMenu] = useState<boolean>(false);
+  const [groupDealsOnly, setGroupDealsOnly] = useState<boolean>(false);
 
   // Hero Image Carousel State
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
@@ -137,7 +140,7 @@ const Destinations: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('destinations')
-          .select('id, name, description, highlights, image, citizen_price, resident_price, non_resident_price, category, duration, max_participants, location, updated_at')
+          .select('id, name, description, highlights, image, citizen_price, resident_price, non_resident_price, category, duration, max_participants, location, updated_at, has_group_discount, discount_percentage, discount_threshold')
           .eq('is_active', true)
           .order('id', { ascending: true });
 
@@ -159,6 +162,9 @@ const Destinations: React.FC = () => {
           duration: d.duration ?? undefined,
           maxParticipants: d.max_participants ?? undefined,
           location: d.location ?? undefined,
+          hasGroupDiscount: d.has_group_discount ?? false,
+          discountPercentage: d.discount_percentage ?? 0,
+          discountThreshold: d.discount_threshold ?? 0,
           updatedAt: d.updated_at ?? undefined,
         }));
         setAllDestinations(mapped);
@@ -186,40 +192,15 @@ const Destinations: React.FC = () => {
     };
   }, []);
 
-  // Fetch discount settings
-  useEffect(() => {
-    const fetchDiscount = async () => {
-      try {
-        const { data } = await supabase
-          .from('site_settings')
-          .select('*')
-          .in('key', ['group_discount_threshold', 'group_discount_percentage', 'is_discount_active', 'group_discount_destinations']);
-        if (data && data.length > 0) {
-          const typedData = data as any[];
-          const tObj = typedData.find((d: any) => d.key === 'group_discount_threshold');
-          const pObj = typedData.find((d: any) => d.key === 'group_discount_percentage');
-          const activeObj = typedData.find((d: any) => d.key === 'is_discount_active');
-          const destsObj = typedData.find((d: any) => d.key === 'group_discount_destinations');
-          setDiscountSettings({
-            isActive: activeObj ? activeObj.value === 'true' : false,
-            threshold: tObj && tObj.value && !isNaN(parseInt(tObj.value)) ? parseInt(tObj.value) : 5,
-            percentage: pObj && pObj.value && !isNaN(parseInt(pObj.value)) ? parseInt(pObj.value) : 10,
-            destinations: destsObj ? destsObj.value : 'all',
-          });
-        }
-      } catch (e) {
-        console.error('Failed to load discount settings', e);
-      }
-    };
-    fetchDiscount();
-  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const c = params.get('category');
     const s = params.get('sort');
+    const gd = params.get('group_deals');
     if (c) setSelectedCategory(c);
     if (s) setSortBy(s);
+    if (gd) setGroupDealsOnly(gd === 'true');
   }, [location.search]);
 
   useEffect(() => {
@@ -232,15 +213,20 @@ const Destinations: React.FC = () => {
       if (sortBy === 'recommended') params.delete('sort');
       else params.set('sort', sortBy);
     }
+    if (groupDealsOnly !== (params.get('group_deals') === 'true')) {
+      if (!groupDealsOnly) params.delete('group_deals');
+      else params.set('group_deals', 'true');
+    }
     navigate({ pathname: location.pathname, search: params.toString() ? `?${params.toString()}` : '' }, { replace: true });
-  }, [selectedCategory, sortBy, location.pathname, location.search, navigate]);
+  }, [selectedCategory, sortBy, groupDealsOnly, location.pathname, location.search, navigate]);
 
   const filtered = allDestinations.filter(d => {
     const matchesCategory = selectedCategory === 'all' || d.category === selectedCategory;
     const matchesSearch = d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       d.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       d.location?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
+    const matchesDeals = !groupDealsOnly || d.hasGroupDiscount;
+    return matchesCategory && matchesSearch && matchesDeals;
   });
 
   const sorted = [...filtered].sort((a, b) => {
@@ -497,68 +483,101 @@ const Destinations: React.FC = () => {
           </div>
         </div>
       </div>
+      {/* ── Premium Group Discount Banner (Best Deal Highlight) ── */}
+      {(() => {
+        const discounted = allDestinations.filter(d => d.hasGroupDiscount);
+        if (discounted.length === 0 || groupDealsOnly) return null;
 
-      {/* ── Premium Group Discount Banner ── */}
-      {discountSettings.isActive && discountSettings.threshold > 0 && discountSettings.percentage > 0 && (
-        <div className="container mx-auto px-4 -mt-6 mb-12 relative z-20">
-          <div className="relative overflow-hidden rounded-3xl shadow-2xl">
-            {/* Layered Background */}
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-amber-900 to-slate-900" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(251,191,36,0.3),transparent_60%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(245,158,11,0.2),transparent_60%)]" />
+        const bestDeal = discounted.reduce((prev, current) => {
+          if (current.discountPercentage! > prev.discountPercentage!) return current;
+          if (current.discountPercentage! === prev.discountPercentage!) {
+            const currentPrice = getPriceByResidency(current.pricing, selectedResidency!) || 0;
+            const prevPrice = getPriceByResidency(prev.pricing, selectedResidency!) || 0;
+            return currentPrice > prevPrice ? current : prev;
+          }
+          return prev;
+        }, discounted[0]);
 
-            {/* Animated shimmer */}
-            <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-spin" style={{ animationDuration: '30s' }}>
-                <div className="absolute top-1/2 left-1/2 w-32 h-[200%] bg-gradient-to-b from-transparent via-amber-400/5 to-transparent -translate-x-1/2" />
+        if (!bestDeal) return null;
+
+        return (
+          <div
+            className="container mx-auto px-4 -mt-6 mb-12 relative z-20 cursor-pointer"
+            onClick={() => navigate(`/destinations/${bestDeal.id}?residency=${selectedResidency}`)}
+          >
+            <div className="relative overflow-hidden rounded-3xl shadow-2xl">
+              {/* Layered Background */}
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-amber-900 to-slate-900" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(251,191,36,0.3),transparent_60%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(245,158,11,0.2),transparent_60%)]" />
+
+              {/* Animated shimmer */}
+              <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-spin" style={{ animationDuration: '30s' }}>
+                  <div className="absolute top-1/2 left-1/2 w-32 h-[200%] bg-gradient-to-b from-transparent via-amber-400/5 to-transparent -translate-x-1/2" />
+                </div>
               </div>
-            </div>
 
-            {/* Border glow */}
-            <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-amber-400/20" />
+              {/* Border glow */}
+              <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-amber-400/20" />
 
-            <div className="relative px-6 py-8 md:px-12 md:py-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
-              {/* Left: Icon cluster */}
-              <div className="flex-shrink-0 relative group">
-                <div className="bg-red-600 rounded-xl px-4 py-2 sm:px-5 sm:py-3 flex items-center justify-center gap-2 sm:gap-3 shadow-lg shadow-red-600/30 group-hover:scale-105 transition-transform duration-300">
-                  <Percent className="w-8 h-8 sm:w-10 sm:h-10 text-white stroke-[2.5]" />
-                  <div className="flex flex-col items-start justify-center">
-                    <span className="text-xl sm:text-2xl font-black leading-none tracking-tight text-white whitespace-nowrap">
-                      {discountSettings.percentage}% OFF
-                    </span>
-                    <span className="text-[10px] sm:text-xs font-bold tracking-[0.15em] text-white/90 mt-[1px] sm:mt-0.5 uppercase whitespace-nowrap">
-                      Group Savings
-                    </span>
+              <div className="relative px-6 py-8 md:px-12 md:py-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
+                {/* Left: Icon cluster */}
+                <div className="flex-shrink-0 relative group">
+                  <div className="bg-red-600 rounded-xl px-4 py-2 sm:px-5 sm:py-3 flex items-center justify-center gap-2 sm:gap-3 shadow-lg shadow-red-600/30 group-hover:scale-105 transition-transform duration-300">
+                    <Percent className="w-8 h-8 sm:w-10 sm:h-10 text-white stroke-[2.5]" />
+                    <div className="flex flex-col items-start justify-center">
+                      <span className="text-xl sm:text-2xl font-black leading-none tracking-tight text-white whitespace-nowrap">
+                        {bestDeal.discountPercentage}% OFF
+                      </span>
+                      <span className="text-[10px] sm:text-xs font-bold tracking-[0.15em] text-white/90 mt-[1px] sm:mt-0.5 uppercase whitespace-nowrap">
+                        Best Deal
+                      </span>
+                    </div>
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg animate-bounce" style={{ animationDuration: '2s' }}>
+                    <Sparkles className="w-4 h-4 text-white" />
                   </div>
                 </div>
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg animate-bounce" style={{ animationDuration: '2s' }}>
-                  <Sparkles className="w-4 h-4 text-white" />
-                </div>
-              </div>
 
-              {/* Center: Copy */}
-              <div className="flex-grow text-center md:text-left space-y-3">
-                <div className="flex items-center justify-center md:justify-start gap-2">
-                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.25em] text-amber-400/80">Limited Time Offer</span>
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                {/* Center: Copy */}
+                <div className="flex-grow text-center md:text-left space-y-3">
+                  <div className="flex items-center justify-center md:justify-start gap-2">
+                    <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.25em] text-amber-400/80">
+                      Top Rated Safari Offer
+                    </span>
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  </div>
+                  <h3 className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold text-white leading-tight">
+                    <span className="relative inline-block">
+                      <span className="relative z-10 text-amber-400">Save {bestDeal.discountPercentage}%</span>
+                      <span className="absolute bottom-0 left-0 w-full h-2 bg-amber-400/20 rounded-full -z-0" />
+                    </span>
+                    {' '}on {bestDeal.name}
+                  </h3>
+                  <p className="text-sm md:text-base text-white/60 max-w-lg leading-relaxed">
+                    Book for {bestDeal.discountThreshold}+ guests and save {bestDeal.discountPercentage}% instantly on this spectacular journey!
+                  </p>
                 </div>
-                <h3 className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold text-white leading-tight">
-                  Book for{' '}
-                  <span className="relative inline-block">
-                    <span className="relative z-10 text-amber-400">{discountSettings.threshold}+ Guests</span>
-                    <span className="absolute bottom-0 left-0 w-full h-2 bg-amber-400/20 rounded-full -z-0" />
-                  </span>
-                  {' '}and Save{' '}
-                  <span className="text-amber-400">{discountSettings.percentage}%</span>
-                </h3>
-                <p className="text-sm md:text-base text-white/60 max-w-lg leading-relaxed">
-                  Gather your friends, family, or colleagues and unlock exclusive group savings on any destination. The more, the merrier — and the cheaper!
-                </p>
+
+                {/* CTA Button */}
+                <div className="flex-shrink-0">
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/destinations/${bestDeal.id}?residency=${selectedResidency}`);
+                    }}
+                    className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-slate-900 font-bold px-8 py-4 h-auto rounded-xl shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 transition-all duration-300 hover:-translate-y-0.5 text-sm group"
+                  >
+                    View This Deal
+                    <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Destinations Grid */}
       <div className="container mx-auto px-4 pb-24">
@@ -571,6 +590,15 @@ const Destinations: React.FC = () => {
             >
               {/* Image Section */}
               <div className="aspect-[4/3] overflow-hidden relative">
+                {/* Premium Discount Ribbon */}
+                {dest.hasGroupDiscount && (
+                  <div className="absolute top-0 right-0 z-30 pointer-events-none overflow-hidden w-32 h-32">
+                    <div className="absolute top-8 -right-10 w-44 py-2.5 bg-gradient-to-r from-red-600 via-rose-500 to-red-600 text-white text-[13px] font-black uppercase tracking-[0.2em] transform rotate-45 shadow-xl border-y border-white/20 flex items-center justify-center gap-2 animate-pulse" style={{ animationDuration: '3s' }}>
+                      <Sparkles className="w-3.5 h-3.5 fill-white" />
+                      <span>{dest.discountPercentage}% OFF</span>
+                    </div>
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10 opacity-60 group-hover:opacity-40 transition-opacity duration-300"></div>
                 <img
                   src={dest.updatedAt ? `${dest.image}?v=${new Date(dest.updatedAt).getTime()}` : dest.image}

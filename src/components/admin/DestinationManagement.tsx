@@ -75,6 +75,10 @@ interface Destination {
     residentChildPrice: number;
     nonResidentChildPrice: number;
   };
+  childAgeLimit?: number;
+  hasGroupDiscount?: boolean;
+  discountPercentage?: number;
+  discountThreshold?: number;
   best_time_to_visit?: { season: string; description: string }[];
 }
 
@@ -119,6 +123,10 @@ const DestinationManagement: React.FC = () => {
     citizenChildPrice: 0,
     residentChildPrice: 0,
     nonResidentChildPrice: 0,
+    childAgeLimit: 12,
+    hasGroupDiscount: false,
+    discountPercentage: 0,
+    discountThreshold: 0,
     isActive: true,
     isFeatured: false,
     featuredOrder: 0,
@@ -153,6 +161,10 @@ const DestinationManagement: React.FC = () => {
       residentChildPrice: d.resident_child_price ?? 0,
       nonResidentChildPrice: d.non_resident_child_price ?? 0,
     },
+    childAgeLimit: d.child_age_limit ?? 12,
+    hasGroupDiscount: d.has_group_discount ?? false,
+    discountPercentage: d.discount_percentage ?? 0,
+    discountThreshold: d.discount_threshold ?? 0,
     best_time_to_visit: d.best_time_to_visit || [],
   });
 
@@ -284,6 +296,10 @@ const DestinationManagement: React.FC = () => {
       citizenChildPrice: dest.pricing.citizenChildPrice ?? 0,
       residentChildPrice: dest.pricing.residentChildPrice ?? 0,
       nonResidentChildPrice: dest.pricing.nonResidentChildPrice ?? 0,
+      childAgeLimit: dest.childAgeLimit ?? 12,
+      hasGroupDiscount: dest.hasGroupDiscount ?? false,
+      discountPercentage: dest.discountPercentage ?? 0,
+      discountThreshold: dest.discountThreshold ?? 0,
       isActive: dest.isActive ?? true,
       isFeatured: dest.isFeatured ?? false,
       featuredOrder: dest.featuredOrder ?? 0,
@@ -384,6 +400,10 @@ const DestinationManagement: React.FC = () => {
         citizen_child_price: Number(formData.citizenChildPrice) || 0,
         resident_child_price: Number(formData.residentChildPrice) || 0,
         non_resident_child_price: Number(formData.nonResidentChildPrice) || 0,
+        child_age_limit: Number(formData.childAgeLimit) || 12,
+        has_group_discount: formData.hasGroupDiscount,
+        discount_percentage: Number(formData.discountPercentage) || 0,
+        discount_threshold: Number(formData.discountThreshold) || 0,
         activities: formData.activities.filter(a => a.title.trim() !== ''),
         best_time_to_visit: formData.best_time_to_visit.filter(b => b.season.trim() !== ''),
       };
@@ -593,6 +613,10 @@ const DestinationManagement: React.FC = () => {
         citizen_price: dest.pricing.citizenPrice,
         resident_price: dest.pricing.residentPrice,
         non_resident_price: dest.pricing.nonResidentPrice,
+        child_age_limit: dest.childAgeLimit,
+        has_group_discount: dest.hasGroupDiscount,
+        discount_percentage: dest.discountPercentage,
+        discount_threshold: dest.discountThreshold,
         best_time_to_visit: dest.best_time_to_visit,
         activities: dest.activities,
       };
@@ -832,7 +856,7 @@ const DestinationManagement: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="nonResidentChildPrice">Non-Res Child (KSh)</Label>
+                      <Label htmlFor="nonResidentChildPrice">Non-Resident Child (USD)</Label>
                       <Input
                         id="nonResidentChildPrice"
                         type="number"
@@ -843,6 +867,68 @@ const DestinationManagement: React.FC = () => {
                         }))}
                       />
                     </div>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <Label htmlFor="childAgeLimit">Child Age Limit (Years)</Label>
+                    <Input
+                      id="childAgeLimit"
+                      type="number"
+                      value={formData.childAgeLimit}
+                      onChange={(e) => setFormData((p) => ({
+                        ...p,
+                        childAgeLimit: e.target.value === '' ? '' as any : parseInt(e.target.value || '12')
+                      }))}
+                      className="w-1/3"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Up to what age does the child pricing apply for this destination? (default 12)
+                    </p>
+                  </div>
+
+                  <div className="pt-6 border-t mt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <Label className="text-base font-semibold">Destination Group Discount</Label>
+                        <p className="text-sm text-muted-foreground">Offer a localized percentage discount for large groups booking this specific destination.</p>
+                      </div>
+                      <Switch
+                        checked={formData.hasGroupDiscount}
+                        onCheckedChange={(checked) => setFormData((p) => ({ ...p, hasGroupDiscount: checked }))}
+                      />
+                    </div>
+
+                    {formData.hasGroupDiscount && (
+                      <div className="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <div>
+                          <Label htmlFor="discountPercentage">Discount Percentage (%)</Label>
+                          <Input
+                            id="discountPercentage"
+                            type="number"
+                            min={0}
+                            max={100}
+                            value={formData.discountPercentage}
+                            onChange={(e) => setFormData((p) => ({
+                              ...p,
+                              discountPercentage: e.target.value === '' ? '' as any : parseInt(e.target.value || '0')
+                            }))}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="discountThreshold">Minimum Guests Threshold</Label>
+                          <Input
+                            id="discountThreshold"
+                            type="number"
+                            min={2}
+                            value={formData.discountThreshold}
+                            onChange={(e) => setFormData((p) => ({
+                              ...p,
+                              discountThreshold: e.target.value === '' ? '' as any : parseInt(e.target.value || '0')
+                            }))}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
 
