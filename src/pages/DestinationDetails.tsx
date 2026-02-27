@@ -74,6 +74,7 @@ interface DestinationDetail {
   discountPercentage?: number;
   discountThreshold?: number;
   childAgeLimit?: number;
+  childMinAge?: number;
   featuredOrder?: number;
   updatedAt?: string;
   activities?: { title: string; icon?: string; desc: string }[];
@@ -195,10 +196,13 @@ const DestinationDetails = () => {
 
   const getDiscountAmount = () => {
     if (!destination || !isDiscountEligible()) return 0;
-    const baseTotal = getBaseTotal();
+
+    // Discount now ONLY applies to adults
+    const adultPrice = getPriceByResidency(destination.pricing, selectedResidency) || 0;
+    const adultTotal = adultPrice * (Number(form.adultsCount) || 1);
 
     if (destination.discountPercentage && destination.discountPercentage > 0) {
-      return baseTotal * (destination.discountPercentage / 100);
+      return adultTotal * (destination.discountPercentage / 100);
     }
     return 0;
   };
@@ -423,7 +427,7 @@ const DestinationDetails = () => {
 
       const { data, error: fetchError }: any = await supabase
         .from('destinations')
-        .select('*, has_group_discount, discount_percentage, discount_threshold, child_age_limit')
+        .select('*, has_group_discount, discount_percentage, discount_threshold, child_age_limit, child_min_age')
         .eq('id', Number(id))
         .single();
 
@@ -453,6 +457,7 @@ const DestinationDetails = () => {
         discountPercentage: data.discount_percentage,
         discountThreshold: data.discount_threshold,
         childAgeLimit: data.child_age_limit,
+        childMinAge: data.child_min_age,
         updatedAt: data.updated_at,
         activities: data.activities || [],
         best_time_to_visit: data.best_time_to_visit || [],
@@ -837,7 +842,7 @@ const DestinationDetails = () => {
                               <LucideIcons.User className="w-5 h-5" />
                             </div>
                             <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">
-                              Child (Under {destination.childAgeLimit || 12})
+                              Child ({destination.childMinAge || 0} - {destination.childAgeLimit || 12} Years)
                             </div>
                           </div>
                           <div className="text-right">
@@ -868,7 +873,7 @@ const DestinationDetails = () => {
                           </div>
                           <p className="text-xs text-amber-800/80 dark:text-amber-200/70 leading-relaxed">
                             Book for <span className="font-bold text-amber-900 dark:text-amber-300">{destination.discountThreshold}+</span> guests and get{' '}
-                            <span className="font-bold text-red-600 dark:text-red-400">{destination.discountPercentage}% off</span> your entire booking — automatically applied at checkout!
+                            <span className="font-bold text-red-600 dark:text-red-400">{destination.discountPercentage}% off</span> adult tickets — automatically applied at checkout!
                           </p>
                         </div>
                       </div>
@@ -886,7 +891,7 @@ const DestinationDetails = () => {
                             Special Group Offer ✨
                           </h4>
                           <p className="text-xs text-amber-800/80 dark:text-amber-200/80 leading-relaxed">
-                            Book for <span className="font-bold">{destination.discountThreshold}+</span> guests and get <span className="font-bold text-amber-700 dark:text-amber-300">{destination.discountPercentage}% off</span>!
+                            Book for <span className="font-bold">{destination.discountThreshold}+</span> guests and get <span className="font-bold text-amber-700 dark:text-amber-300">{destination.discountPercentage}% off</span> adult tickets!
                           </p>
                         </div>
                       </div>
@@ -969,7 +974,7 @@ const DestinationDetails = () => {
                           className="h-12 rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-900"
                         />
                         <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1.5 font-medium leading-tight italic">
-                          * Children are aged 1-{destination?.childAgeLimit || 12} years. Verification is required before travel.
+                          * Children are aged {destination?.childMinAge || 0}-{destination?.childAgeLimit || 12} years. Verification is required before travel.
                         </p>
                       </div>
                     </div>

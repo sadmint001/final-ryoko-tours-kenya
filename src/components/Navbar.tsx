@@ -10,29 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // ✅ Silent Google Translate Provider (Handles only script and initialization)
 const GoogleTranslateProvider: React.FC = () => {
-  useEffect(() => {
-    const scriptId = 'google-translate-script';
-    if (!document.getElementById(scriptId)) {
-      const addScript = document.createElement('script');
-      addScript.id = scriptId;
-      addScript.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-      addScript.async = true;
-      document.body.appendChild(addScript);
-    }
-
-    (window as any).googleTranslateElementInit = () => {
-      new (window as any).google.translate.TranslateElement(
-        {
-          pageLanguage: 'en',
-          includedLanguages: 'en,ja,zh-CN,fr,de,es,it,ar',
-          autoDisplay: false,
-        },
-        'google-translate-silent-holder'
-      );
-    };
-  }, []);
-
-  return <div id="google-translate-silent-holder" className="hidden invisible h-0 w-0 overflow-hidden" />;
+  return null; // Logic moved to index.html for faster initialization
 };
 
 // ✅ Custom Language Switcher Component
@@ -52,15 +30,21 @@ const CustomLanguageSwitcher = ({ isMobile = false }: { isMobile?: boolean }) =>
     { code: 'es', name: 'Spanish', flag: '🇪🇸', locale: 'en' },
   ];
 
-  // Helper to set cookie
   const setTranslateCookie = (langCode: string) => {
     const domain = window.location.hostname;
-    document.cookie = `googtrans=/en/${langCode}; path=/; domain=${domain}`;
-    document.cookie = `googtrans=/en/${langCode}; path=/;`; // Fallback for local dev
+    // Set for current domain
+    document.cookie = `googtrans=/en/${langCode}; path=/; domain=${domain}; SameSite=Lax`;
+    // Set for base domain if possible (for subdomains)
+    const baseDomain = domain.split('.').slice(-2).join('.');
+    if (baseDomain !== domain) {
+      document.cookie = `googtrans=/en/${langCode}; path=/; domain=.${baseDomain}; SameSite=Lax`;
+    }
+    // Set without domain (fallback)
+    document.cookie = `googtrans=/en/${langCode}; path=/; SameSite=Lax`;
   };
 
   const changeLanguage = (langCode: string, langName: string, localeKey: any) => {
-    if (langName === currentLangName) return;
+    if (langName === currentLangName || isTranslating) return;
 
     setIsTranslating(true);
     setTranslateCookie(langCode);
@@ -68,20 +52,24 @@ const CustomLanguageSwitcher = ({ isMobile = false }: { isMobile?: boolean }) =>
     setCurrentLangName(langName);
     setIsMobileOpen(false);
 
-    // Robust function to apply language change via Google Translate element
-    const applyTranslation = (attemptsLeft = 10) => {
+    // Optimized function to apply language change via Google Translate element
+    const applyTranslation = (attemptsLeft = 30) => {
       const googleCombo = document.querySelector('.goog-te-combo') as HTMLSelectElement;
 
       if (googleCombo) {
+        // Force the value and trigger multiple events to wake up Google's listener
         googleCombo.value = langCode;
-        googleCombo.dispatchEvent(new Event('change'));
-        // Slight delay to allow Google's script to update the DOM
-        setTimeout(() => setIsTranslating(false), 300);
+        googleCombo.dispatchEvent(new Event('change', { bubbles: true }));
+        googleCombo.dispatchEvent(new Event('input', { bubbles: true }));
+
+        // Success: Clear translating state after a slight delay
+        setTimeout(() => setIsTranslating(false), 400);
       } else if (attemptsLeft > 0) {
-        // If combo box isn't ready yet, retry in 100ms
-        setTimeout(() => applyTranslation(attemptsLeft - 1), 100);
+        // Retry faster (30ms) to catch the element as soon as it appears
+        setTimeout(() => applyTranslation(attemptsLeft - 1), 30);
       } else {
-        // Stop the loading spinner even if translation fails so UI doesn't hang
+        // Final fallback: refresh if it really gets stuck (optional, but prevents dead state)
+        // window.location.reload(); 
         setIsTranslating(false);
       }
     };
@@ -154,12 +142,23 @@ const CustomLanguageSwitcher = ({ isMobile = false }: { isMobile?: boolean }) =>
     <div className="relative group">
       <button
         aria-label="Change language"
-        className="flex items-center gap-2 px-3 py-2 rounded-full bg-accent/30 hover:bg-accent/50 border border-slate-200 dark:border-white/20 transition-all duration-300 backdrop-blur-sm disabled:opacity-70 disabled:cursor-not-allowed"
+        className="flex items-center gap-2 px-3 py-2 rounded-full bg-accent/30 hover:bg-accent/50 border border-slate-200 dark:border-white/20 transition-all duration-300 backdrop-blur-sm disabled:opacity-70 disabled:cursor-not-allowed group"
         disabled={isTranslating}
       >
-        <Languages className="w-4 h-4 text-primary" />
-        <span className="text-xs font-bold uppercase tracking-widest hidden lg:inline">{currentLangName}</span>
-        <ChevronDown className="w-3 h-3 text-muted-foreground group-hover:rotate-180 transition-transform" />
+        {isTranslating ? (
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+          >
+            <Languages className="w-4 h-4 text-primary" />
+          </motion.div>
+        ) : (
+          <Languages className="w-4 h-4 text-primary transition-transform group-hover:scale-110" />
+        )}
+        <span className="text-xs font-bold uppercase tracking-widest hidden lg:inline">
+          {isTranslating ? 'Translating...' : currentLangName}
+        </span>
+        <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform", isTranslating ? "opacity-0" : "group-hover:rotate-180")} />
       </button>
 
       {/* Dropdown Menu */}

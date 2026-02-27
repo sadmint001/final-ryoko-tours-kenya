@@ -6,7 +6,7 @@ const corsHeaders = {
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+serve(async (req: Request): Promise<Response> => {
     if (req.method === "OPTIONS") {
         return new Response(null, { headers: corsHeaders });
     }
@@ -68,7 +68,9 @@ serve(async (req) => {
             childPrice = tour.non_resident_child_price || 0;
         }
 
-        let expectedTotal = (adultPrice * adultsCount) + (childPrice * childrenCount);
+        let baseChildTotal = childPrice * childrenCount;
+        let baseAdultTotal = adultPrice * adultsCount;
+        let expectedTotal = baseAdultTotal + baseChildTotal;
 
         const { data: settingsData } = await supabaseClient
             .from('site_settings')
@@ -78,15 +80,16 @@ serve(async (req) => {
         let threshold = 5;
         let percentage = 10;
         if (settingsData) {
-            const tObj = settingsData.find(d => d.key === 'group_discount_threshold');
-            const pObj = settingsData.find(d => d.key === 'group_discount_percentage');
+            const tObj = settingsData.find((d: any) => d.key === 'group_discount_threshold');
+            const pObj = settingsData.find((d: any) => d.key === 'group_discount_percentage');
             if (tObj && !isNaN(parseInt(tObj.value))) threshold = parseInt(tObj.value);
             if (pObj && !isNaN(parseInt(pObj.value))) percentage = parseInt(pObj.value);
         }
 
         const totalParticipants = adultsCount + childrenCount;
         if (threshold > 0 && percentage > 0 && totalParticipants >= threshold) {
-            expectedTotal = expectedTotal - (expectedTotal * (percentage / 100));
+            const discountOnAdults = baseAdultTotal * (percentage / 100);
+            expectedTotal = expectedTotal - discountOnAdults;
         }
 
         console.log(`Validating client amount: ${clientAmount} against expected: ${expectedTotal}`);

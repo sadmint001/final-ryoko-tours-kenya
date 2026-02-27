@@ -76,6 +76,7 @@ interface Destination {
     nonResidentChildPrice: number;
   };
   childAgeLimit?: number;
+  childMinAge?: number;
   hasGroupDiscount?: boolean;
   discountPercentage?: number;
   discountThreshold?: number;
@@ -123,6 +124,7 @@ const DestinationManagement: React.FC = () => {
     citizenChildPrice: 0,
     residentChildPrice: 0,
     nonResidentChildPrice: 0,
+    childMinAge: 0,
     childAgeLimit: 12,
     hasGroupDiscount: false,
     discountPercentage: 0,
@@ -162,6 +164,7 @@ const DestinationManagement: React.FC = () => {
       nonResidentChildPrice: d.non_resident_child_price ?? 0,
     },
     childAgeLimit: d.child_age_limit ?? 12,
+    childMinAge: d.child_min_age ?? 0,
     hasGroupDiscount: d.has_group_discount ?? false,
     discountPercentage: d.discount_percentage ?? 0,
     discountThreshold: d.discount_threshold ?? 0,
@@ -296,6 +299,7 @@ const DestinationManagement: React.FC = () => {
       citizenChildPrice: dest.pricing.citizenChildPrice ?? 0,
       residentChildPrice: dest.pricing.residentChildPrice ?? 0,
       nonResidentChildPrice: dest.pricing.nonResidentChildPrice ?? 0,
+      childMinAge: dest.childMinAge ?? 0,
       childAgeLimit: dest.childAgeLimit ?? 12,
       hasGroupDiscount: dest.hasGroupDiscount ?? false,
       discountPercentage: dest.discountPercentage ?? 0,
@@ -400,6 +404,7 @@ const DestinationManagement: React.FC = () => {
         citizen_child_price: Number(formData.citizenChildPrice) || 0,
         resident_child_price: Number(formData.residentChildPrice) || 0,
         non_resident_child_price: Number(formData.nonResidentChildPrice) || 0,
+        child_min_age: Number(formData.childMinAge) || 0,
         child_age_limit: Number(formData.childAgeLimit) || 12,
         has_group_discount: formData.hasGroupDiscount,
         discount_percentage: Number(formData.discountPercentage) || 0,
@@ -613,6 +618,7 @@ const DestinationManagement: React.FC = () => {
         citizen_price: dest.pricing.citizenPrice,
         resident_price: dest.pricing.residentPrice,
         non_resident_price: dest.pricing.nonResidentPrice,
+        child_min_age: dest.childMinAge,
         child_age_limit: dest.childAgeLimit,
         has_group_discount: dest.hasGroupDiscount,
         discount_percentage: dest.discountPercentage,
@@ -869,21 +875,37 @@ const DestinationManagement: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t">
-                    <Label htmlFor="childAgeLimit">Child Age Limit (Years)</Label>
-                    <Input
-                      id="childAgeLimit"
-                      type="number"
-                      value={formData.childAgeLimit}
-                      onChange={(e) => setFormData((p) => ({
-                        ...p,
-                        childAgeLimit: e.target.value === '' ? '' as any : parseInt(e.target.value || '12')
-                      }))}
-                      className="w-full sm:w-1/3"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Up to what age does the child pricing apply for this destination? (default 12)
-                    </p>
+                  <div className="pt-4 border-t grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="childMinAge">Child Minimum Age (Years)</Label>
+                      <Input
+                        id="childMinAge"
+                        type="number"
+                        value={formData.childMinAge}
+                        onChange={(e) => setFormData((p) => ({
+                          ...p,
+                          childMinAge: e.target.value === '' ? '' as any : parseInt(e.target.value || '0')
+                        }))}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Minimum age for child pricing (default 0)
+                      </p>
+                    </div>
+                    <div>
+                      <Label htmlFor="childAgeLimit">Child Maximum Age (Years)</Label>
+                      <Input
+                        id="childAgeLimit"
+                        type="number"
+                        value={formData.childAgeLimit}
+                        onChange={(e) => setFormData((p) => ({
+                          ...p,
+                          childAgeLimit: e.target.value === '' ? '' as any : parseInt(e.target.value || '12')
+                        }))}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Up to what age does the child pricing apply? (default 12)
+                      </p>
+                    </div>
                   </div>
 
                   <div className="pt-6 border-t mt-6">

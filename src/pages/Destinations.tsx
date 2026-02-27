@@ -500,10 +500,15 @@ const Destinations: React.FC = () => {
 
         if (!bestDeal) return null;
 
+        const isSingleDiscount = discounted.length === 1;
+        const promoLink = isSingleDiscount
+          ? `/destinations/${bestDeal.id}?residency=${selectedResidency}`
+          : `/destinations?group_deals=true&residency=${selectedResidency}`;
+
         return (
           <div
             className="container mx-auto px-4 -mt-6 mb-12 relative z-20 cursor-pointer"
-            onClick={() => navigate(`/destinations/${bestDeal.id}?residency=${selectedResidency}`)}
+            onClick={() => navigate(promoLink)}
           >
             <div className="relative overflow-hidden rounded-3xl shadow-2xl">
               {/* Layered Background */}
@@ -528,10 +533,10 @@ const Destinations: React.FC = () => {
                     <Percent className="w-8 h-8 sm:w-10 sm:h-10 text-white stroke-[2.5]" />
                     <div className="flex flex-col items-start justify-center">
                       <span className="text-xl sm:text-2xl font-black leading-none tracking-tight text-white whitespace-nowrap">
-                        {bestDeal.discountPercentage}% OFF
+                        {isSingleDiscount ? `${bestDeal.discountPercentage}% OFF` : `Up to ${Math.max(...discounted.map(d => d.discountPercentage || 0))}% OFF`}
                       </span>
                       <span className="text-[10px] sm:text-xs font-bold tracking-[0.15em] text-white/90 mt-[1px] sm:mt-0.5 uppercase whitespace-nowrap">
-                        Best Deal
+                        {isSingleDiscount ? 'Best Deal' : 'Group Savings'}
                       </span>
                     </div>
                   </div>
@@ -544,19 +549,33 @@ const Destinations: React.FC = () => {
                 <div className="flex-grow text-center md:text-left space-y-3">
                   <div className="flex items-center justify-center md:justify-start gap-2">
                     <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.25em] text-amber-400/80">
-                      Top Rated Safari Offer
+                      {isSingleDiscount ? 'Top Rated Safari Offer' : 'Multiple Group Offers'}
                     </span>
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   </div>
                   <h3 className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold text-white leading-tight">
-                    <span className="relative inline-block">
-                      <span className="relative z-10 text-amber-400">Save {bestDeal.discountPercentage}%</span>
-                      <span className="absolute bottom-0 left-0 w-full h-2 bg-amber-400/20 rounded-full -z-0" />
-                    </span>
-                    {' '}on {bestDeal.name}
+                    {isSingleDiscount ? (
+                      <>
+                        <span className="relative inline-block">
+                          <span className="relative z-10 text-amber-400">Save {bestDeal.discountPercentage}%</span>
+                          <span className="absolute bottom-0 left-0 w-full h-2 bg-amber-400/20 rounded-full -z-0" />
+                        </span>
+                        {' '}on {bestDeal.name}
+                      </>
+                    ) : (
+                      <>
+                        <span className="relative inline-block">
+                          <span className="relative z-10 text-amber-400">Group Savings</span>
+                          <span className="absolute bottom-0 left-0 w-full h-2 bg-amber-400/20 rounded-full -z-0" />
+                        </span>
+                        {' '}Available Now
+                      </>
+                    )}
                   </h3>
                   <p className="text-sm md:text-base text-white/60 max-w-lg leading-relaxed">
-                    Book for {bestDeal.discountThreshold}+ guests and save {bestDeal.discountPercentage}% instantly on this spectacular journey!
+                    {isSingleDiscount
+                      ? `Book for ${bestDeal.discountThreshold}+ guests and save ${bestDeal.discountPercentage}% instantly on this spectacular journey!`
+                      : `Book for ${bestDeal.discountThreshold}+ guests and save instantly on select destinations like ${bestDeal.name}!`}
                   </p>
                 </div>
 
@@ -565,11 +584,11 @@ const Destinations: React.FC = () => {
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/destinations/${bestDeal.id}?residency=${selectedResidency}`);
+                      navigate(promoLink);
                     }}
                     className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-slate-900 font-bold px-8 py-4 h-auto rounded-xl shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 transition-all duration-300 hover:-translate-y-0.5 text-sm group"
                   >
-                    View This Deal
+                    {isSingleDiscount ? 'View This Deal' : 'View Deals'}
                     <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </div>
