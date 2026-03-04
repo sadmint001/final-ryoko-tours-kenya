@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { serve } from "std/http/server.ts";
+import { createClient } from "@supabase/supabase-js";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -72,22 +72,11 @@ serve(async (req: Request): Promise<Response> => {
         let baseAdultTotal = adultPrice * adultsCount;
         let expectedTotal = baseAdultTotal + baseChildTotal;
 
-        const { data: settingsData } = await supabaseClient
-            .from('site_settings')
-            .select('*')
-            .in('key', ['group_discount_threshold', 'group_discount_percentage']);
+        let threshold = tour.discount_threshold || 0;
+        let percentage = tour.discount_percentage || 0;
+        const hasDiscount = tour.has_group_discount || false;
 
-        let threshold = 5;
-        let percentage = 10;
-        if (settingsData) {
-            const tObj = settingsData.find((d: any) => d.key === 'group_discount_threshold');
-            const pObj = settingsData.find((d: any) => d.key === 'group_discount_percentage');
-            if (tObj && !isNaN(parseInt(tObj.value))) threshold = parseInt(tObj.value);
-            if (pObj && !isNaN(parseInt(pObj.value))) percentage = parseInt(pObj.value);
-        }
-
-        const totalParticipants = adultsCount + childrenCount;
-        if (threshold > 0 && percentage > 0 && totalParticipants >= threshold) {
+        if (hasDiscount && threshold > 0 && percentage > 0 && adultsCount >= threshold) {
             const discountOnAdults = baseAdultTotal * (percentage / 100);
             expectedTotal = expectedTotal - discountOnAdults;
         }

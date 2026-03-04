@@ -23,6 +23,6 @@
     "strictNullChecks": false
   },
   "exclude": [
-    "supabase/functions"
+    "supabase/functions/**/*"
   ]
 }

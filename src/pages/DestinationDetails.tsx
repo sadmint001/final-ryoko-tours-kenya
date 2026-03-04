@@ -190,8 +190,8 @@ const DestinationDetails = () => {
   const isDiscountEligible = () => {
     if (!destination) return false;
     if (!destination.hasGroupDiscount) return false;
-    const totalParticipants = (Number(form.adultsCount) || 1) + (Number(form.childrenCount) || 0);
-    return totalParticipants >= (destination.discountThreshold || 0);
+    const adultsCountValue = Number(form.adultsCount) || 1;
+    return adultsCountValue >= (destination.discountThreshold || 0);
   };
 
   const getDiscountAmount = () => {

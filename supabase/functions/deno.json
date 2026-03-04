@@ -1,10 +1,11 @@
 {
+    "importMap": "import_map.json",
     "compilerOptions": {
         "allowJs": true,
         "lib": [
-            "deno.window",
             "deno.ns",
-            "deno.unstable"
+            "deno.unstable",
+            "deno.window"
         ]
     }
 }

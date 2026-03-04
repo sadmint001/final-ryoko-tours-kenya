@@ -50,7 +50,7 @@ const About = () => {
       <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
         {/* Background Image with Parallax-like effect (fixed bg) */}
         <div
-          className="absolute inset-0 bg-cover bg-center bg-fixed transform scale-105 transition-transform duration-[20s] hover:scale-100"
+          className="absolute inset-0 bg-cover bg-center bg-fixed transform scale-105 transition-all duration-[20000ms] hover:scale-100"
           style={{ backgroundImage: `url(${whyUs2})` }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-slate-900/90 dark:to-slate-900"></div>
